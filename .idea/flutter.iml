@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/adair-flutter-lib" />
+    <content url="file://$MODULE_DIR$/anglers-log">
+      <sourceFolder url="file://$MODULE_DIR$/anglers-log/mobile/android/app/src/main/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/anglers-log/mobile/ios/.symlinks/plugins/device_info_plus/android/src/main/kotlin" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/anglers-log/mobile/ios/.symlinks/plugins/device_info_plus/example/android/app/src/main/kotlin" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/anglers-log/mobile/ios/.symlinks/plugins/file_picker/android/src/main/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/anglers-log/mobile/ios/.symlinks/plugins/file_picker/example/android/app/src/main/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/anglers-log/mobile/ios/.symlinks/plugins/file_picker/example/android/app/src/main/kotlin" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/anglers-log/mobile/ios/.symlinks/plugins/file_picker/example/android/app/src/main/kotlin/com/mr/flutter/plugin" isTestSource="false" packagePrefix="com.mr.flutter.plugin.filepicker" />
+      <sourceFolder url="file://$MODULE_DIR$/anglers-log/mobile/ios/.symlinks/plugins/firebase_analytics/android/src/main/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/anglers-log/mobile/ios/.symlinks/plugins/firebase_analytics/example/android/app/src/main/kotlin" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/anglers-log/mobile/ios/.symlinks/plugins/firebase_core/android/src/main/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/anglers-log/mobile/ios/.symlinks/plugins/firebase_core/example/android/app/src/main/kotlin" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/anglers-log/mobile/ios/.symlinks/plugins/firebase_crashlytics/android/src/main/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/anglers-log/mobile/ios/.symlinks/plugins/firebase_crashlytics/example/android/app/src/main/kotlin" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/anglers-log/mobile/ios/.symlinks/plugins/flutter_image_compress_common/android/src/main/kotlin" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/anglers-log/mobile/ios/.symlinks/plugins/flutter_local_notifications/android/src/main/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/anglers-log/mobile/ios/.symlinks/plugins/flutter_local_notifications/android/src/test/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/anglers-log/mobile/ios/.symlinks/plugins/flutter_local_notifications/example/android/app/src/androidTest/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/anglers-log/mobile/ios/.symlinks/plugins/flutter_local_notifications/example/android/app/src/main/kotlin" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/anglers-log/mobile/ios/.symlinks/plugins/flutter_timezone/android/src/main/kotlin" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/anglers-log/mobile/ios/.symlinks/plugins/in_app_review/android/src/main/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/anglers-log/mobile/ios/.symlinks/plugins/in_app_review/example/android/app/src/main/kotlin" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/anglers-log/mobile/ios/.symlinks/plugins/mapbox_gl/android/src/main/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/anglers-log/mobile/ios/.symlinks/plugins/mapbox_gl/example/android/app/src/main/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/anglers-log/mobile/ios/.symlinks/plugins/mapbox_gl/example/android/app/src/main/kotlin" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/anglers-log/mobile/ios/.symlinks/plugins/native_exif/android/src/main/kotlin" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/anglers-log/mobile/ios/.symlinks/plugins/native_exif/example/android/app/src/main/kotlin" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/anglers-log/mobile/ios/.symlinks/plugins/package_info_plus/android/src/main/kotlin" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/anglers-log/mobile/ios/.symlinks/plugins/package_info_plus/example/android/app/src/androidTest/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/anglers-log/mobile/ios/.symlinks/plugins/photo_manager/android/src/main/kotlin" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/anglers-log/mobile/ios/.symlinks/plugins/photo_manager/example/android/app/src/main/kotlin" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/anglers-log/mobile/ios/.symlinks/plugins/purchases_flutter/android/src/main/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/anglers-log/mobile/ios/.symlinks/plugins/purchases_flutter/purchases_ui_flutter/android/src/main/kotlin" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/anglers-log/mobile/ios/.symlinks/plugins/region_settings/android/src/main/kotlin" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/anglers-log/mobile/ios/.symlinks/plugins/region_settings/example/android/app/src/main/kotlin" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/anglers-log/mobile/ios/.symlinks/plugins/share_plus/android/src/main/kotlin" isTestSource="false" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="Dart SDK" level="project" />
+    <orderEntry type="library" name="Dart Packages" level="project" />
+    <orderEntry type="library" name="Flutter Plugins" level="project" />
+  </component>
+</module>

@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="feature-mapbox_gl">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/anglers-log/mobile/ios/.symlinks/plugins/mapbox_gl/example/build/mapbox_gl/intermediates/merged_java_res/debug/feature-mapbox_gl.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

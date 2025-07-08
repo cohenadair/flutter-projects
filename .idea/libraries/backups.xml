@@ -1,0 +1,27 @@
+<component name="libraryTable">
+  <library name="backups">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/anglers-log/mobile/test/resources/backups/legacy_android_photos.zip!/" />
+      <root url="jar://$PROJECT_DIR$/anglers-log/mobile/test/resources/backups/legacy_android_real.zip!/" />
+      <root url="jar://$PROJECT_DIR$/anglers-log/mobile/test/resources/backups/no_journal.zip!/" />
+      <root url="jar://$PROJECT_DIR$/anglers-log/mobile/test/resources/backups/legacy_android_null_trips.zip!/" />
+      <root url="jar://$PROJECT_DIR$/anglers-log/mobile/test/resources/backups/legacy_android_entities.zip!/" />
+      <root url="jar://$PROJECT_DIR$/anglers-log/mobile/test/resources/backups/legacy_empty_entities.zip!/" />
+      <root url="jar://$PROJECT_DIR$/anglers-log/mobile/test/resources/backups/weather_system.zip!/" />
+      <root url="jar://$PROJECT_DIR$/anglers-log/mobile/test/resources/backups/legacy_android_bad_catch_id.zip!/" />
+      <root url="jar://$PROJECT_DIR$/anglers-log/mobile/test/resources/backups/metric.zip!/" />
+      <root url="jar://$PROJECT_DIR$/anglers-log/mobile/test/resources/backups/no_weather_system.zip!/" />
+      <root url="jar://$PROJECT_DIR$/anglers-log/mobile/test/resources/backups/legacy_ios_dotted_am.zip!/" />
+      <root url="jar://$PROJECT_DIR$/anglers-log/mobile/test/resources/backups/legacy_ios_real.zip!/" />
+      <root url="jar://$PROJECT_DIR$/anglers-log/mobile/test/resources/backups/legacy_ios_entities.zip!/" />
+      <root url="jar://$PROJECT_DIR$/anglers-log/mobile/test/resources/backups/legacy_ios_photos.zip!/" />
+      <root url="jar://$PROJECT_DIR$/anglers-log/mobile/test/resources/backups/rick.zip!/" />
+      <root url="jar://$PROJECT_DIR$/anglers-log/mobile/test/resources/backups/no_user_defines.zip!/" />
+      <root url="jar://$PROJECT_DIR$/anglers-log/mobile/test/resources/backups/legacy_ios_24h.zip!/" />
+      <root url="jar://$PROJECT_DIR$/anglers-log/mobile/test/resources/backups/legacy_android_trips.zip!/" />
+      <root url="jar://$PROJECT_DIR$/anglers-log/mobile/test/resources/backups/legacy_ios_lowercase_am.zip!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

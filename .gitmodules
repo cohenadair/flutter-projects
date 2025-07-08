@@ -1,0 +1,9 @@
+[submodule "adair-flutter-lib"]
+	path = adair-flutter-lib
+	url = ./adair-flutter-lib
+[submodule "activity-log"]
+	path = activity-log
+	url = ./activity-log
+[submodule "anglers-log"]
+	path = anglers-log
+	url = ./anglers-log

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/activity-log/mobile/activity-log.iml" filepath="$PROJECT_DIR$/activity-log/mobile/activity-log.iml" />
+      <module fileurl="file://$PROJECT_DIR$/adair-flutter-lib/adair-flutter-lib.iml" filepath="$PROJECT_DIR$/adair-flutter-lib/adair-flutter-lib.iml" />
+      <module fileurl="file://$PROJECT_DIR$/anglers-log/mobile/anglers-log.iml" filepath="$PROJECT_DIR$/anglers-log/mobile/anglers-log.iml" />
+      <module fileurl="file://$PROJECT_DIR$/tools/tools.iml" filepath="$PROJECT_DIR$/tools/tools.iml" />
+    </modules>
+  </component>
+</project>

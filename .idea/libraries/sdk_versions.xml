@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="sdk_versions">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/anglers-log/mobile/ios/.symlinks/plugins/mapbox_gl/example/build/app/intermediates/compressed_assets/debug/out/assets/sdk_versions/com.mapbox.mapboxsdk.jar!/" />
+      <root url="jar://$PROJECT_DIR$/anglers-log/mobile/ios/.symlinks/plugins/mapbox_gl/example/build/app/intermediates/compressed_assets/debug/out/assets/sdk_versions/com.mapbox.android.core.jar!/" />
+      <root url="jar://$PROJECT_DIR$/anglers-log/mobile/ios/.symlinks/plugins/mapbox_gl/example/build/app/intermediates/compressed_assets/debug/out/assets/sdk_versions/com.mapbox.android.telemetry.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

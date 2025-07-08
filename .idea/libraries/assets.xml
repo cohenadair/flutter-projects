@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="assets">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/anglers-log/mobile/ios/.symlinks/plugins/mapbox_gl/example/build/app/intermediates/compressed_assets/debug/out/assets/flutter_assets/assets/style.json.jar!/" />
+      <root url="jar://$PROJECT_DIR$/anglers-log/mobile/ios/.symlinks/plugins/mapbox_gl/example/build/app/intermediates/compressed_assets/debug/out/assets/flutter_assets/assets/sydney.png.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
