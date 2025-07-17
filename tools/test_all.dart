@@ -5,27 +5,26 @@
 import "dart:convert";
 import "dart:io";
 
+import "projects.dart";
+
 /// ANSI escape codes for colored output.
 const green = "\x1B[32m";
 const red = "\x1B[31m";
 const reset = "\x1B[0m";
 
-/// List of project directories.
-final projects = [
-  {"name": "adair-flutter-lib", "path": "../adair-flutter-lib"},
-  // {"name": "activity-log", "path": "../activity-log/mobile"},
-  {"name": "anglers-log", "path": "../anglers-log/mobile"},
-];
-
 int totalTests = 0;
 
 Future<void> main() async {
+  await testAll();
+}
+
+Future<bool> testAll() async {
   final results = <String, bool>{};
 
   for (var project in projects) {
     final name = project["name"]!;
     final path = project["path"]!;
-    final passed = await runTestsForProject(name, path);
+    final passed = await _testProject(name, path);
     results[name] = passed;
     stdout.write("\n");
   }
@@ -34,11 +33,13 @@ Future<void> main() async {
   for (var entry in results.entries) {
     final color = entry.value ? green : red;
     final status = entry.value ? "PASS" : "FAIL";
-    print("$color${entry.key}: $status$reset");
+    print("${status == "PASS" ? "✅" : "❌"} ${entry.key}: $color$status$reset");
   }
+
+  return !results.containsValue(false);
 }
 
-Future<bool> runTestsForProject(String name, String path) async {
+Future<bool> _testProject(String name, String path) async {
   final process = await Process.start(
     "flutter",
     ["test", "--machine"],
