@@ -9,7 +9,10 @@ void main() async {
 
 Future<bool> formatAll() async {
   for (var project in projects) {
-    if (!(await _formatProject(project["name"]!, project["path"]!))) {
+    if (!(await _formatProject(
+      project["name"]! as String,
+      project["path"]! as String,
+    ))) {
       return false;
     }
   }

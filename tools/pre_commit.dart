@@ -10,5 +10,6 @@ void main() async {
     if (!await command()) {
       exit(1);
     }
+    print("\n");
   }
 }

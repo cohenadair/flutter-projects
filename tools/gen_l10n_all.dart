@@ -12,7 +12,7 @@ Future<void> main() async {
     await Process.start(
       "flutter",
       ["gen-l10n"],
-      workingDirectory: project["path"],
+      workingDirectory: project["path"] as String,
       runInShell: true,
     );
     print("Generated ${project["name"]} strings");
