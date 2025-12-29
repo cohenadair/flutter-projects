@@ -24,13 +24,12 @@ Future<bool> testAll() async {
 
   for (var project in projects) {
     final name = project["name"]! as String;
+    print("🏃‍♂️ Testing project: $name...");
     results[name] = await _runAllTests(
-      name,
       project["path"]! as String,
       hasIosTests: project["has_ios_tests"]! as bool,
       hasAndroidTests: project["has_android_tests"]! as bool,
     );
-    stdout.write("\n");
   }
 
   print("Tests for all projects: $totalTests");
@@ -75,25 +74,25 @@ Future<bool> _iterateProcessOutput(
     errors.add(line);
   }
 
+  stdout.write("\n");
   return true;
 }
 
-void _writeTestSummary(String platform, String name, int index) {
-  stdout.write("\r🏃‍♂️ $platform tests for $name: $index");
+void _writeTestSummary(String platform, int index) {
+  stdout.write("\r   => $platform: $index");
 }
 
 Future<bool> _runAllTests(
-  String name,
   String path, {
   required bool hasIosTests,
   required bool hasAndroidTests,
 }) async {
-  return await _runFlutterTests(name, path) &&
-      (!hasIosTests || await _runIosTests(name, path)) &&
-      (!hasAndroidTests || await _runAndroidTests(name, path));
+  return await _runFlutterTests(path) &&
+      (!hasIosTests || await _runIosTests(path)) &&
+      (!hasAndroidTests || await _runAndroidTests(path));
 }
 
-Future<bool> _runFlutterTests(String name, String path) async {
+Future<bool> _runFlutterTests(String path) async {
   final process = await Process.start(
     "flutter",
     ["test", "--machine"],
@@ -102,7 +101,7 @@ Future<bool> _runFlutterTests(String name, String path) async {
   );
 
   var testIndex = 0;
-  _writeTestSummary("Running Flutter", name, testIndex);
+  _writeTestSummary("Flutter", testIndex);
 
   final passed = await _iterateProcessOutput(process, (line) {
     final jsonLine = json.decode(line);
@@ -114,7 +113,7 @@ Future<bool> _runFlutterTests(String name, String path) async {
       case "testStart":
         testIndex++;
         totalTests++;
-        _writeTestSummary("Running Flutter", name, testIndex);
+        _writeTestSummary("Flutter", testIndex);
         break;
       case "testDone":
         if (jsonLine["result"] != "success") {
@@ -125,11 +124,10 @@ Future<bool> _runFlutterTests(String name, String path) async {
     return true;
   });
 
-  stdout.write("\n");
   return passed && await process.exitCode == 0;
 }
 
-Future<bool> _runAndroidTests(String name, String path) async {
+Future<bool> _runAndroidTests(String path) async {
   final process = await Process.start(
     "./gradlew",
     [
@@ -144,7 +142,7 @@ Future<bool> _runAndroidTests(String name, String path) async {
   );
 
   var testIndex = 0;
-  _writeTestSummary("Running Android", name, testIndex);
+  _writeTestSummary("Android", testIndex);
 
   final passed = await _iterateProcessOutput(process, (line) {
     if (line.contains("SKIPPED")) {
@@ -156,7 +154,7 @@ Future<bool> _runAndroidTests(String name, String path) async {
     if (line.contains("PASSED") || line.contains("FAILED")) {
       testIndex++;
       totalTests++;
-      _writeTestSummary("Running Android", name, testIndex);
+      _writeTestSummary("Android", testIndex);
     }
 
     if (line.contains("FAILED")) {
@@ -166,11 +164,10 @@ Future<bool> _runAndroidTests(String name, String path) async {
     return true;
   });
 
-  stdout.write("\n");
   return passed && await process.exitCode == 0;
 }
 
-Future<bool> _runIosTests(String name, String path) async {
+Future<bool> _runIosTests(String path) async {
   final process = await Process.start(
     "xcodebuild",
     [
@@ -187,7 +184,7 @@ Future<bool> _runIosTests(String name, String path) async {
   );
 
   var testIndex = 0;
-  _writeTestSummary("Running iOS", name, testIndex);
+  _writeTestSummary("iOS", testIndex);
 
   final passed = await _iterateProcessOutput(process, (line) {
     if (line.contains("skipped")) {
@@ -199,7 +196,7 @@ Future<bool> _runIosTests(String name, String path) async {
     if (line.contains("passed") || line.contains("failed")) {
       testIndex++;
       totalTests++;
-      _writeTestSummary("Running iOS", name, testIndex);
+      _writeTestSummary("iOS", testIndex);
     }
 
     if (line.contains("failed")) {
@@ -209,6 +206,5 @@ Future<bool> _runIosTests(String name, String path) async {
     return true;
   });
 
-  stdout.write("\n");
   return passed && await process.exitCode == 0;
 }

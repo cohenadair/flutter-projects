@@ -31,7 +31,7 @@ Future<bool> _formatProject(String name, String path) async {
   process.stdout
       .transform(utf8.decoder)
       .transform(const LineSplitter())
-      .listen((data) => print("   --> $data"));
+      .listen((data) => print("   => $data"));
 
   process.stderr
       .transform(utf8.decoder)
@@ -39,7 +39,6 @@ Future<bool> _formatProject(String name, String path) async {
       .listen(print);
 
   if (await process.exitCode == 0) {
-    print("✅ Successfully formatted $name");
     return true;
   } else {
     print("❌ Failed to format $name");
