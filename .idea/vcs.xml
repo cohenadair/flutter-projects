@@ -4,6 +4,7 @@
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/activity-log" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/adair-flutter-lib" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/adair-flutter-lib-tester" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/anglers-log" vcs="Git" />
   </component>
 </project>

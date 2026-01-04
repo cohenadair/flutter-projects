@@ -7,3 +7,6 @@
 [submodule "anglers-log"]
 	path = anglers-log
 	url = ./anglers-log
+[submodule "adair-flutter-lib-tester"]
+	path = adair-flutter-lib-tester
+	url = git@github.com:cohenadair/adair-flutter-lib-tester.git

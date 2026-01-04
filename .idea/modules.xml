@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/activity-log/mobile/activity-log.iml" filepath="$PROJECT_DIR$/activity-log/mobile/activity-log.iml" />
       <module fileurl="file://$PROJECT_DIR$/adair-flutter-lib/adair-flutter-lib.iml" filepath="$PROJECT_DIR$/adair-flutter-lib/adair-flutter-lib.iml" />
+      <module fileurl="file://$PROJECT_DIR$/adair-flutter-lib-tester/adair-flutter-lib-tester.iml" filepath="$PROJECT_DIR$/adair-flutter-lib-tester/adair-flutter-lib-tester.iml" />
       <module fileurl="file://$PROJECT_DIR$/anglers-log/mobile/anglers-log.iml" filepath="$PROJECT_DIR$/anglers-log/mobile/anglers-log.iml" />
       <module fileurl="file://$PROJECT_DIR$/tools/tools.iml" filepath="$PROJECT_DIR$/tools/tools.iml" />
     </modules>
