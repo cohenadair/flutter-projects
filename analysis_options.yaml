@@ -1,0 +1,12 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  errors:
+    # https://github.com/dart-lang/mockito/issues/795
+    duplicate_ignore: false
+
+linter:
+  rules:
+    public_member_api_docs: false
+    use_key_in_widget_constructors: false
+#    prefer_final_locals: true
