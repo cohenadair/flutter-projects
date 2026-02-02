@@ -1,12 +1,11 @@
-//
-// Inserts `import` value into each dart file under `path` who has a single
-// line that contains `searchTerm`.
-//
-// This Script should be followed by a manual "Optimize Imports" in Android
-// Studio to fix import ordering.
-//
-// Original code written using ChatGPT, then fixed and modified as needed.
-//
+/// Inserts `import` value into each dart file under `path` who has a single
+/// line that contains `searchTerm`. Good for when files are moved from a
+/// Flutter app into adair-flutter-lib.
+///
+/// This Script should be followed by a manual "Optimize Imports" in Android
+/// Studio to fix import ordering.
+///
+/// Original code written using ChatGPT, then fixed and modified as needed.
 import "dart:io";
 
 final import = "import 'package:adair_flutter_lib/widgets/loading.dart';";

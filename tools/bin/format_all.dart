@@ -1,32 +1,28 @@
 import "dart:convert";
-import "dart:io";
 
-import "projects.dart";
+import "../lib/projects.dart";
 
 void main() async {
   await formatAll();
 }
 
 Future<bool> formatAll() async {
-  for (var project in projects) {
-    if (!(await _formatProject(
-      project["name"]! as String,
-      project["path"]! as String,
-    ))) {
+  for (var project in projects.values) {
+    if (!(await _formatProject(project))) {
       return false;
     }
   }
   return true;
 }
 
-Future<bool> _formatProject(String name, String path) async {
-  print("🔍 Formatting project: $name...");
+Future<bool> _formatProject(Project project) async {
+  print("🔍 Formatting project: ${project.name}...");
 
-  final process = await Process.start("dart", [
+  final process = await project.runCommand("dart", [
     "format",
     "lib",
     "test",
-  ], workingDirectory: path);
+  ], runInShell: false);
 
   process.stdout
       .transform(utf8.decoder)
@@ -41,7 +37,7 @@ Future<bool> _formatProject(String name, String path) async {
   if (await process.exitCode == 0) {
     return true;
   } else {
-    print("❌ Failed to format $name");
+    print("❌ Failed to format ${project.name}");
     return false;
   }
 }

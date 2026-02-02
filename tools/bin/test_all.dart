@@ -1,11 +1,9 @@
-//
-//  Original code written using ChatGPT, then fixed and modified as needed.
-//
+/// Original code written using ChatGPT, then fixed and modified as needed.
 
 import "dart:convert";
 import "dart:io";
 
-import "projects.dart";
+import "../lib/projects.dart";
 
 /// ANSI escape codes for colored output.
 const green = "\x1B[32m";
@@ -22,14 +20,9 @@ Future<void> main() async {
 Future<bool> testAll() async {
   final results = <String, bool>{};
 
-  for (var project in projects) {
-    final name = project["name"]! as String;
-    print("🏃‍♂️ Testing project: $name...");
-    results[name] = await _runAllTests(
-      project["path"]! as String,
-      hasIosTests: project["has_ios_tests"]! as bool,
-      hasAndroidTests: project["has_android_tests"]! as bool,
-    );
+  for (var project in projects.values) {
+    print("🏃‍♂️ Testing project: ${project.name}...");
+    results[project.name] = await _runAllTests(project);
   }
 
   print("Tests for all projects: $totalTests");
@@ -41,7 +34,7 @@ Future<bool> testAll() async {
 
   if (errors.isNotEmpty) {
     print("\n🚫 Errors:");
-    errors.forEach((e) => print(e));
+    errors.forEach(print);
   }
 
   return !results.containsValue(false);
@@ -68,7 +61,9 @@ Future<bool> _iterateProcessOutput(
   await for (var line in errStream) {
     if (line.contains("warning") ||
         // xcodebuild run summary writes to stderr.
-        line.contains("IDETestOperationsObserverDebug")) {
+        line.contains("IDETestOperationsObserverDebug") ||
+        // Android deprecated API warnings.
+        line.contains("Note")) {
       continue;
     }
     errors.add(line);
@@ -82,23 +77,14 @@ void _writeTestSummary(String platform, int index) {
   stdout.write("\r   => $platform: $index");
 }
 
-Future<bool> _runAllTests(
-  String path, {
-  required bool hasIosTests,
-  required bool hasAndroidTests,
-}) async {
-  return await _runFlutterTests(path) &&
-      (!hasIosTests || await _runIosTests(path)) &&
-      (!hasAndroidTests || await _runAndroidTests(path));
+Future<bool> _runAllTests(Project project) async {
+  return (!project.hasFlutterTests || await _runFlutterTests(project)) &&
+      (!project.hasIosTests || await _runIosTests(project)) &&
+      (!project.hasAndroidTests || await _runAndroidTests(project));
 }
 
-Future<bool> _runFlutterTests(String path) async {
-  final process = await Process.start(
-    "flutter",
-    ["test", "--machine"],
-    workingDirectory: path,
-    runInShell: true,
-  );
+Future<bool> _runFlutterTests(Project project) async {
+  final process = await project.runCommand("flutter", ["test", "--machine"]);
 
   var testIndex = 0;
   _writeTestSummary("Flutter", testIndex);
@@ -127,19 +113,14 @@ Future<bool> _runFlutterTests(String path) async {
   return passed && await process.exitCode == 0;
 }
 
-Future<bool> _runAndroidTests(String path) async {
-  final process = await Process.start(
-    "./gradlew",
-    [
-      ":app:testDebugUnitTest",
-      "--tests",
-      "com.cohenadair.mobile.*",
-      // Forces tests to be run each time.
-      "--rerun-tasks",
-    ],
-    workingDirectory: "$path/android",
-    runInShell: true,
-  );
+Future<bool> _runAndroidTests(Project project) async {
+  final process = await project.runCommand("./gradlew", [
+    ":app:testDebugUnitTest",
+    "--tests",
+    "com.cohenadair.mobile.*",
+    // Forces tests to be run each time.
+    "--rerun-tasks",
+  ], pathOverride: "${project.path}/android");
 
   var testIndex = 0;
   _writeTestSummary("Android", testIndex);
@@ -167,21 +148,16 @@ Future<bool> _runAndroidTests(String path) async {
   return passed && await process.exitCode == 0;
 }
 
-Future<bool> _runIosTests(String path) async {
-  final process = await Process.start(
-    "xcodebuild",
-    [
-      "test",
-      "-workspace",
-      "Runner.xcworkspace",
-      "-scheme",
-      "Runner",
-      "-destination",
-      "platform=iOS Simulator,name=iPhone 17",
-    ],
-    workingDirectory: "$path/ios",
-    runInShell: true,
-  );
+Future<bool> _runIosTests(Project project) async {
+  final process = await project.runCommand("xcodebuild", [
+    "test",
+    "-workspace",
+    "Runner.xcworkspace",
+    "-scheme",
+    "Runner",
+    "-destination",
+    "platform=iOS Simulator,name=iPhone 17",
+  ], pathOverride: "${project.path}/ios");
 
   var testIndex = 0;
   _writeTestSummary("iOS", testIndex);
