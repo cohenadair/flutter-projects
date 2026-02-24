@@ -4,17 +4,31 @@
 /// Original image should be greater than or equal to the 4x size so the
 /// original image is never upscaled. This tool should only be used for images
 /// that can't be converted to an SVG or a custom icon.
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:path/path.dart';
 
 import '../lib/projects.dart';
 
 // Modify as needed.
-final project = projects["adair-flutter-lib-tester"]!;
-const assetPath = "../pro-iq.png";
-const baseWidth = 200;
+final project = projects["anglers-log"]!;
+const assetPath = "../active-pin.png";
+const baseWidth = 30;
 
 void main() async {
-  const outputs = {"4x": 4.0, "3x": 3.0, "2x": 2.0, "1.5x": 1.5, "1.0": 1.0};
+  if (assetPath.endsWith("svg")) {
+    print("SVG assets are not supported.");
+    return;
+  }
+
+  const outputs = {
+    "4.0x": 4.0,
+    "3.0x": 3.0,
+    "2.0x": 2.0,
+    "1.5x": 1.5,
+    "1.0": 1.0,
+  };
 
   for (var entry in outputs.entries) {
     _scaleImage(entry);
@@ -24,8 +38,7 @@ void main() async {
 Future<void> _scaleImage(MapEntry<String, double> output) async {
   final outputDir =
       "${project.path}/assets${output.key == "1.0" ? "" : "/${output.key}"}";
-
-  await project.runCommand("mkdir", [outputDir]);
+  await Directory(outputDir).create();
 
   // magick ~/Downloads/pro-iq.png -resize 800x ~/Downloads/pro-iq@4x.png
   final cmd = "magick";
@@ -34,5 +47,10 @@ Future<void> _scaleImage(MapEntry<String, double> output) async {
   final out = "$outputDir/${basename(assetPath)}";
 
   print("$cmd $assetPath $resize $size $out");
-  await project.runCommand(cmd, [assetPath, resize, size, out]);
+  final process = await project.runCommand(cmd, [assetPath, resize, size, out]);
+
+  final errStream = utf8.decoder.bind(process.stderr).transform(LineSplitter());
+  await for (var line in errStream) {
+    print(line);
+  }
 }
