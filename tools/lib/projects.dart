@@ -45,13 +45,13 @@ class Project {
   Future<Process> runCommand(
     String executable,
     List<String> arguments, {
-    String? pathOverride,
+    String? workingDirectory,
     bool runInShell = true,
   }) async {
-    return Process.start(
+    return await Process.start(
       executable,
       arguments,
-      workingDirectory: pathOverride ?? path,
+      workingDirectory: workingDirectory ?? path,
       runInShell: runInShell,
     );
   }

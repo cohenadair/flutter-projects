@@ -50,6 +50,7 @@ Future<bool> _iterateProcessOutput(
   await for (var line in lines) {
     try {
       if (!callback(line)) {
+        stdout.write("\n");
         return false;
       }
     } catch (_) {
@@ -120,7 +121,7 @@ Future<bool> _runAndroidTests(Project project) async {
     "com.cohenadair.mobile.*",
     // Forces tests to be run each time.
     "--rerun-tasks",
-  ], pathOverride: "${project.path}/android");
+  ], workingDirectory: "${project.path}/android");
 
   var testIndex = 0;
   _writeTestSummary("Android", testIndex);
@@ -157,7 +158,7 @@ Future<bool> _runIosTests(Project project) async {
     "Runner",
     "-destination",
     "platform=iOS Simulator,name=iPhone 17",
-  ], pathOverride: "${project.path}/ios");
+  ], workingDirectory: "${project.path}/ios");
 
   var testIndex = 0;
   _writeTestSummary("iOS", testIndex);
