@@ -1,0 +1,6 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Anglers' Log" type="FlutterRunConfigurationType" factoryName="Flutter">
+    <option name="filePath" value="$PROJECT_DIR$/anglers-log/mobile/lib/main.dart" />
+    <method v="2" />
+  </configuration>
+</component>

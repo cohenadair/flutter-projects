@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Format Anglers' Log" type="DartCommandLineRunConfigurationType" factoryName="Dart Command Line Application">
+    <option name="arguments" value="anglers-log" />
+    <option name="filePath" value="$PROJECT_DIR$/tools/bin/format_projects.dart" />
+    <method v="2" />
+  </configuration>
+</component>

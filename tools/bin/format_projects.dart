@@ -2,16 +2,24 @@ import "dart:convert";
 
 import "../lib/projects.dart";
 
-void main() async {
-  await formatAll();
+void main(List<String> projectNames) async {
+  await format(projectNames);
 }
 
-Future<bool> formatAll() async {
-  for (var project in projects.values) {
+Future<bool> format([List<String> projectNames = const []]) async {
+  Iterable<Project> toFormat = projects.values;
+  if (projectNames.isNotEmpty) {
+    toFormat = projects.values
+        .where((project) => projectNames.contains(project.name))
+        .toList();
+  }
+
+  for (var project in toFormat) {
     if (!(await _formatProject(project))) {
       return false;
     }
   }
+
   return true;
 }
 
