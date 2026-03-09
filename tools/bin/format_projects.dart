@@ -32,17 +32,17 @@ Future<bool> _formatProject(Project project) async {
     "test",
   ], runInShell: false);
 
-  process.stdout
+  process?.stdout
       .transform(utf8.decoder)
       .transform(const LineSplitter())
       .listen((data) => print("   => $data"));
 
-  process.stderr
+  process?.stderr
       .transform(utf8.decoder)
       .transform(const LineSplitter())
       .listen(print);
 
-  if (await process.exitCode == 0) {
+  if (await process?.exitCode == 0) {
     return true;
   } else {
     print("❌ Failed to format ${project.name}");

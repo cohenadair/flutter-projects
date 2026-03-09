@@ -49,7 +49,9 @@ Future<void> _scaleImage(MapEntry<String, double> output) async {
   print("$cmd $assetPath $resize $size $out");
   final process = await project.runCommand(cmd, [assetPath, resize, size, out]);
 
-  final errStream = utf8.decoder.bind(process.stderr).transform(LineSplitter());
+  final errStream = utf8.decoder
+      .bind(process!.stderr)
+      .transform(LineSplitter());
   await for (var line in errStream) {
     print(line);
   }

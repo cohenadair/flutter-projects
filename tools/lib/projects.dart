@@ -1,27 +1,29 @@
 import 'dart:io';
 
 /// List of all projects and directories.
+/// Paths are relative to the tools/bin directory.
 const projects = {
   "adair-flutter-lib": const Project(
     name: "adair-flutter-lib",
-    path: "../adair-flutter-lib",
+    path: "../../adair-flutter-lib",
   ),
   "adair-flutter-lib-tester": const Project(
     name: "adair-flutter-lib-tester",
-    path: "../adair-flutter-lib-tester",
+    path: "../../adair-flutter-lib-tester",
     hasFlutterTests: false,
   ),
   "activity-log": const Project(
     name: "activity-log",
-    path: "../activity-log/mobile",
+    path: "../../activity-log/mobile",
     // Enable as needed (they take a long time to run).
     hasIosTests: true,
     hasAndroidTests: true,
   ),
   "anglers-log": const Project(
     name: "anglers-log",
-    path: "../anglers-log/mobile",
+    path: "../../anglers-log/mobile",
   ),
+  "pro-iq": const Project(name: "pro-iq", path: "../../pro-iq"),
 };
 
 class Project {
@@ -42,17 +44,25 @@ class Project {
     this.hasAndroidTests = false,
   });
 
-  Future<Process> runCommand(
+  Future<Process?> runCommand(
     String executable,
     List<String> arguments, {
     String? workingDirectory,
     bool runInShell = true,
+    bool echoOutput = false,
   }) async {
+    if (!Directory.current.path.endsWith("tools/bin")) {
+      print("Tools must be run from within the tools/bin directory.");
+      print("Current directory: ${Directory.current.path}");
+      return null;
+    }
+
     return await Process.start(
       executable,
       arguments,
       workingDirectory: workingDirectory ?? path,
       runInShell: runInShell,
+      mode: echoOutput ? .inheritStdio : .normal,
     );
   }
 }

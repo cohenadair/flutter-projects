@@ -90,7 +90,7 @@ Future<bool> _runFlutterTests(Project project) async {
   var testIndex = 0;
   _writeTestSummary("Flutter", testIndex);
 
-  final passed = await _iterateProcessOutput(process, (line) {
+  final passed = await _iterateProcessOutput(process!, (line) {
     final jsonLine = json.decode(line);
     if (jsonLine is! Map<String, dynamic>) {
       return true;
@@ -126,7 +126,7 @@ Future<bool> _runAndroidTests(Project project) async {
   var testIndex = 0;
   _writeTestSummary("Android", testIndex);
 
-  final passed = await _iterateProcessOutput(process, (line) {
+  final passed = await _iterateProcessOutput(process!, (line) {
     if (line.contains("SKIPPED")) {
       return true;
     }
@@ -163,7 +163,7 @@ Future<bool> _runIosTests(Project project) async {
   var testIndex = 0;
   _writeTestSummary("iOS", testIndex);
 
-  final passed = await _iterateProcessOutput(process, (line) {
+  final passed = await _iterateProcessOutput(process!, (line) {
     if (line.contains("skipped")) {
       return true;
     }
