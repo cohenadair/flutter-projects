@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter test test/pages/mobile_home_page_test.dart)",
+      "Bash(flutter test:*)"
+    ]
+  }
+}
