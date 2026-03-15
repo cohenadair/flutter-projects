@@ -1,6 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Format All" type="DartCommandLineRunConfigurationType" factoryName="Dart Command Line Application">
     <option name="filePath" value="$PROJECT_DIR$/tools/bin/format_projects.dart" />
+    <option name="workingDirectory" value="$PROJECT_DIR$/tools/bin" />
     <method v="2" />
   </configuration>
 </component>
