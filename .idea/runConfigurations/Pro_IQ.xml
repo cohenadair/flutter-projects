@@ -1,0 +1,6 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Pro IQ" type="FlutterRunConfigurationType" factoryName="Flutter">
+    <option name="filePath" value="$PROJECT_DIR$/pro-iq/lib/main.dart" />
+    <method v="2" />
+  </configuration>
+</component>

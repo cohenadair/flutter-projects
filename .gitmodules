@@ -10,3 +10,6 @@
 [submodule "adair-flutter-lib-tester"]
 	path = adair-flutter-lib-tester
 	url = git@github.com:cohenadair/adair-flutter-lib-tester.git
+[submodule "pro-iq"]
+	path = pro-iq
+	url = git@github.com:Pro-IQ-Inc/pro-iq.git
