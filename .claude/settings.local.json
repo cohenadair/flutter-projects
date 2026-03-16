@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(flutter test test/pages/mobile_home_page_test.dart)",
-      "Bash(flutter test:*)"
+      "Bash(flutter test:*)",
+      "Bash(find /Users/cohen/Documents/flutter -type f -name *SKILL* -o -name *skill*)"
     ]
   }
 }

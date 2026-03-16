@@ -35,12 +35,9 @@ The `models/gen/` (non-`protobuf/`) files are stale — always use the `protobuf
 
 ---
 
-## Coding preferences
+## Examples
 
-### 1. Padding & spacing — use `inset*` constants
-
-Always import from `adair_flutter_lib/res/dimen.dart` and use the named constants.
-Default to `insetsDefault` when no specific size is needed.
+### Padding & spacing
 
 ```dart
 import 'package:adair_flutter_lib/res/dimen.dart';
@@ -72,10 +69,7 @@ Key constants:
 For values not covered by dimen.dart (e.g. a 1px hairline gap), declare a named
 `static const` at the top of the class rather than inlining the literal.
 
-### 2. No magic numbers — declare constants at the top of the class
-
-Elevation, radii, font sizes, fixed spacing that isn't from dimen.dart — all go as
-`static const` fields at the top of the widget class.
+### No magic numbers
 
 ```dart
 class _ProfileCard extends StatelessWidget {
@@ -85,39 +79,23 @@ class _ProfileCard extends StatelessWidget {
 }
 ```
 
-### 3. Curly braces — always use them for `if` statement bodies
-
-Every `if` body must use curly braces, even for single-line returns.
+### Curly braces / double quotes
 
 ```dart
 // Prefer:
 if (isColorReadable(primary, background)) {
   return primary;
 }
-
-// Never:
-if (isColorReadable(primary, background)) return primary;
-```
-
-### 4. Strings use double quotes
-
-Always use double quotes for Dart string literals.
-
-```dart
-// Prefer:
 Text("Coach: ")
 const Avatar(initials: "MR")
 
 // Never:
+if (isColorReadable(primary, background)) return primary;
 Text('Coach: ')
 const Avatar(initials: 'MR')
 ```
 
-### 4. Keep `build()` short — extract to small `_build*` methods
-
-Avoid long `build()` methods. Each meaningful piece of UI should be extracted to its
-own `_build*` method. A good rule of thumb: if a widget has a `Column` or `Row`,
-each child should be a `_build*` call rather than an inline widget tree.
+### build() structure
 
 ```dart
 // Prefer:
@@ -142,10 +120,7 @@ Column(
 The primary `build()` method is always the **first** method in the class body.
 All `_build*` helpers are placed *after* it.
 
-### 5. Conditional widgets — invert and return early
-
-When a widget should only appear under a condition, invert the condition and return
-`const SizedBox()` early. Avoid inline `if` spreads in widget lists.
+### Conditional widgets
 
 ```dart
 // Prefer:
@@ -163,10 +138,7 @@ if (user.coachName.isNotEmpty) ...[
 ],
 ```
 
-### 6. Page widgets — use `ScrollPage` as the root
-
-All new page widgets (files in `lib/pages/`, named `*_page.dart`) should use
-`ScrollPage` from `adair_flutter_lib` as their root widget instead of `Scaffold`.
+### ScrollPage
 
 ```dart
 import 'package:adair_flutter_lib/pages/scroll_page.dart';
@@ -197,11 +169,7 @@ Key parameters:
 | `centerContent` | Center children horizontally |
 | `restrictWidth` | Cap content width for wide screens |
 
-### 7. Future-based widgets — use `SafeFutureBuilder`
-
-Whenever a widget's content is driven by a `Future`, use `SafeFutureBuilder`
-instead of the standard `FutureBuilder`. It handles loading/error states and
-logs errors automatically.
+### SafeFutureBuilder
 
 ```dart
 import 'package:adair_flutter_lib/widgets/safe_future_builder.dart';

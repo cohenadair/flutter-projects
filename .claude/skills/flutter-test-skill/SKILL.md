@@ -12,19 +12,6 @@ description: >
 
 # Flutter Test Skill
 
-## Core rules (always apply)
-
-- **No test groups.** Never use `group()`. Use a flat list of `test()` /
-  `testWidgets()` calls inside `void main()`.
-- **Full code-path coverage.** Every branch must be exercised — including both
-  sides of every `if`, `else`, `??`, `? :`, and `switch` case. Write a
-  separate test for each branch; don't combine them.
-- **Identify impossible code paths.** While reading the code under test, flag
-  any branch that can never be reached and explain why. Do this before writing
-  the tests.
-
----
-
 ## Singleton / Manager pattern
 
 All managers follow the pattern in
