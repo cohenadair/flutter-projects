@@ -40,6 +40,11 @@ Widget _buildCoach(BuildContext context) {
 - For async content use **`SafeFutureBuilder`** in place of both `FutureBuilder`
   and `StreamBuilder`. The `errorReason` parameter is required.
 
+## Localizations
+
+- Never modify `*_localizations*.dart` files directly — they are generated.
+- After editing any `.arb` file, regenerate with `flutter gen-l10n` from the project root.
+
 ## Protos
 
 - Canonical import: `package:pro_iq/models/gen/protobuf/pro_iq.pb.dart`
