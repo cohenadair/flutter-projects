@@ -62,6 +62,8 @@ Widget _buildCoach(BuildContext context) {
   never be reached, explaining why.
 - **Never construct real managers in tests.** Always inject mocks via
   `StubbedManagers`. Access lib-level mocks through `managers.lib.*`.
+- **Never modify `mocks.mocks.dart`** — it is generated. To regenerate, run
+  `pro-iq/gen_mocks.sh` from the repo root.
 - Widget tests always use **`pumpContext`** (from
   `adair-flutter-lib/test/test_utils/testable.dart`) — not plain `pumpWidget`.
 - Use `tester.pumpAndSettle()` after tap / scroll / stream events.
