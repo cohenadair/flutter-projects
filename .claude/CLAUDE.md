@@ -6,6 +6,13 @@
 - Always use **curly braces** for `if` statement bodies, even single-line returns.
 - No magic numbers — declare **`static const`** fields at the top of the class for
   elevation, radii, or any fixed value not covered by dimen.dart.
+- Boolean variables and fields must use a verb prefix: `is`, `can`, `does`, `has`,
+  `should`, `will`, etc. (e.g. `isLoading`, `canEdit`, `hasValue`).
+- **Doc comments for instance variables** go directly above each variable declaration,
+  not inside the class-level doc header. See `AutocompleteTextInput` in
+  `adair-flutter-lib/lib/widgets/autocomplete_text_input.dart` as the reference example.
+- **Unused required parameters** must use the wildcard name `_` instead of a named
+  identifier (e.g. `void onEvent(BuildContext _)` when `context` isn't needed).
 
 ## Spacing & padding
 
@@ -69,3 +76,13 @@ Widget _buildCoach(BuildContext context) {
 - Use `tester.pumpAndSettle()` after tap / scroll / stream events.
 - Stub sync values with `thenReturn`; stub futures/streams with
   `thenAnswer((_) async => ...)` / `thenAnswer((_) => Stream.value(...))`.
+- **Test description casing** — descriptions must start with a capital letter, unless
+  the first word is a method or function name being exercised (e.g. `"capitalize returns
+  empty string when input is empty"` is fine; `"widget renders without errors"` is not).
+- **Test helper functions** — declare as local functions inside `main()`, immediately
+  after `setUp`/`tearDown`. Name them with a plain lowercase identifier (no leading
+  underscore). See `colorCircle` and `openTeamDropdown` in
+  `pro-iq/test/pages/all_users_page_test.dart` as the reference example.
+- **`*AndSettle` helpers** — use `tapAndSettle`, `ensureVisibleAndSettle`, and
+  `enterTextAndSettle` (from `adair-flutter-lib/test/test_utils/widget.dart`)
+  instead of the raw `tester.*()` + `tester.pumpAndSettle()` two-liner.
