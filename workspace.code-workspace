@@ -1,0 +1,72 @@
+{
+    "folders": [
+        {
+            "path": "."
+        },
+        {
+            "path": "activity-log"
+        },
+        {
+            "path": "adair-flutter-lib"
+        },
+        {
+            "path": "adair-flutter-lib-tester"
+        },
+        {
+            "path": "anglers-log"
+        },
+        {
+            "path": "pro-iq"
+        },
+        {
+            "path": "tools"
+        }
+    ],
+    "settings": {
+        "git.repositoryScanIgnoredFolders": [
+            ".claude/worktrees"
+        ],
+        "editor.fontSize": 14,
+        "debug.console.fontSize": 14,
+        "terminal.integrated.fontSize": 14,
+        "[typescript]": {
+            "editor.tabSize": 2,
+            "editor.insertSpaces": true,
+            "editor.detectIndentation": false
+        }
+    },
+    "launch": {
+        "version": "0.2.0",
+        "configurations": [
+            {
+                "name": "pro-iq (prod)",
+                "cwd": "${workspaceFolder:pro-iq}",
+                "request": "launch",
+                "type": "dart",
+                "program": "lib/main.dart"
+            },
+            {
+                "name": "pro-iq (emulator)",
+                "cwd": "${workspaceFolder:pro-iq}",
+                "request": "launch",
+                "type": "dart",
+                "program": "lib/main.dart",
+                "args": [
+                    "--dart-define=USE_EMULATOR=true"
+                ]
+            },
+            {
+                "name": "activity-log",
+                "cwd": "${workspaceFolder:activity-log/mobile}",
+                "request": "launch",
+                "type": "dart"
+            },
+            {
+                "name": "anglers-log",
+                "cwd": "${workspaceFolder:anglers-log/mobile}",
+                "request": "launch",
+                "type": "dart"
+            }
+        ]
+    }
+}

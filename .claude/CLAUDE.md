@@ -51,6 +51,7 @@ Widget _buildCoach(BuildContext context) {
 
 - Never modify `*_localizations*.dart` files directly — they are generated.
 - After editing any `.arb` file, regenerate with `flutter gen-l10n` from the project root.
+- Only add strings to `*_en_US.arb` when the US spelling differs from the base `*_en.arb` string (e.g. "canceled" vs "cancelled"). Do not mirror new strings into `_en_US.arb` otherwise.
 
 ## Protos
 
@@ -79,8 +80,10 @@ Widget _buildCoach(BuildContext context) {
 - **Test description casing** — descriptions must start with a capital letter, unless
   the first word is a method or function name being exercised (e.g. `"capitalize returns
   empty string when input is empty"` is fine; `"widget renders without errors"` is not).
-- **Test helper functions** — declare as local functions inside `main()`, immediately
-  after `setUp`/`tearDown`. Name them with a plain lowercase identifier (no leading
+- **Test helper functions** — declare as local functions inside `main()`, after
+  `setUp`/`tearDown` and before the first `test()`. This placement applies even when
+  adding helpers to an existing file — insert them before the first test, not at the
+  bottom of `main()`. Name them with a plain lowercase identifier (no leading
   underscore). See `colorCircle` and `openTeamDropdown` in
   `pro-iq/test/pages/all_users_page_test.dart` as the reference example.
 - **`*AndSettle` helpers** — use `tapAndSettle`, `ensureVisibleAndSettle`, and

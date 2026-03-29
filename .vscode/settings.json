@@ -1,0 +1,12 @@
+{
+    // Don't want duplicate directories to show in the explorer, so ignore them for 
+    // the flutter/ tree.
+    "files.exclude": {
+        "activity-log": true,
+        "adair-flutter-lib": true,
+        "adair-flutter-lib-tester": true,
+        "anglers-log": true,
+        "pro-iq": true,
+        "tools": true
+    }
+}

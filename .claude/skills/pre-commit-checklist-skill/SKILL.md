@@ -142,6 +142,44 @@ All tests must pass. If any fail, investigate and fix before proceeding.
 
 ---
 
+## Step 6 — Check ARB translation coverage
+
+Skip this step if no `.arb` files were changed in the affected submodules.
+
+For each affected submodule that has `.arb` changes, compare the keys in the base
+English file against each locale file that requires full translation coverage. Use
+`jq` to diff non-metadata (non-`@`-prefixed) keys:
+
+```bash
+# adair-flutter-lib — check Spanish
+diff \
+  <(jq -r 'keys[] | select(startswith("@") | not)' adair-flutter-lib/lib/l10n/adair_flutter_lib_en.arb | sort) \
+  <(jq -r 'keys[] | select(startswith("@") | not)' adair-flutter-lib/lib/l10n/adair_flutter_lib_es.arb | sort)
+
+# anglers-log — check Spanish
+diff \
+  <(jq -r 'keys[] | select(startswith("@") | not)' anglers-log/mobile/lib/l10n/localizations_en.arb | sort) \
+  <(jq -r 'keys[] | select(startswith("@") | not)' anglers-log/mobile/lib/l10n/localizations_es.arb | sort)
+```
+
+**Locale rules — which files need full coverage:**
+
+| Project | Base | Requires full coverage | Skip (spelling variants only) |
+|---------|------|------------------------|-------------------------------|
+| `adair-flutter-lib` | `adair_flutter_lib_en.arb` | `adair_flutter_lib_es.arb` | `adair_flutter_lib_en_US.arb` |
+| `anglers-log/mobile` | `localizations_en.arb` (Canadian English) | `localizations_es.arb` | `localizations_en_US.arb`, `localizations_en_GB.arb` |
+| `pro-iq` | `pro_iq_en.arb` | *(no other locales)* | — |
+
+`_en_US.arb` holds US-spelling overrides (e.g. "canceled") and `_en_GB.arb` holds
+British-spelling overrides — neither needs every key.
+
+**If missing keys are found:** translate them directly. Use the English value,
+surrounding strings in the file, and the app domain to infer the correct translation.
+Do not use placeholder text. Add the translated entry to the locale file in the same
+position as it appears in the base English file, preserving the existing formatting.
+
+---
+
 ## Reminders — generated files & regeneration scripts
 
 See [CLAUDE.md](../../.claude/CLAUDE.md) for style and coding rules. Never
@@ -179,4 +217,6 @@ complications, or items requiring the user's attention. Example format:
              simultaneously in the current call site — flagged for review.
 ✅ Step 4 — Formatting: dart format applied, 3 files changed.
 ✅ Step 5 — Tests: all 47 tests pass.
+✅ Step 6 — ARB: 2 missing keys in adair_flutter_lib_es.arb (inputNameLabel,
+            inputDescriptionLabel) — translated and added.
 ```

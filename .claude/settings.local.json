@@ -3,7 +3,24 @@
     "allow": [
       "Bash(flutter test test/pages/mobile_home_page_test.dart)",
       "Bash(flutter test:*)",
-      "Bash(find /Users/cohen/Documents/flutter -type f -name *SKILL* -o -name *skill*)"
+      "Bash(find /Users/cohen/Documents/flutter -type f -name *SKILL* -o -name *skill*)",
+      "Bash(flutter gen-l10n:*)",
+      "Bash(./pro-iq/gen_proto.sh)",
+      "Bash(flutter --version)",
+      "Bash(fvm flutter:*)",
+      "Bash(flutter sdk-path:*)",
+      "Bash(grep -rn \"DropdownMenu<\\\\|DropdownMenu\\(\" /Users/cohen/Documents/flutter --include=*.dart)",
+      "Bash(flutter config:*)",
+      "Bash(grep -E \"\\\\.dart$\")",
+      "Bash(git submodule:*)",
+      "Bash(grep -r \"DataManager\\\\|managers:\\\\s*\\\\[\" --include=*.dart pro-iq/lib/main.dart pro-iq/lib/app_config.dart)",
+      "Bash(grep -r broadcast /Users/cohen/Documents/flutter/pro-iq /Users/cohen/Documents/flutter/adair-flutter-lib --include=*.dart)",
+      "Bash(rm -rf /Users/cohen/Documents/flutter/.claude/worktrees/*)",
+      "Bash(git -C /Users/cohen/Documents/flutter worktree prune)",
+      "Bash(git -C /Users/cohen/Documents/flutter worktree list)",
+      "WebSearch",
+      "WebFetch(domain:docs.cloud.google.com)",
+      "Bash(chmod +x /Users/cohen/Documents/flutter/pro-iq/run_tests.sh)"
     ]
   }
 }
