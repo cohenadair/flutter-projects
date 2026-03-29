@@ -27,9 +27,8 @@ Implement [FEATURE NAME] in the Flutter app.
 - [ ] 
 
 ## Do NOT
-- Modify [specific files/areas that are off-limits]
 - Add new packages without flagging it first
-- Change existing API contracts unless asked
+- Add or write unit tests
 
 ## Reference examples
 - Similar feature for reference: `lib/[path/to/similar_feature.dart]`
@@ -37,5 +36,4 @@ Implement [FEATURE NAME] in the Flutter app.
 
 ## Output expected
 1. Implementation files (create or modify as needed)
-2. Unit/widget tests for core logic
 3. Brief summary of what was changed and why
