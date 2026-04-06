@@ -8,5 +8,8 @@
         "anglers-log": true,
         "pro-iq": true,
         "tools": true
+    },
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "always"
     }
 }

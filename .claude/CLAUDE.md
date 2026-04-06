@@ -14,6 +14,43 @@
 - **Unused required parameters** must use the wildcard name `_` instead of a named
   identifier (e.g. `void onEvent(BuildContext _)` when `context` isn't needed).
 
+## Wrappers vs. managers
+
+- **Wrappers** (`adair-flutter-lib/lib/wrappers/`) are thin, 1:1 delegations to a
+  Firebase or platform SDK. They contain no business logic — only the minimal surface
+  area needed to make the underlying API testable. Example: `FirestoreWrapper.doc()`,
+  `StorageWrapper.putData()`.
+- **Managers** (`adair-flutter-lib/lib/managers/` or `pro-iq/lib/managers/`) contain
+  business logic and orchestration. A manager may call one or more wrappers but should
+  never call another manager. Example: `StorageManager.uploadBytes()` combines
+  `StorageWrapper.putData()` + `StorageWrapper.getDownloadURL()` into one operation.
+
+## Moving a wrapper or manager to adair-flutter-lib
+
+When a wrapper or manager that exists in a downstream project (`pro-iq`,
+`anglers-log`, etc.) is useful across multiple projects, move it to
+`adair-flutter-lib`. Follow these steps:
+
+1. **Create** the new file in `adair-flutter-lib/lib/wrappers/` (or `managers/`)
+   using the standard singleton pattern (`get get`, `@visibleForTesting` set/reset).
+2. **Add the package** to `adair-flutter-lib/pubspec.yaml` if the wrapper depends on
+   a new pub package.
+3. **Add the mock** to `adair-flutter-lib/test/mocks/mocks.dart`
+   (`@GenerateMocks([MyWrapper])`) and expose a `MockMyWrapper` field on
+   `adair-flutter-lib/test/test_utils/stubbed_managers.dart`, calling
+   `MyWrapper.set(myWrapper)` in its constructor.
+4. **Delete** the original file from the downstream project.
+5. **Update all call sites** in the downstream project: change imports to
+   `package:adair_flutter_lib/wrappers/my_wrapper.dart` and replace
+   service-locator patterns (e.g., `AppManager.get.myWrapper`,
+   `MyWrapper.of(context)`) with `MyWrapper.get`.
+6. **Update downstream test stubs**: remove the local `MockMyWrapper` field and
+   `when(app.myWrapper).thenReturn(...)` stub. Downstream tests now access the
+   mock via `managers.lib.myWrapper` (set automatically by adair-flutter-lib's
+   `StubbedManagers` constructor).
+7. **Regenerate mocks** in both `adair-flutter-lib` and the downstream project:
+   `dart run build_runner build`.
+
 ## Spacing & padding
 
 - Always import spacing from `adair_flutter_lib/res/dimen.dart` and use named
@@ -46,6 +83,37 @@ Widget _buildCoach(BuildContext context) {
   `adair_flutter_lib` as their root — not `Scaffold`.
 - For async content use **`SafeFutureBuilder`** in place of both `FutureBuilder`
   and `StreamBuilder`. The `errorReason` parameter is required.
+
+## Async / setState pattern
+
+In async methods that contain a `try`/`catch`, use local variables to collect results
+and make a **single `setState` call at the end** of the method. Do not call `setState`
+inside `try` or `catch` blocks.
+
+```dart
+// Prefer:
+Future<void> _doWork() async {
+  setState(() => _isBusy = true);
+  var result = "";
+  var error = "";
+  try {
+    result = await someAsyncCall();
+  } catch (_) {
+    error = "Something went wrong.";
+  }
+  if (!mounted) {
+    return;
+  }
+  setState(() {
+    _isBusy = false;
+    _result = result;
+    _error = error;
+  });
+}
+```
+
+See `_ResetPasswordDialogState._sendReset` in
+`adair-flutter-lib/lib/pages/sign_in_page.dart` as the reference example.
 
 ## Localizations
 
@@ -89,3 +157,6 @@ Widget _buildCoach(BuildContext context) {
 - **`*AndSettle` helpers** — use `tapAndSettle`, `ensureVisibleAndSettle`, and
   `enterTextAndSettle` (from `adair-flutter-lib/test/test_utils/widget.dart`)
   instead of the raw `tester.*()` + `tester.pumpAndSettle()` two-liner.
+- **No tests for wrappers** — wrappers are thin, 1:1 SDK delegations with no
+  business logic. They are made testable by injecting mocks at the call site;
+  the wrappers themselves do not have unit test files.
