@@ -57,13 +57,13 @@
             },
             {
                 "name": "activity-log",
-                "cwd": "${workspaceFolder:activity-log/mobile}",
+                "cwd": "${workspaceFolder:activity-log}/mobile",
                 "request": "launch",
                 "type": "dart"
             },
             {
                 "name": "anglers-log",
-                "cwd": "${workspaceFolder:anglers-log/mobile}",
+                "cwd": "${workspaceFolder:anglers-log}/mobile",
                 "request": "launch",
                 "type": "dart"
             }
