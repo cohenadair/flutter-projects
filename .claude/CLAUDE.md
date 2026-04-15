@@ -51,6 +51,19 @@ When a wrapper or manager that exists in a downstream project (`pro-iq`,
 7. **Regenerate mocks** in both `adair-flutter-lib` and the downstream project:
    `dart run build_runner build`.
 
+## Error handling
+
+- **No empty `catch` blocks.** Every `catch` must at minimum call
+  `_log.e(e, reason: "…")` to log the exception to Firebase Crashlytics. Declare
+  `_log` at the file level: `final _log = Log("ClassName");`.
+- **User-action errors** (thrown by a button tap outside a form, e.g. toggling a
+  group membership): call `_log.e`, then show
+  `showErrorSnackBar(context, <message>)` with a meaningful message. Check
+  `!mounted` before using `context` after an `await`.
+- **Form errors** (thrown while saving a dialog or form): call `_log.e`, then set
+  the inline `_error` string and display it via `EmptyOr`/`styleError` — see
+  `_AddGroupDialogState._save` in `pro-iq/lib/pages/my_players_page.dart`.
+
 ## Spacing & padding
 
 - Always import spacing from `adair_flutter_lib/res/dimen.dart` and use named
