@@ -1,3 +1,11 @@
+# Collaboration preferences
+
+- **Before making any code change**, briefly list any possibly unintended side-effects (other
+  features, pages, or tests that may be affected). Do this even when the change is explicitly
+  requested. Keep the warning concise — bullet points are fine.
+
+---
+
 # Flutter Coding Conventions
 
 ## Dart style
@@ -90,10 +98,20 @@ Widget _buildCoach(BuildContext context) {
 }
 ```
 
+## Icon buttons
+
+- **Action icon buttons** (edit, navigate, add, etc.) must use
+  `color: context.colorApp` to distinguish them from decorative icons.
+- **Destructive icon buttons** (delete, remove, etc.) must use
+  `color: Theme.of(context).colorScheme.error`.
+
 ## Pages & async
 
 - Page widgets (`lib/pages/*_page.dart`) must use **`ScrollPage`** from
-  `adair_flutter_lib` as their root — not `Scaffold`.
+  `adair_flutter_lib` as their root — not `Scaffold`. **Exception:** pages whose
+  primary content is a scrollable list should use a plain `Scaffold` with a
+  `ListView` (or `ListView.separated`) so items are built lazily and `ListTile`
+  theming (e.g. `tileColor`) works reliably.
 - For async content use **`SafeFutureBuilder`** in place of both `FutureBuilder`
   and `StreamBuilder`. The `errorReason` parameter is required.
 
@@ -140,6 +158,20 @@ See `_ResetPasswordDialogState._sendReset` in
   The `models/gen/` (non-`protobuf/`) path is stale — never use it.
 - Proto strings default to `""` when unset, not null. Guard with `.isEmpty`,
   not null checks.
+- **Every Firestore-backed proto must have `string id = 1;`** as its first field.
+  The ID is never stored in Firestore — it is assigned from `snapshot.id` in the
+  corresponding `_snapshotTo*` method in `DataManager`:
+  ```dart
+  Foo? _snapshotToFoo(DocumentSnapshot<Map<String, dynamic>> snapshot) {
+    final foo = _snapshotToProtobufType<Foo>(snapshot, () => Foo());
+    return foo?..id = snapshot.id;
+  }
+  ```
+  Streams and collections of these types use `List<Foo>`, not `Map<String, Foo>`.
+  Never pass a separate `String fooId` alongside a `Foo` object — use `foo.id`.
+- **Clear `id` before writing to Firestore.** The `id` field is derived from the
+  document ID and must not be stored in the document itself. Call `clearId()`
+  before serializing: `(foo..clearId()).toProto3Json()`.
 
 ## Tests
 

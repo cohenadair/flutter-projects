@@ -15,15 +15,49 @@ Follow every step below in order. Mark each item complete before moving on.
 
 ## Step 0 — Identify affected submodules
 
+Both detection phases below operate **only on submodules** — the root repo is
+always excluded.
+
+### Phase A — uncommitted changes
+
 From the **repo root** (`/Users/cohen/Documents/flutter`), run:
 
 ```bash
 git submodule foreach git diff --stat HEAD
 ```
 
-Only perform the checklist steps below for submodules that have uncommitted
-changes. The Flutter project root for each submodule is the submodule directory
-itself (e.g. `pro-iq/`, `adair-flutter-lib/`).
+If **any** submodule reports changes, use those submodules for Steps 1–6. Skip
+Phase B entirely.
+
+### Phase B — branch diff (fallback)
+
+Used only when Phase A finds **zero** uncommitted changes in any submodule AND
+the current branch is not `main` or `master`.
+
+For each submodule, determine its base branch and list changed files:
+
+```bash
+# Determine base branch (try main first, then master)
+git -C <submodule> rev-parse --verify main 2>/dev/null && echo main || echo master
+
+# List files changed relative to base
+git -C <submodule> diff --stat <base>...HEAD
+```
+
+Submodules with output from the diff command are the affected submodules. The
+changed `.dart` files drive Steps 1–6, exactly as uncommitted files do in
+Phase A. Note in the Step 0 report that branch-diff mode is active (e.g.
+"Branch diff mode: comparing to main").
+
+### Edge cases
+
+- **On main/master with no uncommitted changes:** Nothing to prepare — tell the
+  user and stop.
+- **Submodule has neither `main` nor `master`:** Skip that submodule and note
+  it in the Step 0 report.
+
+The Flutter project root for each submodule is the submodule directory itself
+(e.g. `pro-iq/`, `adair-flutter-lib/`).
 
 ---
 

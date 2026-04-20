@@ -24,7 +24,11 @@
       "Bash(git -C /Users/cohen/Documents/flutter/pro-iq mv lib/widgets/profile_photo_picker.dart lib/widgets/profile_picture_picker.dart)",
       "Bash(bash gen_proto.sh)",
       "Bash(security dump-keychain:*)",
-      "Bash(flutter analyze:*)"
+      "Bash(flutter analyze:*)",
+      "Bash(gh repo:*)",
+      "Bash(brew install:*)",
+      "Bash(gh pr:*)",
+      "Bash(dart run *)"
     ]
   }
 }
