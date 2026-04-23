@@ -9,4 +9,5 @@ linter:
   rules:
     public_member_api_docs: false
     use_key_in_widget_constructors: false
+    directives_ordering: true
 #    prefer_final_locals: true
