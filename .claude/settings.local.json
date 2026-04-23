@@ -28,7 +28,9 @@
       "Bash(gh repo:*)",
       "Bash(brew install:*)",
       "Bash(gh pr:*)",
-      "Bash(dart run *)"
+      "Bash(dart run *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ]
   }
 }
