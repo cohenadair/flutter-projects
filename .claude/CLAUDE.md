@@ -84,7 +84,7 @@ When a wrapper or manager that exists in a downstream project (`pro-iq`,
 - Keep `build()` short. Extract each meaningful section to a `_build*` private
   method. When a `Column` / `Row` has multiple children, each child should be a
   `_build*` call — not an inline widget tree.
-- `build()` is always the **first** method in the class; `_build*` helpers follow it.
+- `build()` comes after lifecycle methods (`initState`, `dispose`, `didUpdateWidget`, etc.) but before any other methods; `_build*` helpers follow it.
 - Conditional widgets: invert the condition and `return const SizedBox()` early.
   Do **not** use `if (cond) ...[widget]` spread syntax inside widget lists.
 
