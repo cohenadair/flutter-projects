@@ -30,7 +30,8 @@
       "Bash(gh pr:*)",
       "Bash(dart run *)",
       "Bash(git commit -m ' *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(bash pro-iq/gen_mocks.sh)"
     ]
   }
 }
