@@ -10,17 +10,7 @@
 
 ## Dart style
 
-- Always use **double quotes** for string literals.
-- Always use **curly braces** for `if` statement bodies, even single-line returns.
-- No magic numbers — declare **`static const`** fields at the top of the class for
-  elevation, radii, or any fixed value not covered by dimen.dart.
-- Boolean variables and fields must use a verb prefix: `is`, `can`, `does`, `has`,
-  `should`, `will`, etc. (e.g. `isLoading`, `canEdit`, `hasValue`).
-- **Doc comments for instance variables** go directly above each variable declaration,
-  not inside the class-level doc header. See `AutocompleteTextInput` in
-  `adair-flutter-lib/lib/widgets/autocomplete_text_input.dart` as the reference example.
-- **Unused required parameters** must use the wildcard name `_` instead of a named
-  identifier (e.g. `void onEvent(BuildContext _)` when `context` isn't needed).
+See `.claude/skills/flutter-code-audit/SKILL.md` → **Agent 2 — Coding Convention Violations** for the full checklist.
 
 ## Wrappers vs. managers
 
