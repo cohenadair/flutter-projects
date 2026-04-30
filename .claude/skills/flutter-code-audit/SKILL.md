@@ -76,8 +76,16 @@ fold in any additional project-specific conventions found in the project's CLAUD
 - **Magic numbers** — raw numeric values for sizing, elevation, or radii must be
   declared as `static const` fields at the top of the class, or use the project's
   named spacing constants. Never use inline numeric literals for layout values.
-- **Boolean naming** — boolean variables and fields must use a verb prefix: `is`, `can`,
-  `does`, `has`, `should`, `will`, etc. (e.g. `isLoading`, `canEdit`, `hasValue`).
+- **Boolean naming** — prefer a 3rd-person verb form over adding a prefix word:
+  - Multi-word: use the verb in present-tense 3rd person, e.g. `extendsBodyBehindAppBar`,
+    `centersContent`, `restrictsWidth`, `alignsRight`, `obscuresText`, `popsOnTap`,
+    `includesYears`. This avoids the extra `should`/`is` word.
+  - Single-word or past-participle state: `is` prefix is fine, e.g. `isEnabled`,
+    `isRequired`, `isAutofocused`, `isNavRailContent`.
+  - Never use `should` as a prefix — it's always replaceable with the verb form above.
+- **`final` constants that could be `static const`** — a `final double _size = 20.0`
+  that is not instance-dependent (no constructor parameters, no state) should be
+  `static const double _size = 20.0`.
 - **Doc comments for instance variables** — go directly above each variable declaration,
   not inside the class-level doc comment. See `AutocompleteTextInput` in
   `adair-flutter-lib/lib/widgets/autocomplete_text_input.dart` as the reference.
@@ -119,10 +127,15 @@ to look for:
   inline errors should reset the error field (`_error = ""`) alongside the busy flag in
   the opening `setState`, so stale errors don't persist into the next attempt.
 - **Architecture violations** (if the project uses a wrapper/manager pattern):
-  - Managers calling other managers (managers should only call wrappers).
-  - Business logic inside wrappers (wrappers should be thin, 1:1 SDK delegations).
+  - Business logic inside wrappers (wrappers should be thin, 1:1 SDK delegations to a
+    single third-party library — they must not call other wrappers).
   - Generic-enough wrappers or managers living in a sub-project that should be moved to
     `adair-flutter-lib`.
+  Note: managers may freely call other managers. Only wrappers are prohibited from
+  cross-dependency.
+- **Naming-issue TODOs** — TODO/FIXME comments that explicitly call out a misleading or
+  wrong name (class, method, variable, file) are a finding. List them — they represent
+  confirmed tech debt.
 - **Dead code** — unreferenced variables, methods, or classes.
 
 ---
@@ -218,6 +231,16 @@ Once the user approves the revised finding list, exit plan mode and implement al
 
 If a finding reveals a rule that's ambiguous or missing from `CLAUDE.md`, update it as
 part of this fix pass — not as a separate follow-up.
+
+### Skill self-update
+
+After completing fixes, review whether any finding revealed:
+- A check that Agent 1, 2, or 3 **should have caught but didn't** (gap in the checklist).
+- A **false positive pattern** that recurred (add it to the Phase 3 false-positive list).
+- A **fix recipe** for Phase 4 that's missing or unclear.
+
+If any of the above apply, update **this file** (`flutter-code-audit/SKILL.md`) in the
+same commit — not as a separate follow-up.
 
 ---
 

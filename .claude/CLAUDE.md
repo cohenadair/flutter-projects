@@ -19,8 +19,8 @@ See `.claude/skills/flutter-code-audit/SKILL.md` → **Agent 2 — Coding Conven
   area needed to make the underlying API testable. Example: `FirestoreWrapper.doc()`,
   `StorageWrapper.putData()`.
 - **Managers** (`adair-flutter-lib/lib/managers/` or `pro-iq/lib/managers/`) contain
-  business logic and orchestration. A manager may call one or more wrappers but should
-  never call another manager. Example: `StorageManager.uploadBytes()` combines
+  business logic and orchestration. A manager may call one or more wrappers and may
+  also call other managers freely. Example: `StorageManager.uploadBytes()` combines
   `StorageWrapper.putData()` + `StorageWrapper.getDownloadURL()` into one operation.
 
 ## Moving a wrapper or manager to adair-flutter-lib
