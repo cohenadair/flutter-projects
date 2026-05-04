@@ -176,7 +176,24 @@ All tests must pass. If any fail, investigate and fix before proceeding.
 
 ---
 
-## Step 6 — Check ARB translation coverage
+## Step 6 — Check test coverage
+
+Run the `pre-commit-test-coverage` skill on the affected submodules and test files
+identified in Step 0.
+
+All tests must already pass (Step 5) before running this step.
+
+Review the output table:
+- **Changed coverage** below 80% is a warning — add tests to cover the uncovered
+  changed lines before committing.
+- **Total coverage** is informational — note any significant regressions but do
+  not block the commit solely on this metric.
+
+Report the table verbatim in the Step 6 line of the final checklist output.
+
+---
+
+## Step 7 — Check ARB translation coverage
 
 Skip this step if no `.arb` files were changed in the affected submodules.
 
@@ -251,6 +268,9 @@ complications, or items requiring the user's attention. Example format:
              simultaneously in the current call site — flagged for review.
 ✅ Step 4 — Formatting: dart format applied, 3 files changed.
 ✅ Step 5 — Tests: all 47 tests pass.
-✅ Step 6 — ARB: 2 missing keys in adair_flutter_lib_es.arb (inputNameLabel,
+✅ Step 6 — Coverage:
+   | data_manager_test.dart | 8/10 lines (80%) | 34/47 lines (72%) |
+   | all_users_page_test.dart | 5/5 lines (100%) | 61/80 lines (76%) |
+✅ Step 7 — ARB: 2 missing keys in adair_flutter_lib_es.arb (inputNameLabel,
             inputDescriptionLabel) — translated and added.
 ```
