@@ -31,7 +31,12 @@
       "Bash(dart run *)",
       "Bash(git commit -m ' *)",
       "Bash(git push *)",
-      "Bash(bash pro-iq/gen_mocks.sh)"
+      "Bash(bash pro-iq/gen_mocks.sh)",
+      "Bash(mv /Users/cohen/Documents/flutter-projects/.claude/skills/flutter-test-skill /Users/cohen/Documents/flutter-projects/.claude/skills/flutter-test)",
+      "Bash(mv /Users/cohen/Documents/flutter-projects/.claude/skills/flutter-widget-skill /Users/cohen/Documents/flutter-projects/.claude/skills/flutter-widget)",
+      "Bash(mv /Users/cohen/Documents/flutter-projects/.claude/skills/pre-commit-checklist-skill /Users/cohen/Documents/flutter-projects/.claude/skills/pre-commit-checklist)",
+      "Bash(mv __TRACKED_VAR__/flutter-test-skill __TRACKED_VAR__/flutter-test)",
+      "Bash(mv __TRACKED_VAR__/flutter-widget-skill __TRACKED_VAR__/flutter-widget)"
     ]
   }
 }

@@ -1,5 +1,5 @@
 ---
-name: flutter-test-skill
+name: flutter-test
 description: >
   Guidelines and patterns for writing Flutter unit tests and widget tests in
   the pro-iq monorepo and related projects (adair-flutter-lib, anglers-log).

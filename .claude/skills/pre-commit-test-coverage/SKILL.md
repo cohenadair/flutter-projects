@@ -5,7 +5,7 @@ description: >
   outputs a per-file coverage table showing changed-line coverage and total
   coverage. Use when the user says "check test coverage", "run coverage on
   changed files", "pre-commit coverage", or when invoked by the
-  pre-commit-checklist-skill.
+  pre-commit-checklist.
 ---
 
 # Pre-Commit Test Coverage Skill
@@ -16,7 +16,7 @@ Follow every step below in order.
 
 ## Step 1 — Identify changed files
 
-Use the same Phase A / Phase B detection as `pre-commit-checklist-skill` Step 0
+Use the same Phase A / Phase B detection as `pre-commit-checklist` Step 0
 to determine affected submodules and changed `.dart` files.
 
 ### Phase A — uncommitted changes

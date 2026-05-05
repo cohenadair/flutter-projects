@@ -1,5 +1,5 @@
 ---
-name: flutter-widget-skill
+name: flutter-widget
 description: >
   Coding conventions and patterns for building Flutter widgets in the pro-iq monorepo
   (and its shared lib, adair-flutter-lib). Use this skill whenever creating, refactoring,

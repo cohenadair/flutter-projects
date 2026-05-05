@@ -1,5 +1,5 @@
 ---
-name: pre-commit-checklist-skill
+name: pre-commit-checklist
 description: >
   A step-by-step checklist for preparing uncommitted Flutter changes for
   commit and pull request. Use when the user says things like "prepare our
