@@ -18,6 +18,10 @@ See `.claude/skills/flutter-code-audit/SKILL.md` → **Agent 2 — Coding Conven
   Firebase or platform SDK. They contain no business logic — only the minimal surface
   area needed to make the underlying API testable. Example: `FirestoreWrapper.doc()`,
   `StorageWrapper.putData()`.
+- **Every third-party library must have a wrapper** so its methods can be mocked in
+  tests. If a pub package class is used directly in production code (e.g.
+  `VideoPlayerController`), create a wrapper around it before writing
+  tests. Place it in `wrappers/` following the standard singleton pattern.
 - **Managers** (`adair-flutter-lib/lib/managers/` or `pro-iq/lib/managers/`) contain
   business logic and orchestration. A manager may call one or more wrappers and may
   also call other managers freely. Example: `StorageManager.uploadBytes()` combines
@@ -68,6 +72,30 @@ When a wrapper or manager that exists in a downstream project (`pro-iq`,
   constants (`insetsDefault`, `paddingSmall`, `insetsHorizontalDefault`, etc.).
 - Default to `insetsDefault` when no specific size is required.
 - Never use raw `EdgeInsets.all(16)` or inline numeric spacing literals.
+
+## Typography & styling
+
+- **Font sizes**: Never use hardcoded font size constants. Always use
+  `Theme.of(context).textTheme.*` styles (e.g. `labelSmall`, `bodyMedium`,
+  `headlineMedium`). Use the closest available style even if it differs by 1–2pt
+  from the design.
+- **Font weight**: Use `fontWeightBold` (`FontWeight.w500`) or `fontWeightBoldTitle`
+  (`FontWeight.w700`) from `adair_flutter_lib/res/style.dart`. Do not define custom
+  `FontWeight` constants.
+- **Letter spacing**: Never adjust `letterSpacing` unless explicitly requested.
+- **Card border radius**: Derive from `Theme.of(context).cardTheme.shape` via a
+  helper rather than a hardcoded constant.
+- **Dividers**: Use `MinDivider` from `adair_flutter_lib/widgets/min_divider.dart`.
+  It supports `color`, and `width` (fixed-width rule).
+
+## Constants & helper functions
+
+- Constants and helper functions belong to the class that uses them (as
+  `static const` / `static` members). Define file-level constants or top-level
+  functions **only** when they are shared across multiple classes or are part of a
+  public utility API (e.g. functions in `adair-flutter-lib/lib/utils/`).
+- Byte count formatting (e.g. `"110.5 MB"`): use `formatBytes` from
+  `adair_flutter_lib/utils/string.dart`.
 
 ## Widget structure
 
@@ -142,6 +170,15 @@ See `_ResetPasswordDialogState._sendReset` in
 - After editing any `.arb` file, regenerate with `flutter gen-l10n` from the project root.
 - Only add strings to `*_en_US.arb` when the US spelling differs from the base `*_en.arb` string (e.g. "canceled" vs "cancelled"). Do not mirror new strings into `_en_US.arb` otherwise.
 
+## Firestore naming & structure
+
+- All Firestore collection names, document paths, and field names must use **camelCase**
+  (e.g. `pendingUploads`, `coachId`, `createdAt`). Never use snake_case in Firestore paths
+  or field keys.
+- Every Firestore document must map **1-to-1 to a protobuf message**. Do not create raw
+  Firestore documents (plain `Map` literals) — always define a proto message and serialize
+  it via `toProto3Json()`.
+
 ## Protos
 
 - Canonical import: `package:pro_iq/models/gen/protobuf/pro_iq.pb.dart`
@@ -195,3 +232,15 @@ See `_ResetPasswordDialogState._sendReset` in
 - **No tests for wrappers** — wrappers are thin, 1:1 SDK delegations with no
   business logic. They are made testable by injecting mocks at the call site;
   the wrappers themselves do not have unit test files.
+- **Widget callback parameters** — when a widget's functional parameters (e.g.
+  `DropTarget.onDragDone`) cannot be triggered via `tester.tap` or similar gestures,
+  find the widget in the tree and invoke the callback directly:
+  ```dart
+  final dropTarget = tester.widget<DropTarget>(find.byType(DropTarget).first);
+  dropTarget.onDragDone!(DropDoneDetails(...));
+  await tester.pumpAndSettle();
+  ```
+- **Mock generation** — when a class used in production code has no mock yet (e.g.
+  `UploadTask`), add it to the appropriate `mocks.dart` file under
+  `@GenerateMocks([...])` and regenerate with `gen_mocks.sh` (pro-iq) or
+  `dart run build_runner build` (adair-flutter-lib). Never write mock classes by hand.

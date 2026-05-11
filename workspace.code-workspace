@@ -30,6 +30,9 @@
             "editor.tabSize": 2,
             "editor.insertSpaces": true,
             "editor.detectIndentation": false
+        },
+        "[proto]": {
+            "editor.formatOnSave": false
         }
     },
     "launch": {

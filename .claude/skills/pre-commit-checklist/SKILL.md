@@ -172,7 +172,12 @@ For each affected Flutter submodule, run from its project root:
 flutter test
 ```
 
-All tests must pass. If any fail, investigate and fix before proceeding.
+All tests must pass. If any fail, investigate and fix:
+
+- If the fix is in a **test file** (wrong stub, missing mock, incorrect assertion) → fix it directly.
+- If the fix is in an **implementation file** (`lib/`) → flag the issue to the user with a description of the problem and wait for approval before making any change.
+
+Re-run until all tests pass before proceeding.
 
 ---
 
