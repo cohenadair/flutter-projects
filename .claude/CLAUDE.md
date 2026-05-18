@@ -12,6 +12,8 @@
 
 See `.claude/skills/flutter-code-audit/SKILL.md` → **Agent 2 — Coding Convention Violations** for the full checklist.
 
+- **String literals** use double quotes. **Exception: `import` and `export` directives use single quotes** — do not flag or convert them.
+
 ## Wrappers vs. managers
 
 - **Wrappers** (`adair-flutter-lib/lib/wrappers/`) are thin, 1:1 delegations to a

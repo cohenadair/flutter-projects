@@ -71,7 +71,7 @@ These are the universal Dart/Flutter conventions for all projects in this repo. 
 fold in any additional project-specific conventions found in the project's CLAUDE.md.
 
 **Dart style**
-- **String literals** — double quotes, not single quotes.
+- **String literals** — double quotes, not single quotes. **Exception: `import` and `export` directives always use single quotes** — do not flag them.
 - **If bodies** — always use curly braces, even for single-line returns.
 - **Magic numbers** — raw numeric values for sizing, elevation, or radii must be
   declared as `static const` fields at the top of the class, or use the project's
