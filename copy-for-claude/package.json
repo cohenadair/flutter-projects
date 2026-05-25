@@ -1,0 +1,26 @@
+{
+  "name": "copy-for-claude",
+  "displayName": "Copy for Claude",
+  "publisher": "local",
+  "version": "0.0.1",
+  "engines": { "vscode": "^1.75.0" },
+  "categories": ["Other"],
+  "activationEvents": [],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "copyForClaude.copySelection",
+        "title": "Copy for Claude"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "copyForClaude.copySelection",
+        "key": "alt+k",
+        "mac": "alt+k",
+        "when": "editorTextFocus && editorHasSelection"
+      }
+    ]
+  }
+}
