@@ -29,6 +29,15 @@ git submodule foreach git diff --stat HEAD
 If **any** submodule reports changes, use those submodules for Steps 1–6. Skip
 Phase B entirely.
 
+Also check for changed TypeScript files in Cloud Functions directories:
+
+```bash
+git -C pro-iq diff --stat HEAD -- functions/src/
+```
+
+If any non-test `.ts` files appear, include `pro-iq/functions` in the affected
+set for Steps 1, 5, and 6.
+
 ### Phase B — branch diff (fallback)
 
 Used only when Phase A finds **zero** uncommitted changes in any submodule AND
@@ -78,6 +87,33 @@ Test files mirror the `lib/` tree under `test/`:
 - `lib/widgets/bar.dart` → `test/widgets/bar_test.dart`
 - `lib/managers/baz_manager.dart` → `test/managers/baz_manager_test.dart`
 - `lib/utils/string.dart` → `test/utils/string_test.dart`
+
+### TypeScript Cloud Functions
+
+For any non-test `.ts` file changed under `*/functions/src/` (i.e. files that
+are **not** `*.test.ts`), write or update tests in the collocated `.test.ts`
+file (e.g. `functions/src/index.ts` → `functions/src/index.test.ts`).
+
+Apply the same one-test-per-branch rule as Dart. Key patterns for
+`pro-iq/functions/src/index.test.ts`:
+
+- All `jest.mock(...)` calls must be at the top of the file, before any
+  imports — Jest hoists them automatically.
+- Mock `firebase-functions/v2/firestore` to expose Firestore trigger handlers
+  directly (same pattern as the existing `onCall` mock):
+  ```ts
+  jest.mock("firebase-functions/v2/firestore", () => ({
+    onDocumentCreated: (_path: string, handler: (event: unknown) => unknown) => handler,
+    onDocumentUpdated: (_path: string, handler: (event: unknown) => unknown) => handler,
+  }));
+  ```
+- Write narrow type aliases for each handler and small helper functions to
+  invoke them with synthetic event objects (see `callOnVideoCreated` /
+  `callOnVideoUpdated` in `index.test.ts` as the reference example).
+- Run tests with:
+  ```bash
+  cd pro-iq/functions && npm test
+  ```
 
 ### Key context from the Adding Players feature
 
@@ -172,10 +208,16 @@ For each affected Flutter submodule, run from its project root:
 flutter test
 ```
 
+For each affected Cloud Functions directory (e.g. `pro-iq/functions/`), run:
+
+```bash
+cd pro-iq/functions && npm test
+```
+
 All tests must pass. If any fail, investigate and fix:
 
 - If the fix is in a **test file** (wrong stub, missing mock, incorrect assertion) → fix it directly.
-- If the fix is in an **implementation file** (`lib/`) → flag the issue to the user with a description of the problem and wait for approval before making any change.
+- If the fix is in an **implementation file** (`lib/` or `functions/src/`) → flag the issue to the user with a description of the problem and wait for approval before making any change.
 
 Re-run until all tests pass before proceeding.
 
@@ -183,12 +225,16 @@ Re-run until all tests pass before proceeding.
 
 ## Step 6 — Check test coverage
 
-Run the `pre-commit-test-coverage` skill on the affected submodules and test files
-identified in Step 0.
+Run the `pre-commit-test-coverage` skill on the affected Flutter submodules and
+test files identified in Step 0.
+
+For affected Cloud Functions directories, Jest reports coverage automatically
+when `npm test` runs (configured via `jest.config.js`). Review the per-file
+coverage table it prints.
 
 All tests must already pass (Step 5) before running this step.
 
-Review the output table:
+Apply the same threshold to both Dart and TypeScript coverage:
 - **Changed coverage** below 80% is a warning — add tests to cover the uncovered
   changed lines before committing.
 - **Total coverage** is informational — note any significant regressions but do
