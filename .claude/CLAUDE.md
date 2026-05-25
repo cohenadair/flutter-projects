@@ -13,6 +13,31 @@
 See `.claude/skills/flutter-code-audit/SKILL.md` → **Agent 2 — Coding Convention Violations** for the full checklist.
 
 - **String literals** use double quotes. **Exception: `import` and `export` directives use single quotes** — do not flag or convert them.
+- **Null checks** — always check `== null` (null case first), never `!= null`. In ternaries, the `null` branch comes first:
+
+```dart
+// Bad
+errorText != null
+    ? context.colorError.withValues(alpha: _backgroundAlpha)
+    : null,
+
+// Good
+errorText == null
+    ? null
+    : context.colorError.withValues(alpha: _backgroundAlpha),
+```
+
+- **Curly braces** — always use curly braces for `if`/`else`/`for`/`while` bodies, even single-statement ones:
+
+```dart
+// Bad
+if (!mounted) return;
+
+// Good
+if (!mounted) {
+  return;
+}
+```
 
 ## Wrappers vs. managers
 
@@ -179,7 +204,7 @@ See `_ResetPasswordDialogState._sendReset` in
   or field keys.
 - Every Firestore document must map **1-to-1 to a protobuf message**. Do not create raw
   Firestore documents (plain `Map` literals) — always define a proto message and serialize
-  it via `toProto3Json()`.
+  it via `toFirestoreMap()`.
 
 ## Protos
 
@@ -198,9 +223,56 @@ See `_ResetPasswordDialogState._sendReset` in
   ```
   Streams and collections of these types use `List<Foo>`, not `Map<String, Foo>`.
   Never pass a separate `String fooId` alongside a `Foo` object — use `foo.id`.
-- **Clear `id` before writing to Firestore.** The `id` field is derived from the
-  document ID and must not be stored in the document itself. Call `clearId()`
-  before serializing: `(foo..clearId()).toProto3Json()`.
+- **Never store `id` in Firestore.** The `id` field is derived from the document ID
+  and must not be stored in the document itself. `toFirestoreMap()` removes it
+  automatically — do not call `clearId()` manually.
+
+## Protobuf ↔ Firestore
+
+### Serialization
+
+Always use `toFirestoreMap()` (from `pro_iq/lib/utils/protobuf.dart`) to serialize a proto
+object for Firestore. Never manually construct a `Map` from individual proto field values.
+
+### Full-object writes → use `set()`
+
+For document creation and full-object updates, call `set()` — not `update()`:
+
+```dart
+Future<void> updateVideo(Video video) =>
+    FirestoreWrapper.get.doc("$videosCol/${video.id}").set(video.toFirestoreMap());
+```
+
+`toProto3Json()` omits fields at their default value (empty string, 0, empty list). With
+`set()` this is correct: omitted fields are absent from the document, which is the desired
+state when a field has been cleared. With `update()`, omitted fields are left unchanged,
+requiring `FieldValue.delete()` workarounds — avoid this.
+
+### Atomic field mutations → use `update()` with `FieldValue` sentinels
+
+`arrayUnion`, `arrayRemove`, and `increment` are server-side atomic operations that must
+remain in `DataManager` as explicit `update()` calls. These operations cannot go through a
+proto object because they represent a *delta*, not a full document state.
+
+```dart
+// OK — atomic, concurrent-safe, lives in DataManager
+Future<void> addFcmToken(String token) {
+  final uid = FirebaseAuthWrapper.get.currentUser!.uid;
+  return FirestoreWrapper.get.doc("$usersCol/$uid").update({
+    "fcmTokens": FieldValue.arrayUnion([token]),
+  });
+}
+```
+
+### DataManager owns all Firestore interaction
+
+Pages and widgets must never:
+- Construct raw Firestore field Maps (`{"some_field": value}`)
+- Use `FieldValue` sentinels directly
+- Reference Firestore collection/document paths
+
+All Firestore writes go through a `DataManager` method. If a page needs to update a field,
+add a dedicated method to `DataManager`.
 
 ## Tests
 
