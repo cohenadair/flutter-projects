@@ -27,6 +27,8 @@ errorText == null
     : context.colorError.withValues(alpha: _backgroundAlpha),
 ```
 
+- **Comment line length** — comments must not exceed 80 characters per line (the standard Dart line limit). Wrap long comments onto the next line.
+
 - **Curly braces** — always use curly braces for `if`/`else`/`for`/`while` bodies, even single-statement ones:
 
 ```dart
