@@ -32,6 +32,23 @@ If no CLAUDE.md exists, proceed with the universal checks only.
 
 ---
 
+## Scope — full codebase vs. changed files only
+
+If the user's request asks to audit only **uncommitted changes** (e.g. "audit my changes", "review changed files", "check my diff", "only look at what I changed"), determine the changed-file list before launching any agents:
+
+```bash
+git diff --name-only HEAD          # modified/deleted tracked files (staged + unstaged)
+git ls-files --others --exclude-standard  # new untracked files
+```
+
+Collect the union of both outputs. If the list is empty, tell the user there are no uncommitted changes and stop.
+
+Pass the list to all three Phase 1 agents with the instruction: **"Only examine these files: `<list>`. Do not report findings in any other files. However, for any code introduced or modified in these files, search the broader codebase to check whether equivalent code already exists elsewhere — and flag it as a duplication finding if so."**
+
+If the user does not specify changed-files-only, proceed with the full codebase audit as normal.
+
+---
+
 ## Phase 1 — Parallel Exploration
 
 Launch **three Explore agents in parallel** (single message, all three tool calls at once).
