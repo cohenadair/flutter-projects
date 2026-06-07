@@ -120,6 +120,46 @@ Column(
 The primary `build()` method is always the **first** method in the class body.
 All `_build*` helpers are placed *after* it.
 
+### `BuildContext` in helper functions
+
+Only pass `BuildContext` as a parameter to a `_build*` helper when the helper is on a
+`StatelessWidget` (which has no `context` field) or when it genuinely needs a *different*
+context than the one available on `this`. In a `State` subclass, `context` is already
+accessible as a field — pass it only if the helper is `static` or defined outside the class.
+
+```dart
+// StatefulWidget — context is a field; no need to pass it
+class _MyPageState extends State<MyPage> {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        _buildTitle(),   // no context param needed
+        _buildBody(),
+      ],
+    );
+  }
+
+  Widget _buildTitle() => Text("Hello", style: Theme.of(context).textTheme.titleLarge);
+  Widget _buildBody() => Padding(padding: insetsDefault, child: Text(_data));
+}
+
+// StatelessWidget — must pass context because there is no field
+class MyCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        _buildTitle(context),   // context param required here
+      ],
+    );
+  }
+
+  Widget _buildTitle(BuildContext context) =>
+      Text("Hello", style: Theme.of(context).textTheme.titleLarge);
+}
+```
+
 ### Conditional widgets
 
 ```dart
