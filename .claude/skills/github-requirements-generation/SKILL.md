@@ -64,13 +64,24 @@ everything needed to fill the template accurately. You are looking for:
    that the feature will touch or that provide the best reference.
 2. **Existing patterns to reuse** — similar features already implemented (e.g.
    a boolean flag already filtered from stats, an existing dialog or checkbox
-   pattern, a matching DB migration).
+   pattern, a matching DB migration). When the feature involves a UI element
+   (section header, help button, checkbox row), grep for existing widgets that
+   already do the same thing so the implementation detail can name them exactly
+   (e.g. `HeadingText`, `showOkDialog`) rather than describing them generically.
 3. **Dependencies already in `pubspec.yaml`** — list only what's relevant to
    this feature (state management, DB layer, routing, Firebase, etc.).
 4. **Data layer** — how data is stored (SQLite, Firestore, proto, plain model)
    and what migrations / serialization changes are needed.
-5. **Reference examples** — the single most similar existing feature or file
-   that a developer should read first.
+5. **Pro/free gating** — check whether the app has a subscription or pro tier
+   (look for classes like `ProManager`, `SubscriptionManager`, or similar). If
+   it does, consider whether the issue's feature should be pro-only, and if so,
+   what happens for lapsed subscribers (their data should be preserved; they
+   just can't change it). Also find the app's `*ProPage` widget — a new entry
+   must be added there so users can discover the feature. Surface all of this
+   as requirements even if the issue didn't mention them.
+6. **Reference examples** — the single most similar existing feature or file
+   that a developer should read first, with the exact line range of the relevant
+   code.
 
 Keep the exploration focused. Two or three targeted searches are usually enough.
 
@@ -140,8 +151,12 @@ filter), name it explicitly with the file path.
 expand with anything the issue implied but didn't state. Each item must be
 independently testable.
 
-**Reference examples** — point to the single most analogous existing
-implementation in the codebase. If nothing is close, omit the section.
+**Reference examples** — point to the most analogous existing implementations
+in the codebase. Use the `@path/to/file.dart#start-end` format to pin the
+exact line range of the relevant code (e.g.
+`@activity-log/mobile/lib/pages/edit_session_page.dart#156-167`). Include one
+entry per distinct UI or code pattern being referenced. If nothing relevant
+exists, omit the section.
 
 ---
 
