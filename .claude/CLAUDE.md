@@ -13,18 +13,29 @@
 See `.claude/skills/flutter-code-audit/SKILL.md` → **Agent 2 — Coding Convention Violations** for the full checklist.
 
 - **String literals** use double quotes. **Exception: `import` and `export` directives use single quotes** — do not flag or convert them.
-- **Null checks** — always check `== null` (null case first), never `!= null`. In ternaries, the `null` branch comes first:
+- **Null checks** — always check `== null` (null case first), never `!= null`. In
+  ternaries, the **positive condition** goes first (the condition as written, not its
+  negation). This means null-check ternaries naturally put the `null` branch first:
 
 ```dart
-// Bad
+// Bad — negated condition
 errorText != null
     ? context.colorError.withValues(alpha: _backgroundAlpha)
     : null,
 
-// Good
+// Good — positive condition first; null branch is the consequence
 errorText == null
     ? null
     : context.colorError.withValues(alpha: _backgroundAlpha),
+```
+
+A non-null-check ternary where the positive condition is first is also correct:
+
+```dart
+// Good — positive condition first, non-null both branches
+showHeader
+    ? Text(Strings.of(context).hint)
+    : const SizedBox(),
 ```
 
 - **Comment line length** — comments must not exceed 80 characters per line (the standard Dart line limit). Wrap long comments onto the next line.
