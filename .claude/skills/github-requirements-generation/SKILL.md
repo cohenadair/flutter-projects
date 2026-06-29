@@ -13,6 +13,11 @@ description: >
 
 # GitHub Requirements Generation
 
+> **IMPORTANT: Do not make any code changes when this skill is invoked.** This
+> skill is research and documentation only — read files, explore the codebase,
+> and produce the filled-out template. Stop there. Do not edit, create, or
+> delete any source files.
+
 This skill turns a GitHub issue into a filled-out implementation prompt that a
 coding agent (or you in a later session) can act on directly.
 
@@ -87,12 +92,27 @@ Keep the exploration focused. Two or three targeted searches are usually enough.
 
 ---
 
-## Step 4 — Fill out the template
+## Step 4 — Determine the output file path
 
-Produce the completed template as rendered Markdown (no fenced wrapper). Do
-not add commentary before or after it unless you have a specific question or
-caveat — the output should be clean and copy-pasteable directly into a notes
-app (e.g. Obsidian).
+Before filling out the template, determine where to write the `.md` file:
+
+- If the user provided a file path in their prompt, use it exactly.
+- Otherwise, ask:
+
+> Where should I save the requirements file? Please provide the full path to the
+> `.md` file (e.g. `/Users/you/Notes/MyApp/Feature/1. Requirements.md`).
+
+Once you have the path, write the completed template directly to that file using
+the Write tool. Do **not** output the template as a fenced code block in chat —
+write it to the file only. Confirm the file was written with a one-line message.
+
+---
+
+## Step 5 — Fill out the template
+
+Write the completed template to the output file path determined in Step 4. The
+file content should be plain Markdown — no fenced wrapper around it. Do not add
+commentary before or after the template content in the file.
 
 Use this exact template structure:
 
@@ -160,7 +180,7 @@ exists, omit the section.
 
 ---
 
-## Step 5 — Caveats
+## Step 6 — Caveats
 
 After the template block, add a brief "Notes" section (outside the block) if
 any of the following apply:
