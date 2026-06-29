@@ -52,6 +52,18 @@ if (!mounted) {
 }
 ```
 
+- **Inline single-use variables** — do not assign a value to a named variable if
+  it is only used once immediately after. Inline the expression at the call site:
+
+```dart
+// Bad:
+final activity = Activity.fromMap(map);
+expect(activity.createdAt, 0);
+
+// Good:
+expect(Activity.fromMap(map).createdAt, 0);
+```
+
 ## Wrappers vs. managers
 
 - **Wrappers** (`adair-flutter-lib/lib/wrappers/`) are thin, 1:1 delegations to a
@@ -300,7 +312,18 @@ add a dedicated method to `DataManager`.
 - **Never modify `mocks.mocks.dart`** — it is generated. To regenerate, run
   `pro-iq/gen_mocks.sh` from the repo root.
 - Widget tests always use **`pumpContext`** (from
-  `adair-flutter-lib/test/test_utils/testable.dart`) — not plain `pumpWidget`.
+  `adair-flutter-lib/test/test_utils/testable.dart`) — never
+  `tester.pumpWidget(Testable(...))`. `pumpContext` wraps `Testable` internally;
+  `tester.pumpAndSettle()` is still called separately after the pump:
+  ```dart
+  // Bad:
+  await tester.pumpWidget(Testable((_) => MyWidget()));
+  await tester.pumpAndSettle();
+
+  // Good:
+  await pumpContext(tester, (_) => MyWidget());
+  await tester.pumpAndSettle();
+  ```
 - Use `tester.pumpAndSettle()` after tap / scroll / stream events.
 - Stub sync values with `thenReturn`; stub futures/streams with
   `thenAnswer((_) async => ...)` / `thenAnswer((_) => Stream.value(...))`.
