@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "activity-log-screenshots",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["dev"],
+      "cwd": "activity-log/app-store-screenshots",
+      "port": 3000,
+      "autoPort": true
+    },
+    {
+      "name": "activity-log-website",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-l", "8742", "activity-log/web/public"],
+      "port": 8742
+    }
+  ]
+}
