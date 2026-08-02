@@ -168,12 +168,33 @@ Widget _buildCoach(BuildContext context) {
 }
 ```
 
+  **Exception: `TableRow.children`.** Every row in a `Table` must have the same
+  number of children in the same column order, so a whole column must
+  appear/disappear together across the header row and every data row. Use
+  `if (cond) cell` directly in each row's `children` list, applying the exact
+  same conditions in the same order across all rows, instead of forcing a
+  `_build*` + early-return `SizedBox()` per cell.
+- **Don't pass `BuildContext` to helper methods in a `State`/`ConsumerState`
+  class.** The state already has an inherited `context` getter — reference it
+  directly instead of threading a `context` parameter through every `_build*`
+  or private method. Only `build(BuildContext context)` itself (and other
+  framework-overridden signatures) should declare the parameter. This does
+  **not** apply to `StatelessWidget`/`ConsumerWidget`, which have no instance
+  `context` and must receive it as a parameter.
+
 ## Icon buttons
 
-- **Action icon buttons** (edit, navigate, add, etc.) must use
-  `color: context.colorApp` to distinguish them from decorative icons.
-- **Destructive icon buttons** (delete, remove, etc.) must use
-  `color: Theme.of(context).colorScheme.error`.
+- Icon buttons get the app's default "elevated" styling for free from
+  `iconButtonTheme` (see `pro-iq/lib/main.dart`) — don't pass `color:` or a
+  custom `style:` unless deviating below.
+- **Destructive icon buttons** (delete, remove, etc.) must pass
+  `style: errorIconButtonStyle(context)` from
+  `pro_iq/lib/res/icon_button_style.dart`.
+- **Compact icon buttons** overlaid on cards/thumbnails (e.g. video card,
+  `EditPhotoBadge`) use `condensedElevatedIconButtonStyle(context)` /
+  `condensedErrorIconButtonStyle(context)` instead of the default variants.
+  Never pass a custom `iconSize`/size override — add a new style function if
+  a third size is ever needed.
 
 ## Pages & async
 
@@ -182,8 +203,9 @@ Widget _buildCoach(BuildContext context) {
   primary content is a scrollable list should use a plain `Scaffold` with a
   `ListView` (or `ListView.separated`) so items are built lazily and `ListTile`
   theming (e.g. `tileColor`) works reliably.
-- For async content use **`SafeFutureBuilder`** in place of both `FutureBuilder`
-  and `StreamBuilder`. The `errorReason` parameter is required.
+- For async content use **`AsyncBuilder.future`** or **`AsyncBuilder.stream`**
+  in place of `FutureBuilder` and `StreamBuilder`. The `errorReason` parameter
+  is required. Import: `package:adair_flutter_lib/widgets/async_builder.dart`.
 
 ## Async / setState pattern
 
@@ -237,6 +259,16 @@ See `_ResetPasswordDialogState._sendReset` in
   The `models/gen/` (non-`protobuf/`) path is stale — never use it.
 - Proto strings default to `""` when unset, not null. Guard with `.isEmpty`,
   not null checks.
+- **Presence checks — field type determines the pattern.** For `string`
+  fields, always check `.isEmpty`/`.isNotEmpty` — never the generated
+  `has*()` method. For all other field types (numeric, message, enum, etc.),
+  use the generated `has*()` method. Do not mix patterns for the same field
+  across call sites.
+- **Never explicitly set a field to its default value** (`""` for strings, `0`
+  or `-1` for numbers, etc.). Generated `has*()` methods must keep working as
+  presence checks — explicitly assigning a default value marks the field as
+  set, so `has*()` returns `true` even though no real value was written. If a
+  value may be absent, only set the field when there's a real value to assign.
 - **Every Firestore-backed proto must have `string id = 1;`** as its first field.
   The ID is never stored in Firestore — it is assigned from `snapshot.id` in the
   corresponding `_snapshotTo*` method in `DataManager`:
@@ -330,6 +362,24 @@ add a dedicated method to `DataManager`.
 - **Test description casing** — descriptions must start with a capital letter, unless
   the first word is a method or function name being exercised (e.g. `"capitalize returns
   empty string when input is empty"` is fine; `"widget renders without errors"` is not).
+- **Test names/descriptions must never be split across lines.** Keep the
+  `test()`/`testWidgets()` description as a single string literal, as concise
+  as possible. If it exceeds the 80-character line limit, that's fine — do not
+  wrap it with string concatenation (`"foo " "bar"`) or a multi-line literal:
+  ```dart
+  // Bad:
+  test(
+    "Activity panel still shows the selected player after they're removed "
+    "from the live players map",
+    () async { ... },
+  );
+
+  // Good:
+  test(
+    "Activity panel still shows the selected player after removal",
+    () async { ... },
+  );
+  ```
 - **Test helper functions** — declare as local functions inside `main()`, after
   `setUp`/`tearDown` and before the first `test()`. This placement applies even when
   adding helpers to an existing file — insert them before the first test, not at the

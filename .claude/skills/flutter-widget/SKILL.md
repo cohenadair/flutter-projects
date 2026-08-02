@@ -209,12 +209,12 @@ Key parameters:
 | `centerContent` | Center children horizontally |
 | `restrictWidth` | Cap content width for wide screens |
 
-### SafeFutureBuilder
+### AsyncBuilder
 
 ```dart
-import 'package:adair_flutter_lib/widgets/safe_future_builder.dart';
+import 'package:adair_flutter_lib/widgets/async_builder.dart';
 
-SafeFutureBuilder(
+AsyncBuilder.future(
   future: DataManager.get.currentUser(),
   errorReason: "Loading current user",   // required — describes the future's purpose
   builder: (context, user) {
@@ -223,6 +223,13 @@ SafeFutureBuilder(
   },
   loadingBuilder: (_) => const CircularProgressIndicator(),  // optional
   errorBuilder: (_) => const Text("Failed to load"),         // optional
+)
+
+// For streams:
+AsyncBuilder.stream(
+  stream: DataManager.get.usersStream(),
+  errorReason: "Loading users",
+  builder: (context, users) => UserList(users: users),
 )
 ```
 

@@ -70,6 +70,13 @@ Universal Flutter checks:
   intentional — check before flagging.
 - **Futures not awaited** — calls to async methods whose return value is discarded
   (`unawaited` futures) can silently fail.
+- **State that was previously recomputed per-build now cached in a field** — when a
+  refactor (e.g. a platform-branching cleanup) moves a value that used to be read fresh
+  from a live object on every build (e.g. `controller.value.aspectRatio` inside
+  `build()`) into a field that's only assigned once (e.g. on initial load), check every
+  other place the underlying live value can change (advancing to the next item in a
+  list/queue, seeking, switching tabs) and confirm the field is updated there too.
+  Diff the before/after data flow, not just the before/after widget tree.
 
 If the project uses **Firestore + protobuf**, also check:
 
@@ -78,9 +85,23 @@ If the project uses **Firestore + protobuf**, also check:
   (e.g., `..clearId()` before `.toProto3Json()`) and flag write paths that skip it.
 - **Proto/value-type null checks** — fields that default to a zero-value (empty string,
   0, false) must be guarded with `.isEmpty` / `== 0` etc., not null checks.
+- **Proto presence-check pattern by field type** — `string` fields must use
+  `.isEmpty`/`.isNotEmpty`; every other field type (numeric, message, enum, etc.) must
+  use the generated `has*()` method. Flag a `string` field checked via `has*()`, or a
+  non-string field checked via a manual default-value comparison. If the same field is
+  checked both ways at different call sites in the diff, that's a stronger signal.
+- **Eagerly-started side-effecting futures not tracked for cleanup on failure** — when
+  code kicks off an async side effect (e.g. an upload) that writes to external storage
+  before or during a `try` block, check whether that side effect's target path is
+  recorded somewhere a failure-cleanup mechanism (e.g. an "orphan cleanup" pending-doc
+  pattern) can find it — even if the side effect itself swallows its own errors and
+  never throws. A future that "never throws" can still leak state if nothing tracks
+  what it wrote.
 
-If the project uses a custom async widget builder (`SafeFutureBuilder` or similar),
-check that any required error-handling parameters are always provided.
+Check that `FutureBuilder` and `StreamBuilder` are never used directly — they must be
+replaced with `AsyncBuilder.future` / `AsyncBuilder.stream` (from
+`package:adair_flutter_lib/widgets/async_builder.dart`). The `errorReason` parameter
+is required on every `AsyncBuilder` instance.
 
 ### Agent 2 — Coding Convention Violations
 
@@ -198,6 +219,10 @@ Common false positives to anticipate across any Flutter project:
 - **Spread syntax in widget lists** — only flag when there is a single conditional widget
   that could use early return; list comprehensions and multi-widget spreads in `actions:`
   or `children:` are often correct.
+- **`if (cond) cell` in `TableRow.children`** — not a violation. A `Table`'s rows must all
+  have matching column counts, so a column can only appear/disappear as a whole across the
+  header row and every data row. This requires the conditional-spread form; only flag it if
+  the same conditions are *not* applied identically (and in the same order) across all rows.
 - **Stream `onError`** — if the stream pipeline already applies `.handleError()` upstream,
   the absence of `onError` on `.listen()` may be deliberate. Understand the error-handling
   architecture before flagging.
@@ -265,7 +290,17 @@ same commit — not as a separate follow-up.
 
 After all fixes:
 1. Run `flutter analyze` across all sub-projects.
-2. Run `flutter test` across all sub-projects.
+2. Run `flutter test` across all sub-projects. If new manager/wrapper methods were
+   added or modified (by the audit fixes or by the pre-existing uncommitted diff being
+   audited), and tests fail with a mockito `MissingStubError` or a `noSuchMethod`/type
+   cast error on a mock, check whether `test/mocks/mocks.mocks.dart` is stale relative
+   to the real class before touching test setup code — a class member added to a
+   manager/wrapper doesn't automatically appear in the generated mock. Regenerate with
+   `gen_mocks.sh` (pro-iq) or `dart run build_runner build` (adair-flutter-lib) rather
+   than hand-editing the generated file. This same staleness can also cause confusing
+   cascading mockito failures (e.g. "Cannot call `when` within a stub response") in
+   unrelated tests within the same run — don't assume those are real regressions before
+   checking the mock is current.
 3. For any write-path fixes (e.g., ID field clearing before Firestore writes), note in
    the summary that the fix should be manually verified in dev against the actual stored
    document.

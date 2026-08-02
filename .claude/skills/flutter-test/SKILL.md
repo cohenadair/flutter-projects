@@ -123,6 +123,8 @@ void main() {
 ```
 
 - One `test()` per logical branch (including each side of a ternary).
+- Keep the description as a single, concise string literal — never split it
+  across lines with string concatenation, even if it exceeds 80 characters.
 - Use `verify()` / `verifyNever()` to assert that methods were (or were not)
   called when behavior, not just return value, is the thing under test.
 - Prefer `thenReturn` for synchronous values, `thenAnswer((_) async => ...)`
