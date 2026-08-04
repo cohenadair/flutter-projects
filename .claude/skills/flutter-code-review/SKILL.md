@@ -599,7 +599,8 @@ the plan file is up to date after Step 5's fixes.
 file needed) that lists each step with a checkmark and any notes,
 complications, or items requiring the user's attention — prefixed with a
 short summary of what Step 3/4's review agents found and fixed, so the whole
-run reads as one coherent report. Example format:
+run reads as one coherent report. End the report with an **Ad-hoc Testing
+Areas** section (see below). Example format:
 
 ```
 ✅ Review — Agents found 2 bugs (fixed), 3 convention violations (fixed),
@@ -615,7 +616,33 @@ run reads as one coherent report. Example format:
    | all_users_page_test.dart | 5/5 lines (100%) | 61/80 lines (76%) |
 ✅ Step 10 — ARB: 2 missing keys in adair_flutter_lib_es.arb (inputNameLabel,
             inputDescriptionLabel) — translated and added.
+
+🔎 Ad-hoc Testing Areas — parts of the app changed incidentally to the core
+   feature/fix, worth a manual spot-check since tests may not fully exercise
+   the interaction path:
+   - lib/pages/mobile_home_page.dart — sign-out now unregisters the FCM
+     token first; verify sign-out still completes normally.
+   - lib/pages/players_page.dart — refactored to a shared selection
+     controller; verify player selection, select-all, and group toggling.
 ```
+
+### Ad-hoc Testing Areas (pre-commit mode only)
+
+List every part of the app that was changed *incidentally* to the core
+feature/fix being committed — refactors, shared-widget extractions, rewired
+callbacks, or sibling call sites touched along the way, as opposed to the
+new/changed behavior that was the actual point of the diff. These are the
+spots automated tests are least likely to catch a paper cut in (a rewired
+callback, a moved widget, a changed signature), so call them out for the
+user to spot-check by hand.
+
+Derive the list by comparing the diff's core intent (the feature/fix being
+committed, as stated by the user or evident from the primary new files) against
+every changed region from Step 1's scope. Anything not serving that core
+intent goes in the list. For each entry: `file — one-line description of
+what changed and why it's incidental`. Omit the whole section if the diff
+has no such incidental changes (e.g. a single-purpose bug fix that touched
+only the buggy code path).
 
 ---
 

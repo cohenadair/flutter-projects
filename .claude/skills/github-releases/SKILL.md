@@ -103,7 +103,8 @@ pass it via `--notes-file`.
 #### adair-flutter-lib notes (`/tmp/lib-release-notes.md`)
 
 ```
-Flutter {X.Y.Z}
+# Flutter Version
+`{X.Y.Z}`
 
 # Changes
 * {short-hash} {commit message}
