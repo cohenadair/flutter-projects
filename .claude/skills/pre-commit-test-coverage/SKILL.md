@@ -5,7 +5,7 @@ description: >
   outputs a per-file coverage table showing changed-line coverage and total
   coverage. Use when the user says "check test coverage", "run coverage on
   changed files", "pre-commit coverage", or when invoked by the
-  pre-commit-checklist.
+  flutter-code-review skill's pre-commit mode.
 ---
 
 # Pre-Commit Test Coverage Skill
@@ -16,7 +16,7 @@ Follow every step below in order.
 
 ## Step 1 — Identify changed files
 
-Use the same Phase A / Phase B detection as `pre-commit-checklist` Step 0
+Use the same Phase A / Phase B detection as `flutter-code-review` Step 1
 to determine affected submodules and changed `.dart` files.
 
 ### Phase A — uncommitted changes
@@ -144,3 +144,20 @@ For lib files with no corresponding test file, append a warning row:
 
 If `changed_coverable` is 0 for a file (all changed lines are non-coverable, e.g.
 comments or blank lines), display `n/a` in the Changed Coverage column.
+
+## Step 7 — Flag shortfalls below 90%
+
+For every file whose Changed Coverage is below **90%**, add a short
+explanation of what's uncovered and why, using the `DA:<line>,0` entries
+from Step 4 cross-referenced against the source (which branch, guard, or
+`catch` block the line belongs to):
+
+```
+| Test File              | Changed Coverage                          | Total Coverage    |
+|-------------------------|--------------------------------------------|--------------------|
+| foo_manager_test.dart   | 8/10 lines (80%) — catch block (line 42) and the empty-input branch (line 47) are untested | 34/47 lines (72%) |
+```
+
+This skill only reports the shortfall and its cause — it does not write
+tests itself. The calling skill (`flutter-code-review`) is responsible for
+asking the user whether to write tests to close each gap.
