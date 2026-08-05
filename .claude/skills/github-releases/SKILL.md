@@ -52,21 +52,50 @@ Ask the user for `{version}` if not already provided. Check the sub-project's
 The `{project-slug}` is the kebab-case project name (e.g. `anglers-log`,
 `pro-iq`).
 
+**Repo owner is per-project, not always `cohenadair`.** Check
+`git -C <sub-project dir> remote -v` for the actual owner before running any
+`gh` command against the sub-project repo — e.g. `pro-iq` lives under
+`Pro-IQ-Inc/pro-iq`, not `cohenadair/pro-iq`. `adair-flutter-lib` itself is
+always under `cohenadair`.
+
 ---
 
 ### Step 3 — Collect commits since last release
+
+**Always run `git fetch origin --tags -q` in both repos before listing tags.**
+A stale local tag cache silently omits the most recent release tag, which
+causes the previous-release lookup below to skip an entire version and
+produce release notes that both duplicate old commits and omit the true
+starting point.
 
 Find the previous release tags for each repo:
 
 ```bash
 # sub-project — find the most recent vX.Y.Z tag
 cd <sub-project dir>
+git fetch origin --tags -q
 git tag --sort=-version:refname | grep '^v' | head -1
 
 # adair-flutter-lib — find the most recent {project-slug}-vX.Y.Z tag
 cd <lib dir>
+git fetch origin --tags -q
 git tag --sort=-version:refname | grep '^{project-slug}-v' | head -1
 ```
+
+**Cross-check against `pubspec.yaml` history.** A version bump can land in
+`pubspec.yaml` without ever being tagged/released (e.g. `{version}` jumped
+from `0.2.0` straight to `0.4.0` with no `v0.3.0` release). Before trusting
+the tag found above as the true previous release, check whether an
+intermediate version was ever set in `pubspec.yaml` and never released:
+
+```bash
+git -C <sub-project dir> log --oneline --follow -S"version: " -- pubspec.yaml
+```
+
+If an intermediate version bump commit exists with no matching tag, ask the
+user whether to backfill a release for it (tag it at that commit, in both
+repos) before continuing — otherwise the current release's notes will
+silently include commits that were already shipped in the untagged version.
 
 Collect the commit log for each repo since its previous tag:
 
@@ -213,11 +242,14 @@ and regenerates the release notes to cover the updated commit range.
 
 ### Step A1 — Confirm the version to amend
 
-Ask the user for `{version}` if not already provided. Verify both tags already
-exist:
+Ask the user for `{version}` if not already provided. Run
+`git fetch origin --tags -q` in both repos first (stale local tags can hide
+the release you're trying to amend), then verify both tags already exist:
 
 ```bash
+git -C <sub-project dir> fetch origin --tags -q
 git -C <sub-project dir> tag -l "v{version}"
+git -C <lib dir> fetch origin --tags -q
 git -C <lib dir> tag -l "{project-slug}-v{version}"
 ```
 
