@@ -153,13 +153,13 @@ pass it via `--notes-file`.
 ...
 
 # Adair Flutter Lib Changes
-* cohenadair/adair-flutter-lib@{short-hash} {commit message}
-* cohenadair/adair-flutter-lib@{short-hash} {commit message}
-...
+See https://github.com/cohenadair/adair-flutter-lib/releases/tag/{project-slug}-v{version}
 ```
 
 The `{Project Display Name}` is the human-readable name (e.g. `Anglers' Log`,
-`Pro-IQ`).
+`Pro-IQ`). The "Adair Flutter Lib Changes" section links to the lib release
+created in Step 6 instead of duplicating its commit list — the lib release
+already has the full list.
 
 ---
 
@@ -227,9 +227,7 @@ gh release view v{version} --repo cohenadair/{project-slug}
 ...
 
 # Adair Flutter Lib Changes
-* cohenadair/adair-flutter-lib@01f3427 cohenadair/anglers-log#1099: Remove unnecessary Android paths in requestPhotosPermission
-* cohenadair/adair-flutter-lib@0b1763a Add new run_tests.sh script
-...
+See https://github.com/cohenadair/adair-flutter-lib/releases/tag/anglers-log-v2.7.13
 ```
 
 ---
