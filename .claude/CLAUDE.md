@@ -10,7 +10,7 @@
 
 ## Dart style
 
-See `.claude/skills/flutter-code-review/SKILL.md` → **Agent 2 — Coding Convention Violations** for the full checklist.
+See `.claude/skills/pre-commit-review/SKILL.md` → **Agent 2 — Coding Convention Violations** for the full checklist.
 
 - **String literals** use double quotes. **Exception: `import` and `export` directives use single quotes** — do not flag or convert them.
 - **Null checks** — always check `== null` (null case first), never `!= null`. In
