@@ -64,6 +64,14 @@ expect(activity.createdAt, 0);
 expect(Activity.fromMap(map).createdAt, 0);
 ```
 
+## Dependency versions
+
+- **Pin or update a pub package version in `pubspec.yaml` only.** Never hand-edit
+  a lock file (`pubspec.lock`, iOS `Podfile.lock`, etc.) to change a version —
+  lock files are regenerated output (`flutter pub get`, `pod install`), not a
+  source of truth. Editing a lock file directly can leave it inconsistent with
+  `pubspec.yaml` and silently reverts on the next resolve.
+
 ## Wrappers vs. managers
 
 - **Wrappers** (`adair-flutter-lib/lib/wrappers/`) are thin, 1:1 delegations to a
