@@ -5,7 +5,7 @@ description: >
   outputs a per-file coverage table showing changed-line coverage and total
   coverage. Use when the user says "check test coverage", "run coverage on
   changed files", "pre-commit coverage", or when invoked by the
-  pre-commit-review skill's pre-commit mode.
+  adair-code-audit skill's pre-commit mode.
 ---
 
 # Pre-Commit Test Coverage Skill
@@ -16,7 +16,7 @@ Follow every step below in order.
 
 ## Step 1 — Identify changed files
 
-Use the same Phase A / Phase B detection as `pre-commit-review` Step 1
+Use the same Phase A / Phase B detection as `adair-code-audit` Step 1
 to determine affected submodules and changed `.dart` files.
 
 ### Phase A — uncommitted changes
@@ -159,5 +159,5 @@ from Step 4 cross-referenced against the source (which branch, guard, or
 ```
 
 This skill only reports the shortfall and its cause — it does not write
-tests itself. The calling skill (`pre-commit-review`) is responsible for
+tests itself. The calling skill (`adair-code-audit`) is responsible for
 asking the user whether to write tests to close each gap.

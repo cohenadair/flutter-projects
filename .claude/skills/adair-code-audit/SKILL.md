@@ -1,5 +1,5 @@
 ---
-name: pre-commit-review
+name: adair-code-audit
 description: >
   Systematic Flutter code review, in two modes. Pre-commit mode (default):
   prepares uncommitted Flutter changes for commit and pull request, running
@@ -656,7 +656,7 @@ After completing a run, review whether any finding revealed:
 - A **fix recipe** for Step 5 that's missing or unclear.
 
 If any of the above apply, update **this file**
-(`pre-commit-review/SKILL.md`) in the same commit — not as a separate
+(`adair-code-audit/SKILL.md`) in the same commit — not as a separate
 follow-up.
 
 ---

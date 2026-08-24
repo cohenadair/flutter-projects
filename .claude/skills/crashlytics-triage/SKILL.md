@@ -1,18 +1,36 @@
 ---
 name: crashlytics-triage
 description: >
-  Fetches Firebase Crashlytics crash issues via the Firebase MCP server,
+  Fetches Firebase Crashlytics crash issues via the Firebase MCP server —
+  across all Firebase projects in this monorepo — and either (Fix mode)
   analyzes stack traces, root-causes the bug, implements a fix following this
-  repo's Flutter conventions, and opens a GitHub PR — across all Firebase
-  projects in this monorepo. Use when the user says things like "triage
-  crashes", "check Crashlytics", "fix the top crashes", "what's crashing in
-  prod", or references a specific Crashlytics issue ID/URL.
+  repo's Flutter conventions, and opens a GitHub PR, or (Summary mode) just
+  fetches and summarizes issues into a table with no code changes. Use Fix
+  mode when the user says things like "triage crashes", "check Crashlytics",
+  "fix the top crashes", "what's crashing in prod", or references a specific
+  Crashlytics issue ID/URL. Use Summary mode when the user says things like
+  "summarize Crashlytics issues", "give me a crash report", "list all
+  Crashlytics issues", or otherwise asks to see/review crashes without asking
+  to fix anything.
 ---
 
 # Crashlytics Triage & Auto-Fix Skill
 
-Turns a Crashlytics issue into a merged fix: fetch → analyze → root-cause →
-fix → test → PR.
+Two modes, both starting from the same Firebase MCP fetch:
+
+- **Fix mode** (default): fetch → analyze → root-cause → fix → test → PR.
+  See **Fix Mode** below (Steps 0–8).
+- **Summary mode**: fetch → summarize into a table. No code changes, no PRs,
+  no Crashlytics mutations. See **Summary Mode** below.
+
+## Choosing a mode
+
+- Request is to fix, triage, resolve, or references a specific issue to
+  work on → **Fix mode**.
+- Request is to list, summarize, report on, or review issues, with no
+  mention of fixing → **Summary mode**.
+- Ambiguous ("check Crashlytics" with no further detail) → ask the user
+  which they want before proceeding.
 
 ---
 
@@ -62,6 +80,331 @@ lives, not by which Firebase project the crash came from.
     back, not a full 90, to avoid the boundary error.
 
 ---
+
+## Summary Mode
+
+Read-only: fetches and summarizes issues, then renders them as a self-contained
+HTML page. Never writes a Crashlytics note, never closes/updates an issue,
+never touches git or GitHub. The output is meant to be handed back to this
+skill in **Fix mode** — the user picks issues by Reference ID.
+
+### SM-1 — Scope
+
+Ask the user only for what isn't already implied by their request:
+
+1. **Which project(s)?** Defaults to **all three** (see the projects table
+   above). If the user names one, scope to that one only.
+2. **Time window?** Defaults to the last ~85 days (the widest range the
+   Crashlytics API allows — see the 90-day boundary note in Prerequisites).
+3. **Issue state?** Defaults to **open/unresolved** issues only, since those
+   are the ones worth acting on. Include closed/resolved issues only if the
+   user asks (e.g. "include resolved ones too") — the `state` field is
+   already on every row returned in SM-3, so this is a filter on data
+   already in hand, not an extra call.
+
+Fatal and non-fatal issues are always both included — that distinction is a
+column in the output, not a filter.
+
+### SM-2 — Set active project and enumerate apps
+
+For each project in scope:
+
+1. `firebase_update_environment` with `active_project` (and `project_dir` the
+   first time you touch a given repo dir). **Verify it actually took** with a
+   follow-up `firebase_get_environment` call before proceeding — confirmed
+   live (2026-08-19) that setting `active_project` and `project_dir` in the
+   same call can silently leave the *previous* project active. If
+   `firebase_get_environment` still shows the old project, call
+   `firebase_update_environment` again with just `active_project` (no
+   `project_dir`) and re-verify. Don't call `firebase_list_apps` until the
+   active project is confirmed correct — otherwise you silently fetch the
+   wrong project's apps.
+2. `firebase_list_apps` (`platform: "all"`) to get every `appId` in the
+   project. Skip `WEB` apps (no Crashlytics). Every call below is
+   per-`appId` — a project with both an Android and iOS app produces two
+   separate sections (platforms aren't comparable — see the multi-platform
+   note in Fix Mode Step 2).
+
+### SM-3 — Fetch issues per app
+
+For each `appId`:
+
+1. Call `crashlytics_get_report` twice — once with
+   `filter.issueErrorTypes: ["FATAL"]`, once with `["NON_FATAL"]` — both with
+   `report: "topIssues"`, the SM-1 time window, and a generous `pageSize`
+   (start at 100). Two separate calls, not one combined filter, so each
+   issue can be tagged Fatal/Non-fatal by which call surfaced it.
+2. **No confirmed pagination.** If a call returns exactly `pageSize` rows,
+   the list is likely truncated — say so in the final output rather than
+   silently presenting a partial list as complete, and retry once with a
+   larger `pageSize` if that seems likely to matter (e.g. a high-traffic
+   app).
+3. **This response already carries most of what you need** — confirmed live
+   (2026-08-19), don't re-fetch it per issue:
+   - `issue.id`, `issue.title`, `issue.subtitle`, `issue.errorType`
+   - `issue.state` (filter to `OPEN` here per SM-1, no separate
+     `crashlytics_get_issue` call needed)
+   - `issue.firstSeenVersion` / `issue.lastSeenVersion` — **this is the App
+     Version Range column directly.** No separate `topVersions` report call
+     needed.
+   - `issue.sampleEvent` — the resource name to fetch in SM-4 for the last
+     occurrence timestamp and stack trace.
+   - `metrics[0].eventsCount` / `metrics[0].impactedUsersCount` —
+     Occurrences and Affected Users columns directly.
+   - `issue.uri` — deep link to the Firebase console for that issue; use it
+     in the HTML output (SM-6).
+4. If SM-1 scoped to open issues only (the default), drop any issue whose
+   `issue.state` isn't `OPEN` right here — no extra call required.
+
+### SM-4 — Fetch the last event per issue
+
+For every issue surfaced in SM-3, fetch the full event behind its
+`sampleEvent` name via `crashlytics_batch_get_events`. Confirmed live
+(2026-08-19): `sampleEvent` is consistently the *most recent* event for the
+issue (its `eventTime` matches what `crashlytics_list_events` with
+`pageSize: 1` returns) — so this single fetch gives you Last Occurred +
+the full stack trace in one shot, no separate `list_events` call needed.
+
+- **Batch by `appId`, not one call per issue.** `crashlytics_batch_get_events`
+  accepts an array of event names — pass every `sampleEvent` name for a
+  given `appId` in one call.
+- **Response size caps out fast.** A batch of ~20+ mobile events (each
+  carries device/memory/logs/threads/exceptions) exceeds the tool's inline
+  output limit and gets redirected to a saved file
+  (`.../tool-results/mcp-firebase-crashlytics_batch_get_events-*.txt`) with a
+  message to read it in chunks. Don't try to read that file with the `Read`
+  tool section-by-section — instead parse it with a script (`Bash` +
+  `python3`): the format is YAML-ish block-scalar text, one record per
+  `- name: |` line. Extract per record: `issue.id` (inside the nested
+  `issue:` block), `eventTime`, `blameFrame.file` / `blameFrame.owner` /
+  `blameFrame.symbol`, and `exceptions` (fall back to `threads` for native
+  crashes with no Dart exception). A generic block-scalar parser (read lines
+  after `key: |`/`key: |-`/`key: >-` until the next line at the same or
+  lower indent) handles this reliably — see this run's approach: split on
+  `\n(?=- name: \|)`, then within each record locate top-level `  key:
+  value` lines and consume indented continuation lines as the block body.
+- If a project/app has few enough issues that the combined response stays
+  under the limit (roughly ~10–15 mobile events), it comes back inline and
+  no file-parsing step is needed — just extract the same fields directly.
+
+### SM-5 — Classify and infer origin
+
+For every issue, using its `blameFrame` and full stack trace from SM-4:
+
+1. **Stack trace classification** — path-based on `blameFrame.file`, *not*
+   `blameFrame.owner` (confirmed live: `owner` is `DEVELOPER` for both true
+   app code *and* third-party pub packages like `protobuf` or
+   `cloud_firestore_platform_interface` — it only distinguishes an
+   attributable Dart/JVM/ObjC frame from a native one, it does not mean
+   "the app's own code"). Apply the same three buckets as Fix Mode Step 4:
+   - `blameFrame.file` is `package:<app-package>/...` or
+     `package:adair_flutter_lib/...` → **App code**
+   - `blameFrame.file` is `package:<anything-else>/...` (including
+     `package:flutter/...` — the Flutter SDK itself is not app code) →
+     **Third-party**, and name the package in the cell, e.g. "Third-party
+     (mapbox_maps_flutter)"
+   - `blameFrame.file` is empty, `SourceFile` (obfuscated Android), or an
+     unresolvable native symbol (`blameFrame.owner` is `SYSTEM`/`PLATFORM`,
+     or `THIRD_PARTY` with no Dart file) → **Unknown/native**
+2. **Likely origin (one sentence)** — read the issue's title, subtitle, full
+   stack trace, and `blameFrame` together and write one sentence explaining
+   *where in the app's flow* this happens and *why*, not just a restatement
+   of the exception message. Name the actual class/method and the plausible
+   trigger (a UI action, a lifecycle timing issue, a data-shape mismatch,
+   an OS/device condition). Distinguish "this is a real app bug" from "this
+   is an environment/OS/library quirk the app should defensively handle."
+   This is the same reasoning Fix Mode Step 4 does before proposing a fix —
+   here it's surfaced to the user instead of acted on.
+
+### SM-6 — Cross-platform duplicate detection
+
+For each project with issues on both Android and iOS, flag any pair that's
+likely the same underlying bug surfacing on both platforms (common for
+anglers-log/activity-log, whose Dart code is shared across platforms).
+
+- **Don't match on `blameFrame`/title alone.** Several blamed frames are
+  generic wrapper call sites hit by many unrelated errors —
+  `package:adair_flutter_lib/utils/log.dart - Log._log` (every `Log.e()`
+  call in the app blames this same line) and
+  `package:flutter/src/services/message_codecs.dart -
+  StandardMethodCodec.decodeEnvelope` (every platform-channel error blames
+  this) are the two confirmed live (2026-08-19) to produce false positives
+  if matched by title alone.
+- **Match on title (same blamed symbol) AND subtitle similarity.** Normalize
+  each subtitle (lowercase, strip hex addresses and bare numbers, collapse
+  whitespace) and compare with a similarity ratio
+  (`difflib.SequenceMatcher.ratio()` in a Python one-off, or equivalent) —
+  treat pairs above ~0.6 as a match. This correctly rejects the two false
+  positives above (their subtitles describe unrelated errors) while still
+  catching a genuine same-cause pair if one ever appears.
+- Confirmed live: across all issues open at the time, zero genuine
+  cross-platform matches existed — both `Log._log` and `decodeEnvelope`
+  title collisions were false positives once subtitles were compared. Don't
+  assume the feature is broken if it finds nothing; it correctly found
+  nothing that run.
+- Store the match (other platform's issue ID) per issue for SM-7's table.
+
+### SM-7 — Render as a single-file HTML page
+
+Write one self-contained `.html` file (no external requests, inline CSS/JS)
+to `~/Downloads/crashlytics-summary-<YYYYMMDD-HHMM>.html` and deliver it to
+the user (`SendUserFile`) — don't just paste markdown tables into chat, the
+volume (often 30–50+ open issues across three projects) is unreadable that
+way.
+
+Structure:
+
+- One section per project, then per platform within it (same grouping as
+  SM-2/SM-3), each with its own table, in the order the projects table above
+  lists them.
+- Table columns: Reference ID, Type (Fatal/Non-fatal badge), Occurrences,
+  Last Occurred, Affected Users, App Version Range, Stack Trace
+  (App code/Third-party/Unknown-native badge), Cross-Platform (SM-6 — a
+  badge naming the matched platform + issue ID as a tooltip, or an em-dash
+  if no match), Likely Origin (the SM-5 sentence).
+- **Last Occurred display format has no timezone suffix** — render as e.g.
+  `Aug 05, 2026 13:00`, not `Aug 05, 2026 13:00 UTC`. The values are still
+  UTC (Crashlytics' `eventTime` is UTC and this skill doesn't convert it),
+  just don't label every cell with it — say once near the top of the page
+  that times are UTC if it's not otherwise obvious, rather than repeating
+  the suffix 40+ times. Same for the "generated" timestamp in the page
+  header. The `data-sort` attribute (SM-7's sortable-column bullet below)
+  still carries the full ISO 8601 UTC string regardless of what's displayed
+  — only the human-readable text drops the suffix.
+- **Default sort is Last Occurred, most recent first** — not by occurrence
+  count — but every column header is clickable to re-sort (see the dedicated
+  bullet below).
+- **Every section header (project + platform) is collapsible**, independent
+  of row-level expand/collapse: clicking it toggles the whole table below.
+  Use a `<button>` header (not a bare `<div>`) with `aria-expanded` reflecting
+  state, so it's keyboard-accessible. Sections start expanded by default —
+  30–50 issues across three projects is a lot to page through, so letting
+  the user collapse projects/platforms they don't care about this run is
+  the point, not making them collapse everything first.
+- **Every row is independently expandable/collapsible** (click to toggle, no
+  page reload): expanding reveals the full issue title, subtitle, a link to
+  the Firebase console (`issue.uri` from SM-3), and the full stack trace
+  (`exceptions`/`threads` from SM-4) in a `<pre>` block. This must keep
+  working after adding section-level collapse — confirmed live (2026-08-19)
+  the two toggles (section `<button>` vs row `<tr>`) don't interfere since
+  they're bound to different elements with no shared click target.
+- **Every column header is sortable**, independently per table (each
+  project/platform table sorts on its own data, not globally). Click once to
+  sort ascending, click the same header again to reverse to descending;
+  clicking a different header resets to ascending on that column. Show a
+  small ▲/▼ indicator on the active sort column only, and pre-mark the Last
+  Occurred header as the active (descending) sort on page load to match the
+  default order rows are rendered in — don't leave the indicator blank when
+  a sort is already in effect.
+  - Give each `<th>` a `data-col` (its cell index) and `data-type`
+    (`text`/`num`/`date`) attribute the sort handler reads, and give the
+    corresponding `<td>` in every row a `data-sort` attribute with the raw
+    sortable value — Occurrences/Users need the bare number (not the
+    formatted string), Last Occurred needs the raw ISO timestamp (not the
+    human-formatted "Aug 05, 2026 13:00" string, which won't sort
+    chronologically as text). Text columns (Reference ID, Type, Version
+    Range, Stack Trace, Cross-Platform, Likely Origin) can sort on
+    `textContent` directly.
+  - **Sorting must move each issue row's detail row with it.** The expand
+    detail is a separate `<tr class="detail-row">` immediately following its
+    `<tr class="issue-row">` in the DOM, not nested inside it — a naive sort
+    that only reorders `.issue-row` elements orphans every detail row from
+    its issue, showing the wrong stack trace under the wrong row. After
+    sorting, re-append each issue row's paired detail row (found via the
+    issue row's `data-target` → the detail row's matching `id`) right after
+    it. Confirmed live (2026-08-19): sorting by Occurrences, expanding a row
+    post-sort, and confirming the stack trace shown matches that row's
+    Reference ID (not a stale pairing) — this is the failure mode to check
+    for, a static screenshot of the sorted table alone doesn't catch it.
+  - Sorting is a pure DOM reorder (no page reload, no data refetch) and must
+    not disturb section collapse state or any row's already-expanded detail.
+- **Reference ID is plain text**, not a link — the user copies it verbatim
+  back to this skill for Fix mode. Call out once, near the top of the page,
+  that Reference IDs are scoped per-project/appId and are **not**
+  guaranteed globally unique — the same issue ID can legitimately appear in
+  two different projects if Crashlytics grouped an identical stack
+  signature the same way in both (confirmed live: `activity-log` and
+  `anglers-log` both produced an issue with ID
+  `2d42509567320134aecbd6708ad5fa8b` for an unrelated `adair_flutter_lib`
+  log call). When handing a Reference ID back to Fix mode in a case like
+  this, the user needs to say which project too.
+- **Copy-to-clipboard button beside every Reference ID** — a small icon
+  button next to the `<code>` ID, using the `navigator.clipboard` API with a
+  `document.execCommand('copy')` fallback (needed for non-secure/`file://`
+  contexts where `navigator.clipboard` is unavailable). On click, briefly
+  swap the icon to a checkmark (~1.2s) as copy confirmation. **Must call
+  `event.stopPropagation()`** in the button's click handler — the button
+  lives inside the row's `<td>` and the row itself has its own click handler
+  for expand/collapse (SM-6 above); without `stopPropagation` a copy click
+  also toggles the row open/closed. Confirmed live (2026-08-19): clicking
+  the actual button (not just near it) leaves the row's expanded state
+  untouched, and the OS clipboard visibly updates.
+- Keep the visual style consistent with this codebase's dark-UI conventions
+  (see this run's output for a working reference: dark background, colored
+  badges for Fatal/Non-fatal and the three origin buckets, monospace for IDs
+  and stack traces).
+- After writing the file, open it in the browser preview tool and click a
+  row to confirm the expand/collapse interaction actually works, and click a
+  copy button specifically (via its element ref, not just an approximate
+  coordinate) to confirm it copies without toggling the row — a static
+  screenshot doesn't prove either interaction actually works.
+- Close the chat reply with a one-line reminder: give me the Reference
+  ID(s) (and project, if ambiguous) from the page and say "fix" to hand them
+  to Fix mode.
+
+### SM-8 — Stale/duplicate candidates (only when asked, and only with confirmation)
+
+Triggered by a follow-up like "which of these are stale" or "summarize
+what's stale" — not part of the default SM-1–SM-7 flow.
+
+- **This is not pre-authorized**, unlike Fix Mode's outdated-issue path
+  (Step 4) or Step 8's close-on-PR-open — Summary Mode never mutates
+  Crashlytics without the user explicitly saying so for that batch of
+  issues. Propose candidates, then wait for a yes before calling
+  `crashlytics_create_note` / `crashlytics_update_issue` on any of them.
+- **Verify, don't guess from version age.** An old `lastSeenVersion` is a
+  reason to *look*, not a reason to conclude staleness. For every
+  App-code-classified candidate, actually read the current file at the
+  blamed path (`blameFrame.file` from SM-4) and check whether the blamed
+  class/method still exists and the described crash is still plausible
+  there — same check as Fix Mode Step 4's stale-issue rule. Confirmed live
+  (2026-08-19): several issues on old app versions turned out to have the
+  *exact same bug still present*, just shifted to a different line number
+  because unrelated code was added above it in the file — that is **not**
+  stale. Only flag a candidate when the file is gone entirely, the
+  class/method no longer exists anywhere in the repo (grep for the class
+  name too, in case the file was renamed), or the described crash can no
+  longer occur at that location. Third-party and Unknown/native issues
+  aren't checkable this way (no app file to verify against) — don't
+  guess at staleness for those.
+- **Duplicate detection is a separate, related judgment call** — two open
+  issues that are really the same underlying bug (e.g. Crashlytics grouped
+  the same crash into two issue IDs/variants; SM-6's cross-platform
+  matching can surface a Crashlytics grouping gap too). Propose these
+  alongside stale candidates but label them distinctly, since the
+  resolution note differs (see below).
+- Present each candidate with the evidence (file path, what you found or
+  didn't find, the other issue ID for duplicates) and wait for the user to
+  confirm which ones to actually close before touching Crashlytics.
+- **Resolution, once confirmed** — same mechanics as Fix Mode's outdated-issue
+  path (`crashlytics_create_note` then `crashlytics_update_issue` with
+  `state: "CLOSED"`), against the confirmed issue's own `appId`:
+  - **Stale**: note text `"Code is outdated."`, matching Fix Mode Step 4
+    exactly.
+  - **Duplicate**: note text naming the canonical issue ID it duplicates,
+    e.g. `"Duplicate of issue <canonical-id> (<short reason>). Closing as a
+    duplicate variant."` — don't just say "duplicate", name what it's a
+    duplicate *of* so the note is still useful read cold later.
+- After closing, **regenerate SM-7's HTML** with the closed issues removed
+  from their table (don't leave stale rows in an "open issues" report) and
+  a short note near the top of the page listing what was closed this
+  session and why, then redeliver via `SendUserFile`. Don't silently
+  reuse the old file — the whole point of a fresh render is that it
+  reflects current state.
+
+---
+
+## Fix Mode
 
 ## Step 0 — Scope the run
 
