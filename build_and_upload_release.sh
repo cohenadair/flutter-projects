@@ -2,10 +2,15 @@
 # Builds a Flutter app for one or more platforms and uploads to the respective store.
 #
 # Usage (from within a project directory):
-#   ../build_and_upload_release.sh <ios|macos|android> [ios|macos|android] ...
+#   ../build_and_upload_release.sh <ios|macos|android> [ios|macos|android] ... [--flavor=<name>] [--dart-define-from-file=<path>]
 #
 # Usage (from repo root):
-#   ./build_and_upload_release.sh <ios|macos|android> [ios|macos|android] ... <project-dir>
+#   ./build_and_upload_release.sh <ios|macos|android> [ios|macos|android] ... <project-dir> [--flavor=<name>] [--dart-define-from-file=<path>]
+#
+# --flavor and --dart-define-from-file are both optional and only needed by
+# projects with Flutter build flavors (e.g. pro-iq's multi-tenant builds).
+# Omitting them preserves today's behavior exactly — no --flavor is passed to
+# `flutter build`/`xcodebuild`, and no -scheme override is applied.
 #
 # Required env vars (Apple platforms):
 #   APPLE_ID                    — Apple ID email (App Store Connect login)
@@ -21,10 +26,12 @@ set -uo pipefail
 # ── Argument parsing ──────────────────────────────────────────────────────────
 
 usage() {
-  echo "Usage: $(basename "$0") <ios|macos|android> [ios|macos|android] ... [project-dir]"
+  echo "Usage: $(basename "$0") <ios|macos|android> [ios|macos|android] ... [project-dir] [--flavor=<name>] [--dart-define-from-file=<path>]"
   echo ""
-  echo "  Platforms    One or more of: ios, macos, android"
-  echo "  project-dir  Path to the Flutter project (default: current directory)"
+  echo "  Platforms                One or more of: ios, macos, android"
+  echo "  project-dir               Path to the Flutter project (default: current directory)"
+  echo "  --flavor=<name>           Optional Flutter build flavor / Xcode scheme name"
+  echo "  --dart-define-from-file=<path>  Optional dart-define JSON file"
   echo ""
   echo "Required env vars (Apple): APPLE_ID, APP_SPECIFIC_PASSWORD, TEAM_ID"
   echo "Required env vars (Android): GOOGLE_PLAY_JSON_KEY, ANDROID_PACKAGE_NAME"
@@ -37,10 +44,16 @@ fi
 
 PLATFORMS=()
 PROJECT_DIR=""
+FLAVOR=""
+DART_DEFINE_FILE=""
 
 for arg in "$@"; do
   if [[ "$arg" == "ios" || "$arg" == "macos" || "$arg" == "android" ]]; then
     PLATFORMS+=("$arg")
+  elif [[ "$arg" == --flavor=* ]]; then
+    FLAVOR="${arg#*=}"
+  elif [[ "$arg" == --dart-define-from-file=* ]]; then
+    DART_DEFINE_FILE="${arg#*=}"
   else
     if [[ -n "$PROJECT_DIR" ]]; then
       echo "Error: unexpected argument '$arg'" >&2
@@ -237,7 +250,9 @@ build_and_upload() {
     generate_export_options "$export_options"
 
     echo "==> [$platform] flutter build ipa"
-    flutter build ipa --export-options-plist="$export_options" || {
+    flutter build ipa --export-options-plist="$export_options" \
+      ${FLAVOR:+--flavor "$FLAVOR"} \
+      ${DART_DEFINE_FILE:+--dart-define-from-file "$DART_DEFINE_FILE"} || {
       echo "flutter build ipa failed" > "$status_file"; return 1
     }
 
@@ -259,7 +274,9 @@ build_and_upload() {
 
   elif [[ "$platform" == "macos" ]]; then
     echo "==> [$platform] flutter build macos --release"
-    flutter build macos --release || {
+    flutter build macos --release \
+      ${FLAVOR:+--flavor "$FLAVOR"} \
+      ${DART_DEFINE_FILE:+--dart-define-from-file "$DART_DEFINE_FILE"} || {
       echo "flutter build macos failed" > "$status_file"; return 1
     }
 
@@ -268,7 +285,7 @@ build_and_upload() {
     echo "==> [$platform] xcodebuild archive"
     xcodebuild archive \
       -workspace "macos/Runner.xcworkspace" \
-      -scheme Runner \
+      -scheme "${FLAVOR:-Runner}" \
       -configuration Release \
       -archivePath "$archive_path" \
       CODE_SIGN_STYLE=Automatic \
@@ -307,14 +324,20 @@ build_and_upload() {
 
   elif [[ "$platform" == "android" ]]; then
     echo "==> [$platform] flutter build appbundle --release"
-    flutter build appbundle --release || {
+    flutter build appbundle --release \
+      ${FLAVOR:+--flavor "$FLAVOR"} \
+      ${DART_DEFINE_FILE:+--dart-define-from-file "$DART_DEFINE_FILE"} || {
       echo "flutter build appbundle failed" > "$status_file"; return 1
     }
 
+    # A flavor's release AAB lands under a flavor-qualified subdirectory
+    # (e.g. build/app/outputs/bundle/proIqRelease/), not the flat
+    # .../bundle/release/ path used when no flavor is configured — search the
+    # whole bundle output tree so this works either way.
     local aab_path
-    aab_path=$(find "build/app/outputs/bundle/release" -name "*.aab" | head -1)
+    aab_path=$(find "build/app/outputs/bundle" -name "*.aab" | head -1)
     if [[ -z "$aab_path" ]]; then
-      echo "no .aab found in build/app/outputs/bundle/release/" > "$status_file"; return 1
+      echo "no .aab found in build/app/outputs/bundle/" > "$status_file"; return 1
     fi
 
     google_play_upload "$aab_path" || {

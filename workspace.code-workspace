@@ -23,6 +23,13 @@
         "git.repositoryScanIgnoredFolders": [
             ".claude/worktrees"
         ],
+        "dart.analysisExcludedFolders": [
+            "/Users/cohen/Documents/flutter-projects/activity-log/mobile/build",
+            "/Users/cohen/Documents/flutter-projects/anglers-log/mobile/build",
+            "/Users/cohen/Documents/flutter-projects/pro-iq/build",
+            "/Users/cohen/Documents/flutter-projects/adair-flutter-lib/build",
+            "/Users/cohen/Documents/flutter-projects/adair-flutter-lib-tester/build"
+        ],
         "editor.fontSize": 14,
         "debug.console.fontSize": 14,
         "terminal.integrated.fontSize": 14,
@@ -43,7 +50,11 @@
                 "cwd": "${workspaceFolder:pro-iq}",
                 "request": "launch",
                 "type": "dart",
-                "program": "lib/main.dart"
+                "program": "lib/main.dart",
+                "args": [
+                    "--flavor=proIq",
+                    "--dart-define-from-file=dart_defines/pro-iq.json"
+                ]
             },
             {
                 "name": "pro-iq (emulator)",
@@ -52,6 +63,20 @@
                 "type": "dart",
                 "program": "lib/main.dart",
                 "args": [
+                    "--flavor=proIq",
+                    "--dart-define-from-file=dart_defines/pro-iq.json",
+                    "--dart-define=USE_EMULATOR=true"
+                ]
+            },
+            {
+                "name": "hill-method-coaching (emulator)",
+                "cwd": "${workspaceFolder:pro-iq}",
+                "request": "launch",
+                "type": "dart",
+                "program": "lib/main.dart",
+                "args": [
+                    "--flavor=hillMethodCoaching",
+                    "--dart-define-from-file=dart_defines/hill-method-coaching.json",
                     "--dart-define=USE_EMULATOR=true"
                 ]
             },
