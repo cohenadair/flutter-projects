@@ -13,9 +13,13 @@
 See `.claude/skills/adair-code-audit/SKILL.md` → **Agent 2 — Coding Convention Violations** for the full checklist.
 
 - **String literals** use double quotes. **Exception: `import` and `export` directives use single quotes** — do not flag or convert them.
-- **Null checks** — always check `== null` (null case first), never `!= null`. In
-  ternaries, the **positive condition** goes first (the condition as written, not its
-  negation). This means null-check ternaries naturally put the `null` branch first:
+- **Null checks** — always check `== null` (null case first), never `!= null`. This
+  applies to **ternaries and `if`/`else` statements**, where both branches are present
+  and the ordering choice actually matters. It does **not** apply to a single-branch
+  early return (e.g. `if (cached != null) { return cached; }`) — there's no `else` to
+  reorder, so `!= null` is fine there. In ternaries, the **positive condition** goes
+  first (the condition as written, not its negation). This means null-check ternaries
+  naturally put the `null` branch first:
 
 ```dart
 // Bad — negated condition
