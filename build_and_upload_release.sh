@@ -282,11 +282,26 @@ build_and_upload() {
 
     local archive_path="$work_dir/${APP_NAME}.xcarchive"
 
+    # Flavored macOS builds use a per-flavor Xcode configuration named
+    # "Release-<Flavor>" with its first letter capitalized (e.g. flavor
+    # "proIq" -> configuration "Release-ProIq") — this is where TENANT_ID
+    # and other per-tenant xcconfig values come from. Without this, the
+    # archive silently falls back to the generic "Release" configuration,
+    # which has no TENANT_ID set.
+    # Note: ${FLAVOR^} (bash 4+) isn't used here because /usr/bin/env bash
+    # resolves to macOS's stock bash 3.2 on this machine.
+    local xcode_configuration="Release"
+    if [[ -n "$FLAVOR" ]]; then
+      local flavor_titlecase
+      flavor_titlecase="$(tr '[:lower:]' '[:upper:]' <<< "${FLAVOR:0:1}")${FLAVOR:1}"
+      xcode_configuration="Release-${flavor_titlecase}"
+    fi
+
     echo "==> [$platform] xcodebuild archive"
     xcodebuild archive \
       -workspace "macos/Runner.xcworkspace" \
       -scheme "${FLAVOR:-Runner}" \
-      -configuration Release \
+      -configuration "$xcode_configuration" \
       -archivePath "$archive_path" \
       CODE_SIGN_STYLE=Automatic \
       DEVELOPMENT_TEAM="$APPLE_TEAM_ID" || {
