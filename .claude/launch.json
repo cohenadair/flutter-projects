@@ -2,10 +2,10 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "activity-log-screenshots",
+      "name": "screenshots",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["dev"],
-      "cwd": "activity-log/app-store-screenshots",
+      "cwd": "screenshots",
       "port": 3000,
       "autoPort": true
     },

@@ -10,6 +10,6 @@
 [submodule "pro-iq"]
 	path = pro-iq
 	url = git@github.com:Pro-IQ-Inc/pro-iq.git
-[submodule "app-store-screenshots"]
-	path = app-store-screenshots
-	url = ./app-store-screenshots
+[submodule "screenshots"]
+	path = screenshots
+	url = git@github.com:cohenadair/screenshots.git
