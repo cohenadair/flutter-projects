@@ -1,12 +1,12 @@
 [submodule "adair-flutter-lib"]
 	path = adair-flutter-lib
-	url = ./adair-flutter-lib
+	url = git@github.com:cohenadair/adair-flutter-lib.git
 [submodule "activity-log"]
 	path = activity-log
-	url = ./activity-log
+	url = git@github.com:cohenadair/activity-log.git
 [submodule "anglers-log"]
 	path = anglers-log
-	url = ./anglers-log
+	url = git@github.com:cohenadair/anglers-log.git
 [submodule "pro-iq"]
 	path = pro-iq
 	url = git@github.com:Pro-IQ-Inc/pro-iq.git
