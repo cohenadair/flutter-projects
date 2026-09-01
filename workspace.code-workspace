@@ -56,7 +56,7 @@
                 "program": "lib/main.dart",
                 "args": [
                     "--flavor=proIq",
-                    "--dart-define-from-file=dart_defines/pro-iq.json"
+                    "--dart-define-from-file=dart-defines/pro-iq.json"
                 ]
             },
             {
@@ -67,7 +67,7 @@
                 "program": "lib/main.dart",
                 "args": [
                     "--flavor=proIq",
-                    "--dart-define-from-file=dart_defines/pro-iq.json",
+                    "--dart-define-from-file=dart-defines/pro-iq.json",
                     "--dart-define=USE_EMULATOR=true"
                 ]
             },
@@ -79,7 +79,7 @@
                 "program": "lib/main.dart",
                 "args": [
                     "--flavor=hillMethodCoaching",
-                    "--dart-define-from-file=dart_defines/hill-method-coaching.json",
+                    "--dart-define-from-file=dart-defines/hill-method-coaching.json",
                     "--dart-define=USE_EMULATOR=true"
                 ]
             },
