@@ -66,9 +66,9 @@ lives, not by which Firebase project the crash came from.
   plus 8 `crashlytics_*` tools). If the `crashlytics_*` / `firebase_*` tools
   aren't showing up via `ToolSearch`, the session likely needs a restart to
   pick up `.mcp.json` — tell the user.
-- Auth rides on `firebase login` (already logged in as `cohenadair@gmail.com`
-  at the time this skill was written — reconfirm with `firebase_get_environment`
-  if calls fail with an auth error).
+- Auth rides on `firebase login` (already logged in as the maintainer's
+  Google account at the time this skill was written — reconfirm with
+  `firebase_get_environment` if calls fail with an auth error).
 - Tool names below have been exercised live (first full run: 2026-08-16,
   anglers-log). Two confirmed corrections to the MCP docs' own descriptions:
   - `crashlytics_get_report`'s description says to read the Crashlytics
@@ -252,11 +252,47 @@ the user (`SendUserFile`) — don't just paste markdown tables into chat, the
 volume (often 30–50+ open issues across three projects) is unreadable that
 way.
 
+**Always declare `<meta charset="UTF-8">` as the first tag in `<head>`.**
+This file is delivered as a raw file via `SendUserFile`, not published through
+the Artifact tool — so it does not get an automatically-injected charset meta
+the way an Artifact publish would. Confirmed live (2026-09-02): without an
+explicit charset tag, opening the file directly caused every em dash, en
+dash, and middle dot (all used throughout this page's copy — em dashes in
+prose, `·` in the header eyebrow, etc.) to render as mojibake (`â€”` and
+similar) because the viewer guessed Windows-1252 instead of UTF-8. The file
+on disk was valid UTF-8 the whole time; only the missing declaration was
+wrong. Add the meta tag before writing any other content into the file, and
+verify with `file <path>` (expect "UTF-8 text") plus a quick `grep -c "â€"
+<path>` (expect 0) before delivering.
+
 Structure:
 
 - One section per project, then per platform within it (same grouping as
   SM-2/SM-3), each with its own table, in the order the projects table above
   lists them.
+- **Every non-web app enumerated in SM-2 gets its own section, with no
+  exceptions for having nothing to show.** Do not fold zero-issue apps into a
+  separate summary list or footnote, and do not silently omit them — confirmed
+  live (2026-09-02) that doing so (a "no open issues" appendix at the bottom
+  of the page) reads as apps missing from the report entirely, since the
+  section list at a glance no longer matches SM-2's app enumeration. Render
+  the section and its table exactly as for any other app; the table itself
+  is what's empty. Give the empty table a single centered row spanning all
+  columns with a short message instead of headers-with-nothing-under-them:
+  - Zero *open* issues were found in the SM-1 window (the normal case): "No
+    open issues in this window."
+  - `crashlytics_get_report` returned a 404 for this `appId` (confirmed live
+    for a white-label variant app sharing a project with another brand, e.g.
+    a second brand's Android/iOS app registered in Firebase but never
+    integrated with the Crashlytics SDK): "No Crashlytics data for this app
+    — Crashlytics may not be integrated yet." Don't conflate this with the
+    zero-issues case; they mean different things to the user.
+  - These empty sections still get their own `N open` count pill (`0 open`)
+    and are still independently collapsible — default them to **collapsed**
+    on load (unlike sections with issues, which start expanded per the
+    section-collapse bullet below) so a run with several quiet apps doesn't
+    bury the ones that actually need attention, while still being visibly
+    present and one click away.
 - Table columns: Reference ID, Type (Fatal/Non-fatal badge), Occurrences,
   Last Occurred, Affected Users, App Version Range, Stack Trace
   (App code/Third-party/Unknown-native badge), Cross-Platform (SM-6 — a
@@ -318,6 +354,24 @@ Structure:
     for, a static screenshot of the sorted table alone doesn't catch it.
   - Sorting is a pure DOM reorder (no page reload, no data refetch) and must
     not disturb section collapse state or any row's already-expanded detail.
+- **Don't force a horizontal scrollbar the container doesn't need.** Give the
+  `<table>` `table-layout: fixed` plus an explicit `<colgroup>` of
+  percentage-width `<col>`s summing to 100% (roughly: Reference ID 11%, Type
+  8%, Occurrences 8%, Last Occurred 11%, Affected Users 9%, Version Range
+  10%, Stack Trace 9%, Cross-Platform 10%, Likely Origin 24%) instead of a
+  fixed pixel `min-width` on the table or `white-space: nowrap` on `thead
+  th`. Confirmed live (2026-09-02): a `min-width: 980px` plus nowrap headers
+  forced a scrollbar even inside a ~1130px-wide content column, because
+  auto table layout sizes columns to their widest unwrapped content
+  (particularly the Likely Origin prose) regardless of how much container
+  width is actually available. With `table-layout: fixed` + percentage
+  columns the table always exactly fills its container and never needs to
+  scroll when there's room — long text (Likely Origin, the full-length
+  title/subtitle in the id cell) just wraps within its column instead
+  (`overflow-wrap: break-word` on `td`). Keep `.table-scroll`'s
+  `overflow-x: auto` as a fallback only, for a viewport too narrow to fit
+  even the minimum readable column widths — it should not be what's
+  triggering on an ordinary desktop window.
 - **Reference ID is plain text**, not a link — the user copies it verbatim
   back to this skill for Fix mode. Call out once, near the top of the page,
   that Reference IDs are scoped per-project/appId and are **not**
