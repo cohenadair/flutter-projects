@@ -2,15 +2,20 @@
 # Builds a Flutter app for one or more platforms and uploads to the respective store.
 #
 # Usage (from within a project directory):
-#   ../build_and_upload_release.sh <ios|macos|android> [ios|macos|android] ... [--flavor=<name>] [--dart-define-from-file=<path>]
+#   ../build_and_upload_release.sh <ios|macos|android> [ios|macos|android] ... [--flavor=<name>] [--dart-define-from-file=<path>] [--skip-upload]
 #
 # Usage (from repo root):
-#   ./build_and_upload_release.sh <ios|macos|android> [ios|macos|android] ... <project-dir> [--flavor=<name>] [--dart-define-from-file=<path>]
+#   ./build_and_upload_release.sh <ios|macos|android> [ios|macos|android] ... <project-dir> [--flavor=<name>] [--dart-define-from-file=<path>] [--skip-upload]
 #
 # --flavor and --dart-define-from-file are both optional and only needed by
 # projects with Flutter build flavors (e.g. pro-iq's multi-tenant builds).
 # Omitting them preserves today's behavior exactly — no --flavor is passed to
 # `flutter build`/`xcodebuild`, and no -scheme override is applied.
+#
+# --skip-upload builds and archives/exports as usual but skips the store
+# upload step, copying the built artifact into build/release_verify/<platform>/
+# under the project directory instead. Useful for verifying a release build
+# (e.g. checking its code-signed entitlements) before uploading it for real.
 #
 # Required env vars (Apple platforms):
 #   APPLE_ID                    — Apple ID email (App Store Connect login)
@@ -32,6 +37,7 @@ usage() {
   echo "  project-dir               Path to the Flutter project (default: current directory)"
   echo "  --flavor=<name>           Optional Flutter build flavor / Xcode scheme name"
   echo "  --dart-define-from-file=<path>  Optional dart-define JSON file"
+  echo "  --skip-upload             Build/archive/export only; don't upload to the store"
   echo ""
   echo "Required env vars (Apple): APPLE_ID, APP_SPECIFIC_PASSWORD, TEAM_ID"
   echo "Required env vars (Android): GOOGLE_PLAY_JSON_KEY, ANDROID_PACKAGE_NAME"
@@ -46,6 +52,7 @@ PLATFORMS=()
 PROJECT_DIR=""
 FLAVOR=""
 DART_DEFINE_FILE=""
+SKIP_UPLOAD=false
 
 for arg in "$@"; do
   if [[ "$arg" == "ios" || "$arg" == "macos" || "$arg" == "android" ]]; then
@@ -54,6 +61,8 @@ for arg in "$@"; do
     FLAVOR="${arg#*=}"
   elif [[ "$arg" == --dart-define-from-file=* ]]; then
     DART_DEFINE_FILE="${arg#*=}"
+  elif [[ "$arg" == "--skip-upload" ]]; then
+    SKIP_UPLOAD=true
   else
     if [[ -n "$PROJECT_DIR" ]]; then
       echo "Error: unexpected argument '$arg'" >&2
@@ -83,12 +92,16 @@ for p in "${PLATFORMS[@]}"; do
 done
 
 if [[ "$needs_apple" == "true" ]]; then
-  [[ -z "${APPLE_ID:-}" ]]              && missing_vars+=("APPLE_ID")
-  [[ -z "${APPLE_APP_SPECIFIC_PASSWORD:-}" ]] && missing_vars+=("APPLE_APP_SPECIFIC_PASSWORD")
-  [[ -z "${APPLE_TEAM_ID:-}" ]]               && missing_vars+=("APPLE_TEAM_ID")
+  # APPLE_TEAM_ID is needed for code signing even when only building, but the
+  # ID/password pair is only needed to actually upload via altool.
+  [[ -z "${APPLE_TEAM_ID:-}" ]] && missing_vars+=("APPLE_TEAM_ID")
+  if [[ "$SKIP_UPLOAD" != "true" ]]; then
+    [[ -z "${APPLE_ID:-}" ]]                    && missing_vars+=("APPLE_ID")
+    [[ -z "${APPLE_APP_SPECIFIC_PASSWORD:-}" ]] && missing_vars+=("APPLE_APP_SPECIFIC_PASSWORD")
+  fi
 fi
 
-if [[ "$needs_android" == "true" ]]; then
+if [[ "$needs_android" == "true" && "$SKIP_UPLOAD" != "true" ]]; then
   [[ -z "${GOOGLE_PLAY_JSON_KEY:-}" ]]  && missing_vars+=("GOOGLE_PLAY_JSON_KEY")
   [[ -z "${ANDROID_PACKAGE_NAME:-}" ]]  && missing_vars+=("ANDROID_PACKAGE_NAME")
 fi
@@ -262,6 +275,15 @@ build_and_upload() {
       echo "no .ipa found in build/ios/ipa/" > "$status_file"; return 1
     fi
 
+    if [[ "$SKIP_UPLOAD" == "true" ]]; then
+      local verify_dir="$PROJECT_DIR/build/release_verify/ios"
+      mkdir -p "$verify_dir"
+      cp "$ipa_path" "$verify_dir/"
+      echo "==> [$platform] skipped upload (--skip-upload); copied to $verify_dir"
+      echo "ok" > "$status_file"
+      return 0
+    fi
+
     echo "==> [$platform] xcrun altool --upload-app"
     xcrun altool --upload-app \
       --file "$ipa_path" \
@@ -273,11 +295,18 @@ build_and_upload() {
     }
 
   elif [[ "$platform" == "macos" ]]; then
-    echo "==> [$platform] flutter build macos --release"
-    flutter build macos --release \
+    # xcodebuild resolves the Swift Package graph before running any Xcode
+    # build phases, so macos/Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage
+    # must already exist on disk with a correct MACOSX_DEPLOYMENT_TARGET
+    # before `xcodebuild archive` runs — otherwise it fails outright ("cannot
+    # be accessed") or, worse, silently keeps its default (too-low) platform
+    # floor. --config-only regenerates the Xcode project config/ephemeral
+    # files without doing a full build.
+    echo "==> [$platform] flutter build macos --config-only"
+    flutter build macos --release --config-only \
       ${FLAVOR:+--flavor "$FLAVOR"} \
       ${DART_DEFINE_FILE:+--dart-define-from-file "$DART_DEFINE_FILE"} || {
-      echo "flutter build macos failed" > "$status_file"; return 1
+      echo "flutter build macos --config-only failed" > "$status_file"; return 1
     }
 
     local archive_path="$work_dir/${APP_NAME}.xcarchive"
@@ -297,12 +326,20 @@ build_and_upload() {
       xcode_configuration="Release-${flavor_titlecase}"
     fi
 
-    echo "==> [$platform] xcodebuild archive"
-    xcodebuild archive \
+    # `clean` guards against xcodebuild reusing stale product/signing
+    # artifacts from a previous local build (e.g. a plain `flutter run` or
+    # `flutter build`) sitting in the shared build/macos/Build/Products/
+    # directory — Flutter pins SYMROOT there instead of per-run DerivedData.
+    #
+    # -allowProvisioningUpdates lets Xcode fetch/refresh the right profile for
+    # this archive instead of silently reusing whatever's cached locally.
+    echo "==> [$platform] xcodebuild clean archive"
+    xcodebuild clean archive \
       -workspace "macos/Runner.xcworkspace" \
       -scheme "${FLAVOR:-Runner}" \
       -configuration "$xcode_configuration" \
       -archivePath "$archive_path" \
+      -allowProvisioningUpdates \
       CODE_SIGN_STYLE=Automatic \
       DEVELOPMENT_TEAM="$APPLE_TEAM_ID" || {
       echo "xcodebuild archive failed" > "$status_file"; return 1
@@ -325,6 +362,16 @@ build_and_upload() {
     pkg_path=$(find "$export_path" -name "*.pkg" | head -1)
     if [[ -z "$pkg_path" ]]; then
       echo "no .pkg found in export output at $export_path" > "$status_file"; return 1
+    fi
+
+    if [[ "$SKIP_UPLOAD" == "true" ]]; then
+      local verify_dir="$PROJECT_DIR/build/release_verify/macos"
+      mkdir -p "$verify_dir"
+      cp -R "$archive_path" "$verify_dir/"
+      cp "$pkg_path" "$verify_dir/"
+      echo "==> [$platform] skipped upload (--skip-upload); copied to $verify_dir"
+      echo "ok" > "$status_file"
+      return 0
     fi
 
     echo "==> [$platform] xcrun altool --upload-app"
@@ -355,6 +402,15 @@ build_and_upload() {
       echo "no .aab found in build/app/outputs/bundle/" > "$status_file"; return 1
     fi
 
+    if [[ "$SKIP_UPLOAD" == "true" ]]; then
+      local verify_dir="$PROJECT_DIR/build/release_verify/android"
+      mkdir -p "$verify_dir"
+      cp "$aab_path" "$verify_dir/"
+      echo "==> [$platform] skipped upload (--skip-upload); copied to $verify_dir"
+      echo "ok" > "$status_file"
+      return 0
+    fi
+
     google_play_upload "$aab_path" || {
       echo "Google Play upload failed" > "$status_file"; return 1
     }
@@ -381,7 +437,11 @@ all_ok=true
 for platform in "${PLATFORMS[@]}"; do
   status="$(cat "$TMPDIR_WORK/${platform}.status" 2>/dev/null || echo "unknown error")"
   if [[ "$status" == "ok" ]]; then
-    echo " $platform: Uploaded ✓"
+    if [[ "$SKIP_UPLOAD" == "true" ]]; then
+      echo " $platform: Built ✓ (not uploaded)"
+    else
+      echo " $platform: Uploaded ✓"
+    fi
   else
     echo " $platform: Failed ✗ - $status"
     all_ok=false
