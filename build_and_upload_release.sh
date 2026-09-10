@@ -17,6 +17,16 @@
 # under the project directory instead. Useful for verifying a release build
 # (e.g. checking its code-signed entitlements) before uploading it for real.
 #
+# Before building, this script auto-bumps the version/build number in
+# pubspec.yaml (see bump_pubspec_version.sh) — the build number always
+# advances, and the version name (X.Y.Z) is only changed if requested.
+#   --version=<X.Y.Z>         Set the version name directly (default: prompts
+#                             for a new version name if run from a terminal,
+#                             otherwise keeps the current version name).
+#   --skip-version-bump      Don't touch pubspec.yaml at all. Used internally
+#                             by pro-iq's multi-tenant driver, which bumps
+#                             once itself before looping over platforms.
+#
 # Required env vars (Apple platforms):
 #   APPLE_ID                    — Apple ID email (App Store Connect login)
 #   APPLE_APP_SPECIFIC_PASSWORD — App-specific password from appleid.apple.com
@@ -38,6 +48,8 @@ usage() {
   echo "  --flavor=<name>           Optional Flutter build flavor / Xcode scheme name"
   echo "  --dart-define-from-file=<path>  Optional dart-define JSON file"
   echo "  --skip-upload             Build/archive/export only; don't upload to the store"
+  echo "  --version=<X.Y.Z>         Set the version name directly (default: prompt/keep)"
+  echo "  --skip-version-bump       Don't auto-bump pubspec.yaml's version/build number"
   echo ""
   echo "Required env vars (Apple): APPLE_ID, APP_SPECIFIC_PASSWORD, TEAM_ID"
   echo "Required env vars (Android): GOOGLE_PLAY_JSON_KEY, ANDROID_PACKAGE_NAME"
@@ -53,6 +65,8 @@ PROJECT_DIR=""
 FLAVOR=""
 DART_DEFINE_FILE=""
 SKIP_UPLOAD=false
+SKIP_VERSION_BUMP=false
+NEW_VERSION_NAME=""
 
 for arg in "$@"; do
   if [[ "$arg" == "ios" || "$arg" == "macos" || "$arg" == "android" ]]; then
@@ -63,6 +77,10 @@ for arg in "$@"; do
     DART_DEFINE_FILE="${arg#*=}"
   elif [[ "$arg" == "--skip-upload" ]]; then
     SKIP_UPLOAD=true
+  elif [[ "$arg" == "--skip-version-bump" ]]; then
+    SKIP_VERSION_BUMP=true
+  elif [[ "$arg" == --version=* ]]; then
+    NEW_VERSION_NAME="${arg#*=}"
   else
     if [[ -n "$PROJECT_DIR" ]]; then
       echo "Error: unexpected argument '$arg'" >&2
@@ -127,6 +145,14 @@ PUBSPEC="$PROJECT_DIR/pubspec.yaml"
 if [[ ! -f "$PUBSPEC" ]]; then
   echo "Error: pubspec.yaml not found in $PROJECT_DIR" >&2
   exit 1
+fi
+
+if [[ "$SKIP_VERSION_BUMP" != "true" ]]; then
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  "$SCRIPT_DIR/bump_pubspec_version.sh" "$PROJECT_DIR" ${NEW_VERSION_NAME:+--version="$NEW_VERSION_NAME"} || {
+    echo "Error: version bump failed" >&2
+    exit 1
+  }
 fi
 
 APP_NAME=$(grep '^name:' "$PUBSPEC" | head -1 | awk '{print $2}')
@@ -261,6 +287,18 @@ build_and_upload() {
   if [[ "$platform" == "ios" ]]; then
     local export_options="$work_dir/ExportOptions.plist"
     generate_export_options "$export_options"
+
+    # `flutter clean` guards against the archive step reusing a stale
+    # build/ios/ product from a previous local `flutter run`/`flutter build`
+    # — without it, Xcode's incremental build can skip reprocessing
+    # Info.plist and ship the OLD CFBundleVersion even though pubspec.yaml
+    # was just bumped, which App Store Connect then rejects as a duplicate
+    # version. Same class of staleness already guarded against for macOS
+    # below via `xcodebuild clean archive`.
+    echo "==> [$platform] flutter clean"
+    flutter clean || {
+      echo "flutter clean failed" > "$status_file"; return 1
+    }
 
     echo "==> [$platform] flutter build ipa"
     flutter build ipa --export-options-plist="$export_options" \
