@@ -50,6 +50,8 @@ usage() {
   echo "  --skip-upload             Build/archive/export only; don't upload to the store"
   echo "  --version=<X.Y.Z>         Set the version name directly (default: prompt/keep)"
   echo "  --skip-version-bump       Don't auto-bump pubspec.yaml's version/build number"
+  echo "  --log-dir=<path>          Where to write per-platform log files and"
+  echo "                            results.tsv (default: <project-dir>/build/release_logs/<timestamp>)"
   echo ""
   echo "Required env vars (Apple): APPLE_ID, APP_SPECIFIC_PASSWORD, TEAM_ID"
   echo "Required env vars (Android): GOOGLE_PLAY_JSON_KEY, ANDROID_PACKAGE_NAME"
@@ -67,6 +69,7 @@ DART_DEFINE_FILE=""
 SKIP_UPLOAD=false
 SKIP_VERSION_BUMP=false
 NEW_VERSION_NAME=""
+LOG_DIR=""
 
 for arg in "$@"; do
   if [[ "$arg" == "ios" || "$arg" == "macos" || "$arg" == "android" ]]; then
@@ -81,6 +84,8 @@ for arg in "$@"; do
     SKIP_VERSION_BUMP=true
   elif [[ "$arg" == --version=* ]]; then
     NEW_VERSION_NAME="${arg#*=}"
+  elif [[ "$arg" == --log-dir=* ]]; then
+    LOG_DIR="${arg#*=}"
   else
     if [[ -n "$PROJECT_DIR" ]]; then
       echo "Error: unexpected argument '$arg'" >&2
@@ -158,10 +163,33 @@ fi
 APP_NAME=$(grep '^name:' "$PUBSPEC" | head -1 | awk '{print $2}')
 APP_VERSION=$(grep '^version:' "$PUBSPEC" | head -1 | awk '{print $2}')
 
-echo "Project  : $PROJECT_DIR"
-echo "App      : $APP_NAME $APP_VERSION"
-echo "Platforms: ${PLATFORMS[*]}"
-echo ""
+# ── Logging (console only sees progress dots + the final table) ─────────────
+#
+# Everything else — flutter/xcodebuild/gradle output, the google play upload
+# helper, etc. — is redirected to per-platform log files so a long build
+# doesn't scroll a VS Code terminal's scrollback out from under you.
+
+LOG_DIR="${LOG_DIR:-$PROJECT_DIR/build/release_logs/$(date +%Y%m%d_%H%M%S)}"
+mkdir -p "$LOG_DIR"
+MAIN_LOG="$LOG_DIR/main.log"
+
+(
+  echo "Project  : $PROJECT_DIR"
+  echo "App      : $APP_NAME $APP_VERSION"
+  echo "Platforms: ${PLATFORMS[*]}"
+  echo ""
+  echo "==> flutter pub get"
+  cd "$PROJECT_DIR" && flutter pub get
+) > "$MAIN_LOG" 2>&1
+pub_get_status=$?
+
+echo "App: $APP_NAME $APP_VERSION"
+echo "Log directory: $LOG_DIR"
+
+if [[ $pub_get_status -ne 0 ]]; then
+  echo "Error: flutter pub get failed — see $MAIN_LOG" >&2
+  exit 1
+fi
 
 # ── Temp directory (cleaned up on exit) ──────────────────────────────────────
 
@@ -288,16 +316,22 @@ build_and_upload() {
     local export_options="$work_dir/ExportOptions.plist"
     generate_export_options "$export_options"
 
-    # `flutter clean` guards against the archive step reusing a stale
-    # build/ios/ product from a previous local `flutter run`/`flutter build`
-    # — without it, Xcode's incremental build can skip reprocessing
-    # Info.plist and ship the OLD CFBundleVersion even though pubspec.yaml
-    # was just bumped, which App Store Connect then rejects as a duplicate
-    # version. Same class of staleness already guarded against for macOS
-    # below via `xcodebuild clean archive`.
-    echo "==> [$platform] flutter clean"
-    flutter clean || {
-      echo "flutter clean failed" > "$status_file"; return 1
+    # Guards against the archive step reusing a stale build/ios/ product from
+    # a previous local `flutter run`/`flutter build` — without it, Xcode's
+    # incremental build can skip reprocessing Info.plist and ship the OLD
+    # CFBundleVersion even though pubspec.yaml was just bumped, which App
+    # Store Connect then rejects as a duplicate version. Same class of
+    # staleness already guarded against for macOS below via `xcodebuild
+    # clean archive`.
+    #
+    # This is scoped to build/ios/ only (not `flutter clean`, which wipes
+    # the whole build/ dir and .dart_tool/) because platforms now build
+    # concurrently in the same project directory — a full `flutter clean`
+    # here would delete macOS/Android's in-progress output out from under
+    # them.
+    echo "==> [$platform] rm -rf build/ios"
+    rm -rf "$PROJECT_DIR/build/ios" || {
+      echo "rm -rf build/ios failed" > "$status_file"; return 1
     }
 
     echo "==> [$platform] flutter build ipa"
@@ -457,15 +491,50 @@ build_and_upload() {
   echo "ok" > "$status_file"
 }
 
-# ── Run each platform sequentially, collecting results ───────────────────────
+# ── Run every platform in parallel, collecting results ───────────────────────
+#
+# Each platform runs in its own subshell so `cd "$PROJECT_DIR"` inside
+# build_and_upload doesn't race with its siblings, and its entire output is
+# redirected to its own log file. `trap - EXIT` clears the inherited
+# TMPDIR_WORK cleanup trap inside the subshell — otherwise the first platform
+# to finish would delete TMPDIR_WORK (status files, work dirs) out from under
+# the platforms still running.
 
+pids=()
 for platform in "${PLATFORMS[@]}"; do
   status_file="$TMPDIR_WORK/${platform}.status"
-  build_and_upload "$platform" "$status_file"
-  echo ""
+  log_file="$LOG_DIR/${platform}.log"
+  (
+    trap - EXIT
+    build_and_upload "$platform" "$status_file"
+  ) > "$log_file" 2>&1 &
+  pids+=($!)
 done
 
+# Progress indicator: a `.` every few seconds while builds run, since all
+# real output is going to the log files above.
+(
+  trap - EXIT
+  while true; do
+    sleep 3
+    printf '.'
+  done
+) &
+spinner_pid=$!
+disown "$spinner_pid" 2>/dev/null
+
+for pid in "${pids[@]}"; do
+  wait "$pid"
+done
+
+kill "$spinner_pid" 2>/dev/null
+wait "$spinner_pid" 2>/dev/null
+echo ""
+
 # ── Summary report ────────────────────────────────────────────────────────────
+
+RESULTS_FILE="$LOG_DIR/results.tsv"
+: > "$RESULTS_FILE"
 
 echo "────────────────────────────────────────────────────────────────────────────"
 echo " Build & Upload Report"
@@ -474,14 +543,19 @@ echo "────────────────────────�
 all_ok=true
 for platform in "${PLATFORMS[@]}"; do
   status="$(cat "$TMPDIR_WORK/${platform}.status" 2>/dev/null || echo "unknown error")"
+  log_file="$LOG_DIR/${platform}.log"
   if [[ "$status" == "ok" ]]; then
     if [[ "$SKIP_UPLOAD" == "true" ]]; then
-      echo " $platform: Built ✓ (not uploaded)"
+      result="built"
+      echo " $platform: Built ✓ (not uploaded) — log: $log_file"
     else
-      echo " $platform: Uploaded ✓"
+      result="uploaded"
+      echo " $platform: Uploaded ✓ — log: $log_file"
     fi
+    printf '%s\t%s\t%s\t%s\n' "$platform" "$result" "-" "$log_file" >> "$RESULTS_FILE"
   else
-    echo " $platform: Failed ✗ - $status"
+    echo " $platform: Failed ✗ - $status — log: $log_file"
+    printf '%s\t%s\t%s\t%s\n' "$platform" "failed" "$status" "$log_file" >> "$RESULTS_FILE"
     all_ok=false
   fi
 done
