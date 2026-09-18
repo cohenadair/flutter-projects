@@ -855,7 +855,7 @@ guarantees each PR's diff is exactly that issue's fix.
 ### Write the fix
 
 - Follow this repo's Dart/Flutter conventions (see root `CLAUDE.md`) — invoke
-  the `flutter-widget` skill for widget-shaped fixes.
+  the `flutter-coding-standards` skill for widget- or logic-shaped fixes.
 - Add or extend a test that reproduces the crash scenario so it can't
   regress — see the `flutter-test` skill for conventions (flat `test()`
   list, one test per branch, `StubbedManagers`, etc.).

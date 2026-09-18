@@ -1,15 +1,16 @@
 ---
-name: flutter-widget
+name: flutter-coding-standards
 description: >
-  Coding conventions and patterns for building Flutter widgets in the pro-iq monorepo
+  Coding conventions, patterns, and reuse checks for Flutter code in the pro-iq monorepo
   (and its shared lib, adair-flutter-lib). Use this skill whenever creating, refactoring,
-  or reviewing any Flutter widget, page, or UI component — including StatelessWidgets,
-  StatefulWidgets, reusable widgets in lib/widgets/, and page files in lib/pages/.
-  Trigger on any Flutter UI request: new widgets, layout changes, theming, avatar/card
-  components, or questions about where to put a new widget.
+  or reviewing any Flutter widget, page, manager, or utility — including StatelessWidget
+  and StatefulWidget subclasses in lib/widgets/ and lib/pages/, and non-widget logic in
+  lib/managers/, lib/utils/, and lib/wrappers/. Trigger on any Flutter implementation
+  request: new widgets, layout changes, theming, new manager/utility methods, or
+  questions about where to put new code or whether something reusable already exists.
 ---
 
-# Flutter Widget Skill
+# Flutter Coding Standards Skill
 
 ## Project layout
 
@@ -32,6 +33,40 @@ adair-flutter-lib/lib/
 import 'package:pro_iq/models/gen/protobuf/pro_iq.pb.dart';
 ```
 The `models/gen/` (non-`protobuf/`) files are stale — always use the `protobuf/` subdirectory.
+
+---
+
+## Check for reusable code before writing new code
+
+Before implementing a new widget, manager method, or utility function, search for
+existing code that already does — or could be adapted to do — what you need. Writing
+a new class/method when an equivalent (or near-equivalent) one exists is a duplication
+bug, not a style nit.
+
+**Widgets** — nearly all custom widgets in this codebase extend `StatelessWidget` or
+`StatefulWidget` (with its paired `State<T>` subclass). Before writing a new one:
+- Grep for the class declarations, not just filenames — a matching widget may be
+  private and defined inside a page file rather than living in `lib/widgets/`:
+  ```
+  grep -rn "extends StatelessWidget\|extends StatefulWidget" lib/widgets/ lib/pages/
+  ```
+- Skim `lib/widgets/` (and `adair-flutter-lib/lib/widgets/` for cross-app widgets) for
+  anything visually or structurally similar to what you're about to build.
+- Check the **Existing reusable code** reference below — it's a non-exhaustive sample
+  of the most commonly reused pieces, not a substitute for actually searching.
+
+**Non-widget logic** (managers, utils, wrappers) — search `lib/managers/`,
+`adair-flutter-lib/lib/managers/`, `lib/utils/`, and `adair-flutter-lib/lib/utils/` for
+a method that already covers the behavior, e.g.:
+```
+grep -rn "formatBytes\|isColorReadable\|<keyword for what you need>" lib/utils/ adair-flutter-lib/lib/utils/
+```
+
+If you find something close but not exact, **prefer extending or parameterizing it**
+(adding an optional parameter, extracting a shared base) over copy-pasting and
+modifying — copy-pasted variants are exactly what `adair-code-audit`'s duplication
+check (Agent 3) will later flag as tech debt. If nothing reusable exists, say so
+explicitly before writing the new code, so the user can confirm you didn't miss it.
 
 ---
 
@@ -239,7 +274,11 @@ AsyncBuilder.stream(
 
 ---
 
-## Existing reusable widgets
+## Existing reusable code
+
+Non-exhaustive — a quick-reference sample of pieces that come up often. Always
+search the codebase (see "Check for reusable code before writing new code" above)
+rather than assuming this list is complete.
 
 ### `Avatar` — `lib/widgets/avatar.dart`
 
@@ -270,6 +309,15 @@ Coach row is omitted when `user.coachName` is empty.
 
 ```dart
 _ProfileCard(user: someUser)
+```
+
+### `formatBytes` — `adair_flutter_lib/utils/string.dart`
+
+Formats a byte count into a human-readable string (e.g. `"110.5 MB"`). Use this
+instead of writing a new byte-formatting helper.
+
+```dart
+formatBytes(fileSizeInBytes)
 ```
 
 ---
