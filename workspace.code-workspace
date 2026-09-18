@@ -20,6 +20,9 @@
         },
         {
             "path": "screenshots"
+        },
+        {
+            "path": "tapd"
         }
     ],
     "settings": {

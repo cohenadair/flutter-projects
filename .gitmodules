@@ -13,3 +13,6 @@
 [submodule "screenshots"]
 	path = screenshots
 	url = git@github.com:cohenadair/screenshots.git
+[submodule "tapd"]
+	path = tapd
+	url = git@github.com:cohenadair/tapd.git
