@@ -1,11 +1,19 @@
 #!/usr/bin/env bash
 # Builds a Flutter app for one or more platforms and uploads to the respective store.
 #
-# Usage (from within a project directory):
-#   ../build_and_upload_release.sh <ios|macos|android> [ios|macos|android] ... [--flavor=<name>] [--dart-define-from-file=<path>] [--skip-upload]
-#
 # Usage (from repo root):
-#   ./build_and_upload_release.sh <ios|macos|android> [ios|macos|android] ... <project-dir> [--flavor=<name>] [--dart-define-from-file=<path>] [--skip-upload]
+#   ./build_and_upload_release.sh <project-dir> [ios|macos|android] ... [--flavor=<name>] [--dart-define-from-file=<path>] [--skip-upload]
+#
+# Usage (from within a project directory, e.g. activity-log/mobile):
+#   ../../build_and_upload_release.sh [ios|macos|android] ... [--flavor=<name>] [--dart-define-from-file=<path>] [--skip-upload]
+#
+# Platforms default to "ios android" when none are given. The project
+# directory defaults to the current directory.
+#
+# Credentials: if <project-dir>/release_credentials.sh exists (local,
+# gitignored — see release_credentials.sh.example), it's sourced before the
+# credential checks below. Multi-tenant projects (pro-iq) export credentials
+# themselves before calling this script instead.
 #
 # --flavor and --dart-define-from-file are both optional and only needed by
 # projects with Flutter build flavors (e.g. pro-iq's multi-tenant builds).
@@ -34,16 +42,18 @@
 #
 # Required env vars (Android):
 #   GOOGLE_PLAY_JSON_KEY  — Path to the Google service-account JSON key file
-#   ANDROID_PACKAGE_NAME  — App package name (e.g. ca.proiq.pro_iq)
+#   ANDROID_PACKAGE_NAME  — App package name (e.g. ca.proiq.pro_iq). Defaults to
+#                           the applicationId in android/app/build.gradle(.kts)
+#                           when unset; flavored projects must set it.
 
 set -uo pipefail
 
 # ── Argument parsing ──────────────────────────────────────────────────────────
 
 usage() {
-  echo "Usage: $(basename "$0") <ios|macos|android> [ios|macos|android] ... [project-dir] [--flavor=<name>] [--dart-define-from-file=<path>]"
+  echo "Usage: $(basename "$0") [project-dir] [ios|macos|android] ... [--flavor=<name>] [--dart-define-from-file=<path>]"
   echo ""
-  echo "  Platforms                One or more of: ios, macos, android"
+  echo "  Platforms                Any of: ios, macos, android (default: ios android)"
   echo "  project-dir               Path to the Flutter project (default: current directory)"
   echo "  --flavor=<name>           Optional Flutter build flavor / Xcode scheme name"
   echo "  --dart-define-from-file=<path>  Optional dart-define JSON file"
@@ -96,14 +106,22 @@ for arg in "$@"; do
 done
 
 if [[ ${#PLATFORMS[@]} -eq 0 ]]; then
-  echo "Error: at least one platform (ios, macos, android) is required" >&2
-  usage
+  PLATFORMS=(ios android)
 fi
 
 PROJECT_DIR="${PROJECT_DIR:-$PWD}"
 PROJECT_DIR="$(cd "$PROJECT_DIR" && pwd)"
 
 # ── Credential checks ─────────────────────────────────────────────────────────
+
+# Single-tenant projects keep their Apple/Google Play secrets in this local,
+# gitignored file. Projects that don't have one (pro-iq's driver exports
+# credentials per tenant instead) just skip this.
+credentials_file="$PROJECT_DIR/release_credentials.sh"
+if [[ -f "$credentials_file" ]]; then
+  # shellcheck source=/dev/null
+  source "$credentials_file"
+fi
 
 missing_vars=()
 
@@ -124,6 +142,21 @@ if [[ "$needs_apple" == "true" ]]; then
   fi
 fi
 
+# Unflavored projects have a single applicationId in their app-level gradle
+# file (Groovy `applicationId "x"` or Kotlin `applicationId = "x"`), so no
+# per-project wrapper needs to export it. Flavored projects (pro-iq) set
+# ANDROID_PACKAGE_NAME themselves per tenant before calling this script.
+if [[ "$needs_android" == "true" && -z "${ANDROID_PACKAGE_NAME:-}" ]]; then
+  for gradle_file in "$PROJECT_DIR/android/app/build.gradle" "$PROJECT_DIR/android/app/build.gradle.kts"; do
+    if [[ -f "$gradle_file" ]]; then
+      ANDROID_PACKAGE_NAME="$(grep -E '^[[:space:]]*applicationId' "$gradle_file" \
+        | head -1 | sed -E "s/.*[\"']([^\"']+)[\"'].*/\1/")"
+      [[ -n "$ANDROID_PACKAGE_NAME" ]] && break
+    fi
+  done
+  export ANDROID_PACKAGE_NAME
+fi
+
 if [[ "$needs_android" == "true" && "$SKIP_UPLOAD" != "true" ]]; then
   [[ -z "${GOOGLE_PLAY_JSON_KEY:-}" ]]  && missing_vars+=("GOOGLE_PLAY_JSON_KEY")
   [[ -z "${ANDROID_PACKAGE_NAME:-}" ]]  && missing_vars+=("ANDROID_PACKAGE_NAME")
@@ -131,6 +164,7 @@ fi
 
 if [[ ${#missing_vars[@]} -gt 0 ]]; then
   echo "Error: missing required env vars: ${missing_vars[*]}" >&2
+  echo "Set them in $credentials_file (copy release_credentials.sh.example and fill in real values)." >&2
   echo "" >&2
   if [[ "$needs_apple" == "true" ]]; then
     echo "  APPLE_ID              — your Apple ID email" >&2

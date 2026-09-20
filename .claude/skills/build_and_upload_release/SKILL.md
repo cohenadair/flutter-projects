@@ -5,7 +5,7 @@ description: >
   and upload a new release to the App Store / Google Play, then
   automatically diagnoses and retries any platform that fails. Use when the
   user says things like "build and upload a release", "cut a release build",
-  "upload pro-iq/anglers-log/activity-log", "release build_and_upload", or
+  "upload pro-iq/anglers-log/activity-log/tapd", "release build_and_upload", or
   invokes /build_and_upload_release directly. Also use to retry a previous
   failed run (e.g. "retry the failed iOS uploads") — pass the project and,
   if known, which platform(s)/tenant(s) failed.
@@ -13,20 +13,26 @@ description: >
 
 # build_and_upload_release Skill
 
-Drives one project's `build_and_upload_release.sh` (root
-`/Users/cohen/Documents/flutter-projects/build_and_upload_release.sh`,
-invoked via each project's own wrapper), then reads its results and retries
-automatically where it can.
+Runs the root
+`/Users/cohen/Documents/flutter-projects/build_and_upload_release.sh` for one
+project, then reads its results and retries automatically where it can. The
+single-tenant projects are invoked directly against the root script (it
+sources the project's `release_credentials.sh`, defaults the platforms to
+`ios android`, and reads the Android package name from
+`android/app/build.gradle` itself — no per-project wrapper exists). pro-iq is
+the exception: its multi-tenant driver sets up each tenant's credentials and
+flavor, then calls the root script itself.
 
 ## Step 1 — Identify the project (ask if not given)
 
 One of:
 
-| Project | Script | Notes |
+| Project | Entry point | Notes |
 |---|---|---|
-| `pro-iq` | `pro-iq/build_and_upload_release.sh` | Multi-tenant driver — loops `tenants.yaml`, one tenant at a time, each tenant's platforms in parallel. |
-| `anglers-log` | `anglers-log/mobile/build_and_upload_release.sh` | Single tenant, defaults to `ios android`. |
-| `activity-log` | `activity-log/mobile/build_and_upload_release.sh` | Single tenant, defaults to `ios android`. |
+| `pro-iq` | `pro-iq/build_and_upload_release.sh` | Multi-tenant driver — loops `tenants.yaml`, one tenant at a time, each tenant's platforms in parallel. It calls the root script per tenant. |
+| `anglers-log` | root script, project dir `anglers-log/mobile` | Single tenant, defaults to `ios android`. |
+| `activity-log` | root script, project dir `activity-log/mobile` | Single tenant, defaults to `ios android`. |
+| `tapd` | root script, project dir `tapd/mobile` | Single tenant, defaults to `ios android`. |
 
 If the user's request doesn't name one and it's not obvious from context
 (e.g. continuing a prior run discussed in this conversation), ask which
@@ -58,8 +64,8 @@ request implies a narrower scope:
 
 - **pro-iq**: all tenants with `build: true` in `tenants.yaml`, each tenant's
   full configured platform list.
-- **anglers-log** / **activity-log**: `ios android` (the wrapper script's own
-  default).
+- **anglers-log** / **activity-log** / **tapd**: `ios android` (the root
+  script's own default when no platform is passed).
 
 Narrow the scope only when:
 - The user names specific platforms ("just iOS", "android only") →
@@ -73,12 +79,19 @@ Narrow the scope only when:
 ## Step 4 — Run it
 
 ```bash
-# anglers-log / activity-log
-cd <project-dir>/mobile && ./build_and_upload_release.sh --version=<X.Y.Z> [ios] [macos] [android]
+# anglers-log / activity-log / tapd — root script, project dir as an argument
+cd /Users/cohen/Documents/flutter-projects && \
+  ./build_and_upload_release.sh <project>/mobile --version=<X.Y.Z> [ios] [macos] [android]
 
-# pro-iq
-cd pro-iq && ./build_and_upload_release.sh --version=<X.Y.Z> [--tenant=<id> ...] [ios] [macos] [android]
+# pro-iq — multi-tenant driver (calls the root script per tenant)
+cd /Users/cohen/Documents/flutter-projects/pro-iq && \
+  ./build_and_upload_release.sh --version=<X.Y.Z> [--tenant=<id> ...] [ios] [macos] [android]
 ```
+
+Omit the platform tokens to use the default (`ios android` for single-tenant
+projects; each tenant's configured list for pro-iq). Add `--skip-upload` only
+if the user asks for a build-only verification run — it's a root-script flag
+for the single-tenant projects, and pro-iq's driver doesn't accept it.
 
 Run this with the Bash tool in the foreground — it can take a long time
 (multiple platform builds), and its console output is now just a project
@@ -123,16 +136,16 @@ Re-bumping on retry would give the retried platform a *different* build
 number than its siblings from the same release. Pass `--skip-version-bump`
 on every retry invocation (both the root script directly and pro-iq's
 driver support this flag) and omit `--version=` entirely (it's ignored
-alongside `--skip-version-bump` anyway).
+alongside `--skip-version-bump` anyway). For example, retrying only iOS for
+activity-log:
+
+```bash
+cd /Users/cohen/Documents/flutter-projects && \
+  ./build_and_upload_release.sh activity-log/mobile --skip-version-bump ios
+```
 
 ### Known fixable categories
 
-- **Stale CocoaPods state** (iOS/macOS build fails during pod install /
-  Xcode Swift Package resolution, or a "module not found" / framework
-  linkage error): `cd ios && pod install --repo-update` (or `cd macos && pod
-  install --repo-update` — check whether the project actually uses
-  CocoaPods vs. SPM-only first; see the root CLAUDE.md note that pro-iq's
-  iOS/macOS are SPM-only, so this category won't apply there). Then retry.
 - **Stale/incomplete build output** (`no .ipa found`, `no .aab found`, `no
   .pkg found in export output`): usually means an earlier step silently
   produced nothing where the log's tail expected. Re-read the full log for
