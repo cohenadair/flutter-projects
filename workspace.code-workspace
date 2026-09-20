@@ -97,6 +97,12 @@
                 "cwd": "${workspaceFolder:anglers-log}/mobile",
                 "request": "launch",
                 "type": "dart"
+            },
+            {
+                "name": "tapd",
+                "cwd": "${workspaceFolder:tapd}/mobile",
+                "request": "launch",
+                "type": "dart"
             }
         ]
     }
