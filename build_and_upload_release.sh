@@ -63,7 +63,7 @@ usage() {
   echo "  --log-dir=<path>          Where to write per-platform log files and"
   echo "                            results.tsv (default: <project-dir>/build/release_logs/<timestamp>)"
   echo ""
-  echo "Required env vars (Apple): APPLE_ID, APP_SPECIFIC_PASSWORD, TEAM_ID"
+  echo "Required env vars (Apple): APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID"
   echo "Required env vars (Android): GOOGLE_PLAY_JSON_KEY, ANDROID_PACKAGE_NAME"
   exit 1
 }
