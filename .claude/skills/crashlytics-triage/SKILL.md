@@ -774,11 +774,12 @@ package, not app code or `adair-flutter-lib`.
      (`gen_mocks.sh` / `dart run build_runner build`) — see the `flutter-test`
      skill/root `CLAUDE.md` for the exact command per repo. Never hand-edit
      the generated file.
-   - If the package has an iOS component, run `pod install` in the `ios/`
-     dir so `Podfile.lock` (typically gitignored — check with
-     `git check-ignore` before assuming it needs to be committed) picks up
-     the new native pod version; otherwise the fix won't actually apply to
-     iOS builds.
+   - If the package has an iOS component, run `flutter build ios --debug
+     --no-codesign` so Swift Package Manager re-resolves the new native
+     version, then check `git diff` on
+     `ios/Runner.xcworkspace/xcshareddata/swiftpm/Package.resolved` (SPM's
+     lockfile — it's tracked, so commit it if it changed); otherwise the fix
+     won't actually apply to iOS builds.
 4. **If it isn't fixed upstream**: add a reasonable defensive guard at the
    call site so the exception can't crash the app — e.g. wrap the call in
    `try`/`catch` following this repo's error-handling convention (log via
@@ -844,7 +845,7 @@ guarantees each PR's diff is exactly that issue's fix.
    per the exception above.
 4. **Do all remaining work for this issue in that worktree directory** — the
    rest of Step 6's fix, Step 7's commit/push/`gh pr create`. Run test
-   commands (`flutter test`, `dart format`, `gen_mocks.sh`, `pod install`)
+   commands (`flutter test`, `dart format`, `gen_mocks.sh`)
    scoped to the worktree path, not the original repo dir.
 5. **Remove the worktree once the PR is open** — see the cleanup step at the
    end of Step 7. This deletes only the local checkout; the branch itself
