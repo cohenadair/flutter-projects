@@ -125,7 +125,16 @@ mode is active (e.g. "Branch diff mode: comparing to main").
   note it in the scope report.
 
 The Flutter project root for each submodule is the submodule directory
-itself (e.g. `pro-iq/`, `adair-flutter-lib/`).
+itself (e.g. `pro-iq/`, `adair-flutter-lib/`), except monorepo-style
+submodules where the Flutter project is a subfolder — e.g. `tapd/` (Flutter
+root is `tapd/mobile/`, with its own `gen_mocks.sh` and `l10n.yaml`) and
+`anglers-log/` (`anglers-log/mobile/`). Run `flutter`/`dart` commands from
+that Flutter root.
+
+If the user narrows scope (e.g. "of all staged tapd changes"), honour it:
+use `git diff --cached` for that submodule instead of `git diff HEAD`, and
+tell the agents to read the staged diff. Unstaged edits made by Step 5 don't
+alter the index, so never unstage or stash to isolate changes.
 
 ---
 
@@ -369,6 +378,10 @@ Common false positives to anticipate across any Flutter project:
   explicitness and safety rather than a functional bug. Still worth doing, but low severity.
 - **Single-line if without braces** — some projects explicitly allow this for `return`
   statements. Check CLAUDE.md before flagging.
+- **"Won't compile" claims from read-only agents** — agents can't run the
+  analyzer, and extension methods (e.g. `firstWhereOrNull`) often resolve via
+  re-exports they can't see. Run `dart analyze lib test` from the Flutter
+  root before listing any compile-error finding.
 - **Efficiency/cost suggestions (Agent 4)** — a missing `.limit()` or a full collection
   read may be intentional (e.g. an admin tool, a small bounded collection). Treat these
   as discussion points, not defects, unless the collection is known to be large/growing.
