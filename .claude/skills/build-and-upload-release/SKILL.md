@@ -1,17 +1,17 @@
 ---
-name: build_and_upload_release
+name: build-and-upload-release
 description: >
   Runs a Flutter sub-project's build_and_upload_release.sh script to build
   and upload a new release to the App Store / Google Play, then
   automatically diagnoses and retries any platform that fails. Use when the
   user says things like "build and upload a release", "cut a release build",
   "upload pro-iq/anglers-log/activity-log/tapd", "release build_and_upload", or
-  invokes /build_and_upload_release directly. Also use to retry a previous
+  invokes /build-and-upload-release directly. Also use to retry a previous
   failed run (e.g. "retry the failed iOS uploads") — pass the project and,
   if known, which platform(s)/tenant(s) failed.
 ---
 
-# build_and_upload_release Skill
+# build-and-upload-release Skill
 
 Runs the root
 `/Users/cohen/Documents/flutter-projects/build_and_upload_release.sh` for one
