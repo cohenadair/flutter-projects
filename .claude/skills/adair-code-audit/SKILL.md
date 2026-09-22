@@ -382,6 +382,16 @@ Common false positives to anticipate across any Flutter project:
   analyzer, and extension methods (e.g. `firstWhereOrNull`) often resolve via
   re-exports they can't see. Run `dart analyze lib test` from the Flutter
   root before listing any compile-error finding.
+- **"Reuse the lib's `StubbedManagers` / `mocks.mocks.dart` in tapd"** — the
+  sibling apps import `../../../adair-flutter-lib/test/mocks/mocks.mocks.dart`
+  by relative path, but tapd resolves build_runner 2.16.1 (siblings: 2.10.4),
+  which throws `Package name contains invalid characters: "adair-flutter-lib"`
+  on that import, so `gen_mocks.sh` cannot build. Leave tapd's hand-rolled
+  lib mocks (`MockSpec<lib.X>(as: #MockLibX)`) unless build_runner is
+  downgraded/fixed. Also note `gen_mocks.sh` `rm`s `mocks.mocks.dart` before
+  building, so a failed run deletes it — restore with
+  `git checkout -- test/mocks/mocks.mocks.dart` (copies from the index,
+  doesn't unstage).
 - **Efficiency/cost suggestions (Agent 4)** — a missing `.limit()` or a full collection
   read may be intentional (e.g. an admin tool, a small bounded collection). Treat these
   as discussion points, not defects, unless the collection is known to be large/growing.
