@@ -439,6 +439,10 @@ Once the user approves the revised finding list, exit plan mode and implement al
 - Add `const` to widget constructors where the arguments are all compile-time constant.
 - Add `.limit()` to unbounded queries; replace looped single-doc fetches with a batched
   or `whereIn` query; cancel listeners in `dispose()`.
+- Before hoisting a per-item lookup into a parent's `build()` ("resolve once per
+  list"), check who rebuilds on change. If the listener lives in a child (e.g.
+  `ManageableListPage`'s `EntityListenerBuilder`), only the child rebuilds and the
+  parent's hoisted value goes stale — keep the lookup in the item builder instead.
 
 ### CLAUDE.md updates
 
@@ -601,6 +605,7 @@ diff \
 | `adair-flutter-lib` | `adair_flutter_lib_en.arb` | `adair_flutter_lib_es.arb` | `adair_flutter_lib_en_US.arb` |
 | `anglers-log/mobile` | `localizations_en.arb` (Canadian English) | `localizations_es.arb` | `localizations_en_US.arb`, `localizations_en_GB.arb` |
 | `pro-iq` | `pro_iq_en.arb` | *(no other locales)* | — |
+| `tapd/mobile` | `app_en.arb` | *(no other locales)* | `app_en_CA.arb`, `app_en_GB.arb`, `app_en_AU.arb` |
 
 `_en_US.arb` holds US-spelling overrides (e.g. "canceled") and `_en_GB.arb` holds
 British-spelling overrides — neither needs every key.
