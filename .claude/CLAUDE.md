@@ -255,6 +255,16 @@ See `_ResetPasswordDialogState._sendReset` in
 - Never modify `*_localizations*.dart` files directly — they are generated.
 - After editing any `.arb` file, regenerate with `flutter gen-l10n` from the project root.
 - Only add strings to `*_en_US.arb` when the US spelling differs from the base `*_en.arb` string (e.g. "canceled" vs "cancelled"). Do not mirror new strings into `_en_US.arb` otherwise.
+- **Translate every new key into all other supported languages in the same change —
+  never defer it.** `flutter gen-l10n` silently falls back to the base-locale string
+  for any locale missing a key, so an untranslated string still compiles, builds, and
+  displays (in the base language) with no error — it's easy to miss in review and easy
+  to ship by accident. When you add a key to a base ARB file, add the same key with a
+  real translation (not placeholder or copied-English text) to every other locale file
+  that requires full coverage, in the same edit. See
+  `.claude/skills/adair-code-audit/SKILL.md` → **Step 10 — Check ARB translation
+  coverage** for the per-project table of which locale files require full coverage vs.
+  which are spelling-variant-only and can be skipped.
 
 ## Firestore naming & structure
 
