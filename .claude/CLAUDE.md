@@ -90,6 +90,14 @@ expect(Activity.fromMap(map).createdAt, 0);
   business logic and orchestration. A manager may call one or more wrappers and may
   also call other managers freely. Example: `StorageManager.uploadBytes()` combines
   `StorageWrapper.putData()` + `StorageWrapper.getDownloadURL()` into one operation.
+- **Always use `TimeManager` for the current time — never raw `DateTime`.** Use
+  `TimeManager.get.currentTimestamp` / `currentDateTime` (from
+  `adair_flutter_lib/managers/time_manager.dart`) instead of `DateTime.now()`,
+  even when the value is time-zone independent (e.g. an epoch timestamp), so time
+  can be stubbed in tests. `TimeManager.get.init()` must be awaited at startup
+  with the app's other managers before any use — if an app doesn't init it yet
+  (e.g. tapd, which also has its own unrelated `TimeManager`), add the init
+  rather than falling back to `DateTime`.
 
 ## Moving a wrapper or manager to adair-flutter-lib
 

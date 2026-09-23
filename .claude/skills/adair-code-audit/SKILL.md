@@ -166,6 +166,10 @@ Universal Flutter checks:
   intentional — check before flagging.
 - **Futures not awaited** — calls to async methods whose return value is discarded
   (`unawaited` futures) can silently fail.
+- **Leftover debug overrides** — a getter or flag hardcoded to a constant in the
+  diff (e.g. `bool get isPro => true;` replacing a real state check), often in a
+  file unrelated to the rest of the change. Always critical: it ships to every
+  app that depends on the file.
 - **State that was previously recomputed per-build now cached in a field** — when a
   refactor (e.g. a platform-branching cleanup) moves a value that used to be read fresh
   from a live object on every build (e.g. `controller.value.aspectRatio` inside
@@ -378,6 +382,10 @@ Common false positives to anticipate across any Flutter project:
   explicitness and safety rather than a functional bug. Still worth doing, but low severity.
 - **Single-line if without braces** — some projects explicitly allow this for `return`
   statements. Check CLAUDE.md before flagging.
+- **`tap` + `pumpAndSettle(duration)` in tapd tests** — tapd's own
+  `tapAndSettle` (`tapd/mobile/test/test_utils/test_utils.dart`) takes no
+  duration argument, unlike adair-flutter-lib's, so the two-liner is required
+  there when a settle duration is needed.
 - **"Won't compile" claims from read-only agents** — agents can't run the
   analyzer, and extension methods (e.g. `firstWhereOrNull`) often resolve via
   re-exports they can't see. Run `dart analyze lib test` from the Flutter
