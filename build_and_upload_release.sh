@@ -368,6 +368,29 @@ build_and_upload() {
       echo "rm -rf build/ios failed" > "$status_file"; return 1
     }
 
+    # `flutter build ipa` clones Swift packages into build/ios/SourcePackages,
+    # but the FlutterFire "upload-crashlytics-symbols" build phase only looks
+    # for firebase-ios-sdk/Crashlytics/run under the workspace's DerivedData
+    # SourcePackages/checkouts. If DerivedData was cleaned (or Xcode never
+    # opened the project), that checkout doesn't exist and the archive fails.
+    # Resolving packages here populates DerivedData so the script is found.
+    # --config-only first ensures ios/Flutter/ephemeral/Packages exists, which
+    # the package graph references.
+    echo "==> [$platform] flutter build ios --config-only"
+    flutter build ios --release --config-only \
+      ${FLAVOR:+--flavor "$FLAVOR"} \
+      ${DART_DEFINE_FILE:+--dart-define-from-file "$DART_DEFINE_FILE"} || {
+      echo "flutter build ios --config-only failed" > "$status_file"; return 1
+    }
+
+    echo "==> [$platform] xcodebuild -resolvePackageDependencies"
+    xcodebuild -resolvePackageDependencies \
+      -workspace "ios/Runner.xcworkspace" \
+      -scheme "${FLAVOR:-Runner}" || {
+      echo "xcodebuild -resolvePackageDependencies failed" > "$status_file"
+      return 1
+    }
+
     echo "==> [$platform] flutter build ipa"
     flutter build ipa --export-options-plist="$export_options" \
       ${FLAVOR:+--flavor "$FLAVOR"} \
