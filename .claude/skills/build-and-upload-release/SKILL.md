@@ -72,11 +72,60 @@ Narrow the scope only when:
   pass those platform tokens (`ios`/`macos`/`android`) through.
 - The user names specific pro-iq tenants ("just pro-iq, not
   hill-method-coaching") → pass `--tenant=<id>` (repeatable).
-- **This is a retry of a previous failed run** — see Step 6. Scope to
+- **This is a retry of a previous failed run** — see Step 7. Scope to
   exactly the tenant/platform combinations that failed; don't rebuild ones
   that already succeeded.
 
-## Step 4 — Run it
+## Step 4 — Pre-build check: hardcoded Pro override
+
+**Run this before every build, including retries.** Every project depends
+on `adair-flutter-lib` by path, so a local dev override in its
+`SubscriptionManager` (e.g. `bool get isPro => true;`) is compiled straight
+into the release and gives **every user Pro for free**. This has shipped
+once already (anglers-log `2.8.0+2026092502`).
+
+The file is
+`/Users/cohen/Documents/flutter-projects/adair-flutter-lib/lib/managers/subscription_manager.dart`.
+The correct getter is:
+
+```dart
+bool get isPro => _state == SubscriptionState.pro;
+```
+
+1. **Check the committed version first:**
+   ```bash
+   cd /Users/cohen/Documents/flutter-projects/adair-flutter-lib && \
+     git show HEAD:lib/managers/subscription_manager.dart | grep -n 'bool get is\(Pro\|Free\)'
+   ```
+   If `HEAD` itself has an override, **stop and flag it to the user — do
+   not build.** Don't commit a fix yourself; it's their call how to land it.
+2. **Check uncommitted (staged + unstaged) changes:**
+   ```bash
+   cd /Users/cohen/Documents/flutter-projects/adair-flutter-lib && \
+     git diff -U0 HEAD -- lib/managers/subscription_manager.dart
+   ```
+   Treat any changed line that forces subscription state as an override.
+   Examples include `isPro`/`isFree` returning a literal `true`/`false`,
+   `_state` initialized or assigned to `SubscriptionState.pro` outside the
+   RevenueCat callback, and an early return that skips entitlement checks.
+3. **If an override is found, flag it to the user** by quoting the offending
+   line(s), **then revert it automatically** before building:
+   - Save the full diff first, so the user can reapply it for local
+     testing after the release:
+     `git diff HEAD -- lib/managers/subscription_manager.dart > <scratchpad>/subscription_manager_override.patch`
+   - Restore **only the override lines** to their `HEAD` version with the
+     Edit tool. Leave any other uncommitted changes in the file alone.
+   - If the override was also staged, run `git add` on this one file after
+     the edit so the index doesn't still hold the override. Don't touch
+     staging for any other file.
+4. **Verify** before continuing:
+   `grep -n 'bool get isPro' lib/managers/subscription_manager.dart` must
+   print `bool get isPro => _state == SubscriptionState.pro;`. If it
+   doesn't, stop and ask.
+5. In the final report (Step 8), say that the override was reverted and give
+   the patch path.
+
+## Step 5 — Run it
 
 ```bash
 # anglers-log / activity-log / tapd — root script, project dir as an argument
@@ -100,7 +149,7 @@ step-by-step output lives in log files under `build/release_logs/`, printed
 in the table). Use a generous timeout; if using a background invocation,
 check back rather than assuming it's done from silence.
 
-## Step 5 — Read the report
+## Step 6 — Read the report
 
 Every run ends with a table listing each platform (pro-iq: each
 tenant/platform pair) as `uploaded`/`built`/`FAILED - <reason>`, plus the
@@ -111,7 +160,7 @@ actual compiler/signing/upload error.
 
 Report the table to the user first, in full, before doing any auto-fix work.
 
-## Step 6 — Auto-fix and retry failures
+## Step 7 — Auto-fix and retry failures
 
 For each failed platform, in order:
 
@@ -130,7 +179,7 @@ For each failed platform, in order:
    excerpts — don't loop indefinitely on the same platform.
 
 **Always retry with `--skip-version-bump`.** The version/build number was
-already bumped once during Step 4's run; other platforms in that same run
+already bumped once during Step 5's run; other platforms in that same run
 may have already uploaded successfully under that exact build number.
 Re-bumping on retry would give the retried platform a *different* build
 number than its siblings from the same release. Pass `--skip-version-bump`
@@ -181,7 +230,7 @@ cd /Users/cohen/Documents/flutter-projects && \
   a real bug, not a release-pipeline issue. Report it; fixing app code is
   outside this skill's scope unless the user explicitly asks you to.
 
-## Step 7 — Final report
+## Step 8 — Final report
 
 After all retries (successful or exhausted), give one final table covering
 every platform from the original run — including ones fixed on retry (note
