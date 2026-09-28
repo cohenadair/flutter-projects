@@ -72,6 +72,34 @@ If no CLAUDE.md exists, proceed with the universal checks only.
 
 ---
 
+## Project-level additions
+
+This skill holds only rules that apply to every sub-project. Anything that
+applies to one sub-project lives in that sub-project's own skill of the same
+name, at `<submodule>/.claude/skills/adair-code-audit/SKILL.md`. Such a file
+is **not** standalone: it only adds to this skill. If a run starts from one
+(e.g. `tapd:adair-code-audit`), follow this root skill and apply its additions.
+
+For every submodule in scope (Step 1, or all submodules in full-audit mode),
+read its project-level file, if it has one, before briefing the agents. Apply
+its additions at the step they name. They typically cover:
+- the Flutter root, when it isn't the submodule directory;
+- extra scope, such as non-Dart code like Cloud Functions;
+- extra agent checks;
+- extra Step 4 false positives;
+- test, mock-regeneration and generated-file commands;
+- ARB locale rules.
+
+Pass the relevant items to each agent.
+
+Current project-level files:
+- `tapd/.claude/skills/adair-code-audit/SKILL.md`
+- `pro-iq/.claude/skills/adair-code-audit/SKILL.md`
+- `anglers-log/.claude/skills/adair-code-audit/SKILL.md`
+- `adair-flutter-lib/.claude/skills/adair-code-audit/SKILL.md`
+
+---
+
 ## Step 1 — Determine scope **(pre-commit mode only)**
 
 Both detection phases below operate **only on submodules** — the root repo
@@ -88,14 +116,8 @@ git submodule foreach git diff --stat HEAD
 If **any** submodule reports changes, use those submodules for the rest of
 this skill. Skip Phase B entirely.
 
-Also check for changed TypeScript files in Cloud Functions directories:
-
-```bash
-git -C pro-iq diff --stat HEAD -- functions/src/
-```
-
-If any non-test `.ts` files appear, include `pro-iq/functions` in the
-affected set.
+Also run any extra scope checks from the affected submodules' project-level
+files, e.g. a check for changed non-Dart code such as Cloud Functions.
 
 ### Phase B — branch diff (fallback)
 
@@ -125,13 +147,10 @@ mode is active (e.g. "Branch diff mode: comparing to main").
   note it in the scope report.
 
 The Flutter project root for each submodule is the submodule directory
-itself (e.g. `pro-iq/`, `adair-flutter-lib/`), except monorepo-style
-submodules where the Flutter project is a subfolder — e.g. `tapd/` (Flutter
-root is `tapd/mobile/`, with its own `gen_mocks.sh` and `l10n.yaml`) and
-`anglers-log/` (`anglers-log/mobile/`). Run `flutter`/`dart` commands from
-that Flutter root.
+itself, unless its project-level file names a subfolder (monorepo-style
+submodules). Run `flutter`/`dart` commands from that Flutter root.
 
-If the user narrows scope (e.g. "of all staged tapd changes"), honour it:
+If the user narrows scope (e.g. "of all staged <submodule> changes"), honour it:
 use `git diff --cached` for that submodule instead of `git diff HEAD`, and
 tell the agents to read the staged diff. Unstaged edits made by Step 5 don't
 alter the index, so never unstage or stash to isolate changes.
@@ -362,7 +381,8 @@ inline when it helps clarify the issue.
 
 After presenting the findings, enter plan mode and wait for the user to review.
 
-Common false positives to anticipate across any Flutter project:
+Common false positives to anticipate across any Flutter project. Also apply
+the Step 4 false positives in each affected submodule's project-level file.
 
 - **Custom Scaffold / root widget** — a page using `Scaffold` directly may be intentional
   (e.g., a navigation shell with `IndexedStack`, or a list-first page). Check the
@@ -382,24 +402,10 @@ Common false positives to anticipate across any Flutter project:
   explicitness and safety rather than a functional bug. Still worth doing, but low severity.
 - **Single-line if without braces** — some projects explicitly allow this for `return`
   statements. Check CLAUDE.md before flagging.
-- **`tap` + `pumpAndSettle(duration)` in tapd tests** — tapd's own
-  `tapAndSettle` (`tapd/mobile/test/test_utils/test_utils.dart`) takes no
-  duration argument, unlike adair-flutter-lib's, so the two-liner is required
-  there when a settle duration is needed.
 - **"Won't compile" claims from read-only agents** — agents can't run the
   analyzer, and extension methods (e.g. `firstWhereOrNull`) often resolve via
   re-exports they can't see. Run `dart analyze lib test` from the Flutter
   root before listing any compile-error finding.
-- **"Reuse the lib's `StubbedManagers` / `mocks.mocks.dart` in tapd"** — the
-  sibling apps import `../../../adair-flutter-lib/test/mocks/mocks.mocks.dart`
-  by relative path, but tapd resolves build_runner 2.16.1 (siblings: 2.10.4),
-  which throws `Package name contains invalid characters: "adair-flutter-lib"`
-  on that import, so `gen_mocks.sh` cannot build. Leave tapd's hand-rolled
-  lib mocks (`MockSpec<lib.X>(as: #MockLibX)`) unless build_runner is
-  downgraded/fixed. Also note `gen_mocks.sh` `rm`s `mocks.mocks.dart` before
-  building, so a failed run deletes it — restore with
-  `git checkout -- test/mocks/mocks.mocks.dart` (copies from the index,
-  doesn't unstage).
 - **Efficiency/cost suggestions (Agent 4)** — a missing `.limit()` or a full collection
   read may be intentional (e.g. an admin tool, a small bounded collection). Treat these
   as discussion points, not defects, unless the collection is known to be large/growing.
@@ -477,32 +483,11 @@ Test files mirror the `lib/` tree under `test/`:
 - `lib/managers/baz_manager.dart` → `test/managers/baz_manager_test.dart`
 - `lib/utils/string.dart` → `test/utils/string_test.dart`
 
-### TypeScript Cloud Functions
+### Non-Dart code
 
-For any non-test `.ts` file changed under `*/functions/src/` (i.e. files that
-are **not** `*.test.ts`), write or update tests in the collocated `.test.ts`
-file (e.g. `functions/src/index.ts` → `functions/src/index.test.ts`).
-
-Apply the same one-test-per-branch rule as Dart. Key patterns for
-`pro-iq/functions/src/index.test.ts`:
-
-- All `jest.mock(...)` calls must be at the top of the file, before any
-  imports — Jest hoists them automatically.
-- Mock `firebase-functions/v2/firestore` to expose Firestore trigger handlers
-  directly (same pattern as the existing `onCall` mock):
-  ```ts
-  jest.mock("firebase-functions/v2/firestore", () => ({
-    onDocumentCreated: (_path: string, handler: (event: unknown) => unknown) => handler,
-    onDocumentUpdated: (_path: string, handler: (event: unknown) => unknown) => handler,
-  }));
-  ```
-- Write narrow type aliases for each handler and small helper functions to
-  invoke them with synthetic event objects (see `callOnVideoCreated` /
-  `callOnVideoUpdated` in `index.test.ts` as the reference example).
-- Run tests with:
-  ```bash
-  cd pro-iq/functions && npm test
-  ```
+Tests for non-Dart code in scope, such as Cloud Functions, follow the
+patterns in that submodule's project-level file. Apply the same
+one-test-per-branch rule as Dart.
 
 ---
 
@@ -516,8 +501,7 @@ dart format lib test
 
 Example:
 ```bash
-cd /Users/cohen/Documents/flutter-projects/pro-iq && dart format lib test
-cd /Users/cohen/Documents/flutter-projects/adair-flutter-lib && dart format lib test
+cd /Users/cohen/Documents/flutter-projects/<flutter-root> && dart format lib test
 ```
 
 In full-audit mode, run this across every submodule; in pre-commit mode, run
@@ -533,23 +517,20 @@ For each affected Flutter submodule, run from its project root:
 flutter test
 ```
 
-For each affected Cloud Functions directory (e.g. `pro-iq/functions/`), run:
-
-```bash
-cd pro-iq/functions && npm test
-```
+Also run the test commands for any non-Dart code in scope, as given in the
+project-level file.
 
 All tests must pass. If any fail, investigate and fix:
 
 - If the fix is in a **test file** (wrong stub, missing mock, incorrect assertion) → fix it directly.
-- If the fix is in an **implementation file** (`lib/` or `functions/src/`) → flag the issue to the user with a description of the problem and wait for approval before making any change.
+- If the fix is in an **implementation file** (`lib/`, or non-Dart source) → flag the issue to the user with a description of the problem and wait for approval before making any change.
 
 If tests fail with a mockito `MissingStubError` or a `noSuchMethod`/type cast
 error on a mock, check whether `test/mocks/mocks.mocks.dart` is stale
 relative to the real class before touching test setup code — a class member
 added to a manager/wrapper doesn't automatically appear in the generated
-mock. Regenerate with `gen_mocks.sh` (pro-iq) or `dart run build_runner
-build` (adair-flutter-lib) rather than hand-editing the generated file. This
+mock. Regenerate with the submodule's mock-generation command (see its
+project-level file) rather than hand-editing the generated file. This
 same staleness can also cause confusing cascading mockito failures (e.g.
 "Cannot call `when` within a stub response") in unrelated tests within the
 same run — don't assume those are real regressions before checking the mock
@@ -565,11 +546,10 @@ Run the `pre-commit-test-coverage` skill on the affected Flutter submodules and
 test files identified in Step 1. All tests must already pass (Step 8) before
 running this step.
 
-For affected Cloud Functions directories, Jest reports coverage automatically
-when `npm test` runs (configured via `jest.config.js`). Review the per-file
-coverage table it prints.
+For non-Dart code in scope, get coverage as the project-level file
+describes.
 
-Apply the same threshold to both Dart and TypeScript coverage:
+Apply the same threshold to Dart and non-Dart coverage:
 
 - **Changed coverage** below **90%** is flagged. For each such file, report a
   one-line explanation of what's uncovered and why (e.g. "the `catch` block
@@ -595,28 +575,20 @@ English file against each locale file that requires full translation coverage. U
 `jq` to diff non-metadata (non-`@`-prefixed) keys:
 
 ```bash
-# adair-flutter-lib — check Spanish
 diff \
-  <(jq -r 'keys[] | select(startswith("@") | not)' adair-flutter-lib/lib/l10n/adair_flutter_lib_en.arb | sort) \
-  <(jq -r 'keys[] | select(startswith("@") | not)' adair-flutter-lib/lib/l10n/adair_flutter_lib_es.arb | sort)
-
-# anglers-log — check Spanish
-diff \
-  <(jq -r 'keys[] | select(startswith("@") | not)' anglers-log/mobile/lib/l10n/localizations_en.arb | sort) \
-  <(jq -r 'keys[] | select(startswith("@") | not)' anglers-log/mobile/lib/l10n/localizations_es.arb | sort)
+  <(jq -r 'keys[] | select(startswith("@") | not)' <base>.arb | sort) \
+  <(jq -r 'keys[] | select(startswith("@") | not)' <locale>.arb | sort)
 ```
 
-**Locale rules — which files need full coverage:**
+**Locale rules:** each submodule's project-level file has a Step 10 table.
+It lists the base file, the locale files that need every key, and the
+spelling-variant files that can be skipped.
 
-| Project | Base | Requires full coverage | Skip (spelling variants only) |
-|---------|------|------------------------|-------------------------------|
-| `adair-flutter-lib` | `adair_flutter_lib_en.arb` | `adair_flutter_lib_es.arb` | `adair_flutter_lib_en_US.arb` |
-| `anglers-log/mobile` | `localizations_en.arb` (Canadian English) | `localizations_es.arb` | `localizations_en_US.arb`, `localizations_en_GB.arb` |
-| `pro-iq` | `pro_iq_en.arb` | *(no other locales)* | — |
-| `tapd/mobile` | `app_en.arb` | *(no other locales)* | `app_en_CA.arb`, `app_en_GB.arb`, `app_en_AU.arb` |
-
-`_en_US.arb` holds US-spelling overrides (e.g. "canceled") and `_en_GB.arb` holds
-British-spelling overrides — neither needs every key.
+Spelling-variant files such as `_en_US.arb` (US spelling, e.g. "canceled")
+and `_en_GB.arb` (British spelling) hold only overrides, so they never need
+every key. If a submodule with `.arb` changes has no locale table, ask the
+user which files need full coverage and add a table to its project-level
+file.
 
 **If missing keys are found:** translate them directly. Use the English value,
 surrounding strings in the file, and the app domain to infer the correct translation.
@@ -691,28 +663,25 @@ After completing a run, review whether any finding revealed:
   false-positive list).
 - A **fix recipe** for Step 5 that's missing or unclear.
 
-If any of the above apply, update **this file**
-(`adair-code-audit/SKILL.md`) in the same commit — not as a separate
-follow-up.
+If any of the above apply, update the skill in the same commit, not as a
+separate follow-up:
+- A rule for every sub-project goes in **this file**
+  (`.claude/skills/adair-code-audit/SKILL.md`).
+- A rule for one sub-project goes in that sub-project's project-level file
+  (`<submodule>/.claude/skills/adair-code-audit/SKILL.md`). Create the file
+  if it doesn't exist yet, and add it to the list under **Project-level
+  additions**.
+- Never put sub-project-specific paths, versions, class names or commands in
+  this file.
 
 ---
 
 ## Reminders — generated files & regeneration scripts
 
 See [CLAUDE.md](../../.claude/CLAUDE.md) for style and coding rules. Never
-edit these files by hand; they are always regenerated:
-
-| File | Regenerate with | From |
-|------|----------------|------|
-| `pro-iq/test/mocks/mocks.mocks.dart` | `pro-iq/gen_mocks.sh` | repo root |
-| `pro-iq/lib/l10n/gen/pro_iq_localizations*.dart` | `flutter gen-l10n` | `pro-iq/` |
-| `pro-iq/lib/models/gen/protobuf/pro_iq.pb.dart` (and siblings) | `gen_proto.sh` | repo root |
-
-**When to regenerate:**
-- `gen_mocks.sh` — any time a class that is mocked (e.g. `DataManager`) has a
-  new method or a changed method signature.
-- `flutter gen-l10n` — any time a `.arb` file is edited.
-- `gen_proto.sh` — any time `protobuf/pro_iq.proto` is changed.
+edit generated files by hand, such as mocks, localizations and protobuf
+output. Each project-level file lists its own generated files and the
+commands that regenerate them.
 
 ---
 

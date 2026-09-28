@@ -269,10 +269,10 @@ See `_ResetPasswordDialogState._sendReset` in
   displays (in the base language) with no error — it's easy to miss in review and easy
   to ship by accident. When you add a key to a base ARB file, add the same key with a
   real translation (not placeholder or copied-English text) to every other locale file
-  that requires full coverage, in the same edit. See
-  `.claude/skills/adair-code-audit/SKILL.md` → **Step 10 — Check ARB translation
-  coverage** for the per-project table of which locale files require full coverage vs.
-  which are spelling-variant-only and can be skipped.
+  that requires full coverage, in the same edit. Each sub-project's
+  `<submodule>/.claude/skills/adair-code-audit/SKILL.md` → **Step 10 — ARB locale
+  rules** lists which of its locale files require full coverage vs. which are
+  spelling-variant-only and can be skipped.
 
 ## Firestore naming & structure
 
@@ -372,7 +372,10 @@ add a dedicated method to `DataManager`.
 - **Never construct real managers in tests.** Always inject mocks via
   `StubbedManagers`. Access lib-level mocks through `managers.lib.*`.
 - **Never modify `mocks.mocks.dart`** — it is generated. To regenerate, run
-  `pro-iq/gen_mocks.sh` from the repo root.
+  `./gen_mocks.sh` from the Flutter root (e.g. `pro-iq/`, `tapd/mobile/`).
+  Each project's `build.yaml` limits mockito's builder to
+  `test/mocks/mocks.dart`; keep it, or build_runner 2.16+ fails with
+  "Cannot recurse at later or equal phase".
 - Widget tests always use **`pumpContext`** (from
   `adair-flutter-lib/test/test_utils/testable.dart`) — never
   `tester.pumpWidget(Testable(...))`. `pumpContext` wraps `Testable` internally;
