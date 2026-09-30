@@ -90,6 +90,16 @@ expect(Activity.fromMap(map).createdAt, 0);
   business logic and orchestration. A manager may call one or more wrappers and may
   also call other managers freely. Example: `StorageManager.uploadBytes()` combines
   `StorageWrapper.putData()` + `StorageWrapper.getDownloadURL()` into one operation.
+- **Sign-out cleanup lives in managers.** Each manager overrides
+  `Manager.onSignOut()` to clear its own per-user state; it runs while the
+  user is still authenticated, so auth-gated writes (e.g. removing an FCM
+  token, flushing usage) work. UI calls `AuthManager.get.signOut()` (from
+  `adair_flutter_lib/managers/auth_manager.dart`), never a page-level or
+  util sign-out helper. A manager only gets the hook if it's in
+  `AdairFlutterLibApp.managers`.
+- **Managers aren't Riverpod consumers.** Singletons have no `Ref`, so they
+  can't read providers like `currentUserProvider`. When a manager needs the
+  current user, the caller passes it in.
 - **Always use `TimeManager` for the current time — never raw `DateTime`.** Use
   `TimeManager.get.currentTimestamp` / `currentDateTime` (from
   `adair_flutter_lib/managers/time_manager.dart`) instead of `DateTime.now()`,
