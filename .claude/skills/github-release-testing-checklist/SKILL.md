@@ -40,6 +40,7 @@ Keep this updated as projects add/drop platforms.
 | Activity Log | iOS, Android |
 | Anglers' Log | iOS, Android |
 | Pro IQ | iOS, Android, macOS |
+| Tapd | iOS, Android |
 
 If the sub-project isn't in this table, ask the user which platforms it
 ships to, then add a row here so future runs don't have to ask again.
@@ -148,8 +149,14 @@ Use the sub-project's platform list from the **platform reference table**
 three: iOS, Android, macOS.
 
 Add a sub-list with one item per platform the sub-project ships to, under a
-checklist item, **only when that item is meaningfully testable on all of
-those platforms**:
+checklist item, **only when the behavior goes through native platform code
+and is testable on all of those platforms**: in-app purchases, ads, OS
+permissions, app lifecycle (background/foreground), connectivity checks,
+device/package info plugins, store install/upgrade, Firebase SDKs, and native
+build/config changes. Shared Dart logic and Flutter UI (game rules, layout,
+stats, form validation, and so on) behave identically on every platform, so
+those items get **no** sub-list, even when they have UI. Test them once, on
+any platform:
 
 ```markdown
 - [ ] Deny the camera permission prompt — shows the specific error message, no crash.
