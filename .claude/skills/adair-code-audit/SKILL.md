@@ -185,10 +185,20 @@ Universal Flutter checks:
   intentional — check before flagging.
 - **Futures not awaited** — calls to async methods whose return value is discarded
   (`unawaited` futures) can silently fail.
+- **Removed guards and validation checks** — when the diff deletes a guard, early
+  return, or sign-in/role check, work out which inputs it used to reject (e.g. a
+  user with no roles) and follow them through the new code path. Also grep
+  `test/` for tests that still assert the old behavior or a removed string.
 - **Leftover debug overrides** — a getter or flag hardcoded to a constant in the
   diff (e.g. `bool get isPro => true;` replacing a real state check), often in a
   file unrelated to the rest of the change. Always critical: it ships to every
   app that depends on the file.
+- **Page teardown of app-lifetime singleton state** — a page's `dispose()` that
+  closes a manager's `StreamController`s or cancels listeners the manager only
+  creates once in `init()`. After sign-out → sign-in (same app launch), the
+  page is rebuilt but the manager isn't re-initialized, so the feature silently
+  stops working. Trace what `init()` creates against what `dispose()` tears
+  down.
 - **State that was previously recomputed per-build now cached in a field** — when a
   refactor (e.g. a platform-branching cleanup) moves a value that used to be read fresh
   from a live object on every build (e.g. `controller.value.aspectRatio` inside
@@ -348,32 +358,53 @@ After all four agents finish, compile results.
   checklist report (Step 11) — no separate plan file needed unless the
   findings are extensive enough that plan-mode review is warranted.
 
-Present findings as severity-grouped tables:
+Present findings as severity-grouped **lists, not tables**. The plan
+preview panel is narrow, so tables wrap badly. Each finding carries its
+own proposed fix and side effects, so the user reviews one self-contained
+item at a time. Don't put fixes or side effects in a separate section at
+the end; the user would have to scroll back and forth between them.
 
 ```
 ### 🔴 Bugs & Potential Crashes
-| # | File | Line | Issue |
-|---|------|------|-------|
-| B1 | path/to/file.dart | ~42 | Short description |
+
+- **B1 — Short title**
+  - *File:* `path/to/file.dart` ~42
+  - *Issue:* What's wrong and how it fails.
+  - *Fix:* The concrete change, including any tests to add or update.
+  - *Side effects:* Other features, pages or tests affected, or "None".
 
 ### 🟡 Convention Violations
-| # | File | Line | Convention | Issue |
-|---|------|------|-----------|-------|
-| C1 | ... | ~15 | Widget structure | build() appears after _helper() |
+
+- **C1 — Widget structure: build() after helpers**
+  - *File:* `path/to/file.dart` ~15
+  - *Issue:* `build()` appears after `_helper()`.
+  - *Fix:* Move `build()` above the `_build*` helpers.
+  - *Side effects:* None.
 
 ### 🔵 Code Quality & Duplication
-| # | Files | Issue |
-|---|-------|-------|
-| Q1 | file_a.dart, file_b.dart | Identical _buildError() in both files |
+
+- **Q1 — Duplicated _buildError()**
+  - *Files:* `file_a.dart`, `file_b.dart`
+  - *Issue:* …
+  - *Fix:* …
+  - *Side effects:* …
 
 ### 🟢 Efficiency & Firebase Cost (suggestions)
-| # | File | Line | Issue |
-|---|------|------|-------|
-| E1 | path/to/file.dart | ~30 | Unbounded Firestore query missing .limit() |
+
+- **E1 — Unbounded query**
+  - *File:* `path/to/file.dart` ~30
+  - *Issue:* The Firestore query is missing `.limit()`.
+  - *Fix:* …
+  - *Side effects:* …
+
+### Dismissed (not planning to act)
+
+- **Finding:** why it's a false positive or not worth acting on.
 ```
 
 Use `~` before line numbers to signal approximation. Include the problematic code snippet
-inline when it helps clarify the issue.
+inline when it helps clarify the issue. Split long issue or fix text into
+nested bullets rather than long sentences.
 
 ---
 
@@ -628,7 +659,7 @@ Areas** section (see below). Example format:
 🔎 Ad-hoc Testing Areas — parts of the app changed incidentally to the core
    feature/fix, worth a manual spot-check since tests may not fully exercise
    the interaction path:
-   - lib/pages/mobile_home_page.dart — sign-out now unregisters the FCM
+   - lib/pages/player_home_page.dart — sign-out now unregisters the FCM
      token first; verify sign-out still completes normally.
    - lib/pages/players_page.dart — refactored to a shared selection
      controller; verify player selection, select-all, and group toggling.
