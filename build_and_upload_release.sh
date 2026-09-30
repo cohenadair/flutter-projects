@@ -350,23 +350,8 @@ build_and_upload() {
     local export_options="$work_dir/ExportOptions.plist"
     generate_export_options "$export_options"
 
-    # Guards against the archive step reusing a stale build/ios/ product from
-    # a previous local `flutter run`/`flutter build` — without it, Xcode's
-    # incremental build can skip reprocessing Info.plist and ship the OLD
-    # CFBundleVersion even though pubspec.yaml was just bumped, which App
-    # Store Connect then rejects as a duplicate version. Same class of
-    # staleness already guarded against for macOS below via `xcodebuild
-    # clean archive`.
-    #
-    # This is scoped to build/ios/ only (not `flutter clean`, which wipes
-    # the whole build/ dir and .dart_tool/) because platforms now build
-    # concurrently in the same project directory — a full `flutter clean`
-    # here would delete macOS/Android's in-progress output out from under
-    # them.
-    echo "==> [$platform] rm -rf build/ios"
-    rm -rf "$PROJECT_DIR/build/ios" || {
-      echo "rm -rf build/ios failed" > "$status_file"; return 1
-    }
+    # build/ios/ was already cleared before the parallel builds started — see
+    # "Clear stale iOS build output" below.
 
     # `flutter build ipa` clones Swift packages into build/ios/SourcePackages,
     # but the FlutterFire "upload-crashlytics-symbols" build phase only looks
@@ -547,6 +532,39 @@ build_and_upload() {
 
   echo "ok" > "$status_file"
 }
+
+# ── Clear stale iOS build output ─────────────────────────────────────────────
+#
+# Guards against the iOS archive step reusing a stale build/ios/ product from
+# a previous local `flutter run`/`flutter build` — without it, Xcode's
+# incremental build can skip reprocessing Info.plist and ship the OLD
+# CFBundleVersion even though pubspec.yaml was just bumped, which App Store
+# Connect then rejects as a duplicate version. Same class of staleness
+# already guarded against for macOS via `xcodebuild clean archive`.
+#
+# Scoped to build/ios/ only (not `flutter clean`, which wipes the whole
+# build/ dir and .dart_tool/) so nothing else is disturbed. It runs here,
+# before the parallel builds, rather than inside the iOS build: the other
+# platforms' Flutter tooling also writes build/ios/SourcePackages, and a
+# concurrent `rm -rf` fails with "Directory not empty".
+#
+# It's also retried: the version bump edits pubspec.yaml, which makes an open
+# IDE (e.g. VS Code's Dart extension) run its own `pub get` in the
+# background, and that can repopulate build/ios/SourcePackages mid-delete.
+
+if [[ " ${PLATFORMS[*]} " == *" ios "* ]]; then
+  echo "==> rm -rf build/ios" >> "$MAIN_LOG"
+  rm_attempt=1
+  until rm -rf "$PROJECT_DIR/build/ios" >> "$MAIN_LOG" 2>&1; do
+    if [[ $rm_attempt -ge 5 ]]; then
+      echo "Error: rm -rf build/ios failed — see $MAIN_LOG" >&2
+      exit 1
+    fi
+    echo "rm -rf build/ios failed (attempt $rm_attempt); retrying" >> "$MAIN_LOG"
+    rm_attempt=$((rm_attempt + 1))
+    sleep 2
+  done
+fi
 
 # ── Run every platform in parallel, collecting results ───────────────────────
 #
