@@ -15,11 +15,11 @@ description: >
 ## Singleton / Manager pattern
 
 All managers follow the pattern in
-`adair-flutter-lib/lib/managers/manager.dart` (implements `Manager`) and
+`adair-flutter-lib/lib/managers/manager.dart` (extends `Manager`) and
 `adair-flutter-lib/lib/managers/properties_manager.dart`:
 
 ```dart
-class MyManager implements Manager {
+class MyManager extends Manager {
   static var _instance = MyManager._();
   static MyManager get get => _instance;
 

@@ -302,7 +302,7 @@ String get _initials => [
 ].join().toUpperCase();
 ```
 
-### `_ProfileCard` — `lib/pages/mobile_home_page.dart` (private, in-page)
+### `_ProfileCard` — `lib/pages/player_home_page.dart` (private, in-page)
 
 M3 elevated card displaying a `User`'s avatar, name, team, and coach.
 Coach row is omitted when `user.coachName` is empty.
