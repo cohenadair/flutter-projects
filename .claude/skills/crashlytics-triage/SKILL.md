@@ -460,6 +460,8 @@ what's stale" — not part of the default SM-1–SM-7 flow.
     e.g. `"Duplicate of issue <canonical-id> (<short reason>). Closing as a
     duplicate variant."` — don't just say "duplicate", name what it's a
     duplicate *of* so the note is still useful read cold later.
+- Record each closed issue in the checkpoint's `ignoredIssues` as `closed`
+  (see **Checkpoint bookkeeping after acting on issues**).
 - After closing, **regenerate SM-7's HTML** with the closed issues removed
   from their table (don't leave stale rows in an "open issues" report) and
   a short note near the top of the page listing what was closed this
@@ -473,7 +475,9 @@ what's stale" — not part of the default SM-1–SM-7 flow.
 
 Read-only against Crashlytics: fetches open issues, diffs them against a
 small local checkpoint file from the last run, and reports only issues that
-are new since then. Never writes a Crashlytics note, never closes/updates an
+are new since then, plus any previously *ignored* issue (reported earlier
+but left open, muted, or closed without a code fix) that is still
+occurring. Never writes a Crashlytics note, never closes/updates an
 issue, never touches git or GitHub. The only thing this mode writes is its
 own checkpoint file (UM-2 below) — everything else reuses Summary Mode's
 fetch/classify machinery so the two modes can't drift apart on how "an
@@ -504,11 +508,38 @@ Shape:
   "<Firebase project ID>": {
     "<appId>": {
       "lastCheckTime": "<ISO 8601 timestamp>",
-      "knownIssueIds": ["<issueId>", "..."]
+      "knownIssueIds": ["<issueId>", "..."],
+      "ignoredIssues": {
+        "<issueId>": {
+          "status": "left-open | muted | closed",
+          "since": "<ISO 8601 timestamp>",
+          "note": "<short reason, e.g. the user's words>"
+        }
+      }
     }
   }
 }
 ```
+
+`ignoredIssues` tracks every issue that was surfaced to the user but **not
+fixed** — so it doesn't get silently suppressed forever just because its ID
+is in `knownIssueIds` (or drops out of it because it's no longer `OPEN`).
+An absent `ignoredIssues` key means empty (older checkpoints predate it).
+Statuses:
+
+- `left-open` — reported as new, user didn't act on it (the default for
+  every newly reported issue — see UM-8).
+- `muted` — user had it muted. Muted issues never appear in UM-4's
+  `OPEN`-only set, so without this entry they'd vanish from every future
+  report even while still crashing.
+- `closed` — user had it closed *without* a code fix (e.g. "fixed in a
+  newer build", "outdated", duplicate). Crashlytics only regresses a closed
+  issue when it recurs in a *newer* version, so recurrences on old builds
+  stay closed and invisible without this entry.
+
+Issues closed by a Fix-mode PR are **not** tracked here — remove their
+entry (see **Checkpoint bookkeeping after acting on issues** below); a
+recurrence regresses the issue to `OPEN` and UM-5 surfaces it as new.
 
 Keyed by Firebase project ID, then `appId` (matches SM-2's per-app
 enumeration — an Android and iOS app in the same project track
@@ -532,6 +563,31 @@ diff in UM-5 is against a complete set — an issue first seen 40 days ago
 that this app simply never surfaced before (new Firebase project added to
 scope, a prior run that errored before reaching this app, etc.) should still
 show as new to *this checkpoint*, even though it's not new to Crashlytics.
+
+### UM-4b — Check ignored issues for recent activity
+
+Only for appIds whose `ignoredIssues` is non-empty:
+
+1. Call `crashlytics_get_report` (`topIssues`, `FATAL` and `NON_FATAL` as
+   two calls, `pageSize` 100) with `intervalStartTime` = the app's
+   `lastCheckTime` and `intervalEndTime` = now. **Don't** filter by
+   `issue.state` here — muted and closed issues still appear in the report
+   when they have events in the window, and those are exactly the ones this
+   step exists to catch.
+2. **Still occurring** = every `ignoredIssues` ID that appears in that
+   result (i.e. has ≥1 event since the last check). Record its
+   `eventsCount`/`impactedUsersCount` for the window, current
+   `issue.state`, `lastSeenVersion`, and any `signals` (e.g.
+   `SIGNAL_REGRESSED`).
+3. Ignored IDs absent from the result were quiet since the last check —
+   don't list them individually in the report, just count them.
+4. If this fetch fails, report it inline (same as UM-7's failure rule) and
+   leave that app's `ignoredIssues` untouched in UM-8.
+
+No sample-event fetch is needed — these were already classified when first
+reported. Reuse the classification from that report if it's still in the
+conversation; otherwise one `crashlytics_batch_get_events` call per app for
+just the still-occurring IDs is fine.
 
 ### UM-5 — Diff against the checkpoint
 
@@ -577,6 +633,15 @@ origin).
   issue. Note at the top of the page that this is an Update Me run, and
   whether it's an initial baseline (UM-5.3) or an actual delta, with the
   `lastCheckTime` being compared against.
+- **Still-occurring ignored issues (UM-4b)** get their own section,
+  placed *before* the new-issues sections so they aren't buried: a compact
+  table with Reference ID, project/app, Status (`left-open`/`muted`/
+  `closed` + the stored `since` date and `note`), Events since last check,
+  Users since last check, Current state, and Latest version. Call out
+  explicitly when a `closed` issue is still occurring on a version *newer*
+  than the one it was closed against, or a `muted` one is accelerating —
+  those likely need revisiting. If none are still occurring, say so in one
+  line (e.g. "6 ignored issues — none occurred since last check").
 - Either way, close with the same one-line reminder as Summary Mode: give
   me the Reference ID(s) (and project, if ambiguous) and say "fix" to hand
   them to Fix mode.
@@ -592,8 +657,17 @@ appId):
 1. Set `knownIssueIds` to the **full current open-issue-ID set from UM-4**
    for that appId (not `knownIssueIds ∪ new`) — closed issues drop out
    naturally, so a reopen is detected next time per UM-5.2.
-2. Set `lastCheckTime` to now (ISO 8601, UTC).
-3. Write the **whole file** back in one shot (read-modify-write the full
+2. Add every issue reported as **new** in this run to `ignoredIssues` with
+   `status: "left-open"`, `since` = now, and a short `note` (the Likely
+   Origin's gist is fine). Don't overwrite an existing entry for the same
+   ID — keep its original `status`/`since`.
+3. Prune `ignoredIssues` entries whose ID is absent from UM-4's **raw**
+   85-day results (before the `OPEN` filter — muted/closed issues with
+   events still appear there), i.e. no events in ~85 days; they've aged
+   out. Don't prune just because an issue was quiet since the last check.
+4. Set `lastCheckTime` to now (ISO 8601, UTC). Do this *after* UM-4b has
+   used the old value.
+5. Write the **whole file** back in one shot (read-modify-write the full
    JSON), not a per-app incremental patch — avoids a partially-written file
    if this step is interrupted mid-run across multiple apps.
 
@@ -603,6 +677,25 @@ its existing entry untouched so the next run retries against the last
 never actually seen. Do not skip the update for an appId that fetched
 successfully but had zero new issues — `lastCheckTime` should still advance
 for it.
+
+### Checkpoint bookkeeping after acting on issues
+
+Whenever this skill — in *any* mode, including a follow-up turn after an
+Update Me report — mutates an issue or the user explicitly decides on one,
+update that app's `ignoredIssues` in the checkpoint file (read-modify-write
+the whole file, same as UM-8.5):
+
+- **Muted** (user asked) → `status: "muted"`, `since` = now, `note` = the
+  user's reason.
+- **Closed without a code fix** (e.g. "fixed in a newer build", SM-8
+  stale/duplicate, Fix Mode's outdated-issue path, or the
+  no-app-fixable-resolution path) → `status: "closed"`, `since` = now,
+  `note` = the closing note text.
+- **Explicitly left as-is** → keep/create `status: "left-open"`.
+- **Fixed via a Fix-mode PR** (Step 8 closed it) → **remove** the entry.
+
+This is the only checkpoint write outside UM-8, and it never touches
+`knownIssueIds` or `lastCheckTime`.
 
 ---
 
@@ -732,7 +825,9 @@ Skip the fix/PR flow entirely. Same pre-authorization basis as Steps 7–8
 
 1. `crashlytics_create_note` on the issue with the text `Code is outdated.`
 2. `crashlytics_update_issue` to close/resolve it.
-3. Report the issue ID in the running checklist as "closed — outdated" and
+3. Record it in the checkpoint's `ignoredIssues` as `closed` (see
+   **Checkpoint bookkeeping after acting on issues**).
+4. Report the issue ID in the running checklist as "closed — outdated" and
    move to the next issue.
 
 ### No app-fixable resolution (ask the user — not pre-authorized)
@@ -975,6 +1070,9 @@ Crashlytics issue closed as soon as the fix is up for review, not later. Same
 pre-authorization basis as Step 7 (2026-08-15): narrow, specific to this
 skill's own crash-fix issues, doesn't extend to any other Crashlytics issue
 mutation outside this flow.
+
+Then remove the issue from the checkpoint's `ignoredIssues`, if present
+(see **Checkpoint bookkeeping after acting on issues**).
 
 After both calls, report the issue ID + PR URL pair so the user has a record,
 even though nothing here required their approval first.
