@@ -69,6 +69,11 @@ applies to another.
 
 - **One campaign per platform** (iOS / Android). Creative, copy, and store
   wording are platform-specific — never mix platforms in one ad.
+- **Budget cap: at most $20/day across all campaigns in the account**
+  (2026-10-06; currently $5/day per campaign). Check the total before adding
+  or raising any budget.
+- Budget at the **campaign level** (CBO) by default — let Meta split it
+  between ad sets.
 - At small budgets (~$5/day per campaign), **at most 2 ads per ad set** so
   the budget isn't split too thin for Meta to learn.
 - Goal: **maximize installs** (optimize for `APP_INSTALLS`). Don't try to
@@ -127,11 +132,26 @@ applies to another.
 ### Media
 
 - The user uploads images/videos in Ads Manager (to the Cohen Adair Apps ad
-  account). The upload tool's `LOCAL_FILE` mode doesn't work in this client.
+  account). `ads_creative_upload_media` isn't rolled out to this account yet
+  (neither `LOCAL_FILE` nor `URL` mode works).
 - Find uploads with `ads_get_ad_videos` (`title` filter) or
   `ads_get_ad_images` (`name` filter), then fetch by ID and confirm
   `video_status: ready` before using them. If nothing's found, the user may
   have uploaded to another account or portfolio.
+- **Images uploaded in Ads Manager can't be trusted by hash.** Looking them up
+  with `ads_get_ad_images` `hashes` returns nothing even when they're usable,
+  and creatives built from freshly uploaded hashes have shown "Image Not
+  Found" in every preview (2026-10-05). Image IDs (hashes) also come from the
+  file's pixels, so re-uploading the same file gives the same broken ID. What
+  worked:
+  1. With the user's OK, push the images to a temporary branch of a public
+     repo and create the creative with each card's `image_url`
+     (`raw.githubusercontent.com/...`). Meta downloads them into the account.
+  2. Check a preview in the browser pane, then build the **final** creative
+     from the resulting `image_hash` values only. A creative made from URLs
+     stores both `picture` and `image_hash`, and `ads_create_ad` rejects it
+     ("ObjectStorySpecRedundant").
+  3. Delete the temporary branch.
 
 ### Ad sets
 
@@ -151,11 +171,21 @@ applies to another.
 - Countries and ages from `apps.md`. With Advantage+ audience on, ages are
   suggestions; set `targeting_automation.advantage_audience: 0` for a hard
   limit.
-- Placements: Advantage+ (automatic) by default, unless `apps.md` or the user
-  says otherwise. For manual Facebook + Instagram placements, don't include
-  retired positions: Facebook `video_feeds`, Instagram `explore` (keep
-  `explore_home`). Don't send `targeting_optimization`, which has been
-  removed; Advantage+ detailed targeting now applies automatically.
+- **Placements: always manual, Facebook + Instagram only** (user's default for
+  every campaign and app, 2026-10-05). Never use Advantage+ (automatic)
+  placements unless the user asks. Put these in `targeting`:
+  ```json
+  "device_platforms": ["mobile"],
+  "publisher_platforms": ["facebook", "instagram"],
+  "facebook_positions": ["feed", "instream_video", "marketplace", "story",
+    "search", "facebook_reels", "facebook_reels_overlay", "profile_feed"],
+  "instagram_positions": ["stream", "story", "reels", "explore_home",
+    "profile_feed", "ig_search"]
+  ```
+  No Audience Network, Messenger or Threads. Don't add retired positions:
+  Facebook `video_feeds`, Instagram `explore` (keep `explore_home`). Don't
+  send `targeting_optimization`, which has been removed; Advantage+ detailed
+  targeting now applies automatically.
 - **Ad transparency (EU/DSA):** set `dsa_beneficiary` and `dsa_payor` to the
   value in `reference.md`. Meta otherwise defaults to the business name, which
   the user had to fix by hand.
@@ -188,6 +218,11 @@ applies to another.
 - `ads_get_ad_preview` sometimes returns all placements and sometimes only
   the requested one — request each `ad_format` you need (Facebook Feed/Reels,
   Instagram Feed/Reels/Stories, Messenger Stories, Threads).
+- Carousels show "Story type is not supported for this format" in the
+  Messenger Stories preview. That's expected: Messenger Stories doesn't take
+  carousels (and the default placements exclude Messenger anyway).
+- Preview iframes open in the browser pane without signing in, so check one
+  yourself (screenshot) before sending the page.
 - Preview links expire (hours to a day or so). For a single page of all
   placements, write the URLs to a JSON file and run
   `scripts/preview_page.py`; save the HTML in the app's assets folder. It's
@@ -230,6 +265,29 @@ applies to another.
      granting "all and future" access.
 - **Portfolios can't be merged.** Move individual assets (Instagram accounts,
   Pages) between portfolios instead; ad accounts can't be moved.
+- **"App is Ineligible for Apple's SKAdNetwork" (3955033) / "No Opt Out
+  Data" (3955014):** Meta won't run iOS 14+ install ads for that app without
+  the Meta SDK (seen for Activity Log, which never had it; Anglers' Log
+  passes). Checking the app's store IDs, ad account authorization, business
+  ownership, the iOS 14+ agreement, or creating a new Meta app didn't help.
+  Don't keep creating test campaigns — each leaves a draft the user has to
+  discard. Building the campaign in Ads Manager instead produces Aggregated
+  Event Measurement ad sets that fail later edits the same way.
+- **New draft campaigns can't be deleted with the tool** (`status: DELETED`
+  fails with "New campaigns need to be either active or paused"). The user
+  discards them in Ads Manager, so avoid throwaway test campaigns.
+- **`ads_create_ad_set` can wrongly refuse** with "the parent campaign does not
+  use CBO" for a campaign that was published from Ads Manager, even when it
+  has a campaign budget. Setting the budget again via the tool stages a broken
+  draft. Have the user create the ad sets in Ads Manager; `ads_create_ad` still
+  works for adding the ads to them.
+- **A deleted Meta app breaks campaigns that point to it.** A live ad set's
+  app can't be changed, so rebuild the campaign on the new app ID and pause
+  the old one.
+- **Per-placement video ads (`placement_videos`) get rewritten by Ads Manager**
+  when the ad set's placements change. The rewritten creative can fail with
+  unrelated errors (e.g. "WhatsApp number required" #2446880). The live ad is
+  unaffected; have the user discard the ad's draft.
 
 ## Status Update mode
 
@@ -306,7 +364,7 @@ For each campaign, judge it against the goal (maximize installs):
 - Filter Meta's Opportunity Score recommendations through the user's
   preferences and `apps.md`. Don't suggest anything that conflicts with them
   (e.g. worldwide targeting for Activity Log, more than 2 ads per ad set at
-  the current budget, copy with prices), or flag the conflict explicitly if
+  the current budget, copy with prices, Advantage+ placements), or flag the conflict explicitly if
   the data really argues for it.
 - Typical levers: pause the clearly losing ad in an ad set; refresh fatigued
   creative; move budget between platform campaigns of the same app; scale a

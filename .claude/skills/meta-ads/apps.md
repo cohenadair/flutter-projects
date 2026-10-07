@@ -6,9 +6,9 @@ fill it in **before** creating anything.
 
 | App | Languages | Countries | Ages / demographics | Meta app ID | App Store | Google Play | Assets folder |
 |---|---|---|---|---|---|---|---|
-| Activity Log | English | US, CA, GB, AU, NZ, IE | 18–65 (both platforms) | 1059232339882913 | id1458926666 | com.cohenadair.activitylog | `~/Downloads/activity-log-ads/` |
+| Activity Log | English | US, CA, GB, AU, NZ, IE | 18–65 (both platforms) | 1423092639929446 | id1458926666 | com.cohenadair.activitylog | `~/Downloads/activity-log-ads/` |
 | Anglers' Log | English (app also supports Spanish) | US, CA, GB, AU, NZ, IE (Spanish markets MX, ES, AR, CL, CO once there are Spanish images) | 18–64 (hard limit; smartphone users) | 1100097140947439 | id959989008 | com.cohenadair.anglerslog | ? |
-| Tapd | ? | ? | ? | ? | ? | ? | ? |
+| Tapd | ? | ? | ? | 906547471192431 | id1019522139 | com.cohenadair.colortap | ? |
 
 Store links: `https://apps.apple.com/app/<App Store ID>` and
 `https://play.google.com/store/apps/details?id=<package>`.
@@ -21,13 +21,36 @@ Store links: `https://apps.apple.com/app/<App Store ID>` and
 - Countries chosen by the user (2026-10) over worldwide: English-only app, and
   worldwide targeting at a small budget buys the cheapest installs, mostly from
   markets unlikely to become paying users.
-- Asset folder layout: `Images/` (app-store, google-play, universal variants),
-  `Video/` (`Meta/` has per-platform 4:5 and 9:16), `Copy/` (`.docx` copy docs
-  with headlines, primary text, and guardrails).
-- The draft campaigns "Activity Log (iOS)" / "(Android)" were discarded by the
-  user on 2026-10-05; recreate them when the fixed 9:16 videos are ready.
-  Creatives `1368056125401815` (iOS) and `1355275826679835` (Android) still
-  exist and can be reused if the videos haven't changed.
+- Asset folder layout: current assets are in `01 Creatives/ActivityLog_Final/`
+  (`Images/` per store, `Videos/Meta/<platform>/` 4:5 and 9:16,
+  `Images_meta_v2/` = the carousel images actually uploaded). Copy docs
+  (`.docx`) are in `02 Copy and briefs/`. The older `01 Creatives/Images/` and
+  `Video/` folders are superseded.
+- Minimum OS: iOS 15.6, Android 7.0 (API 24). Bundle ID and Android package
+  are both `com.cohenadair.activitylog`.
+- Meta app: the original app `1059232339882913` was deleted on 2026-10-06 and
+  replaced by `1423092639929446` (no app type field; the old "Business" type
+  isn't offered for new apps). Android reads the app ID and client token from
+  `mobile/android/app/src/main/res/values/strings.xml`.
+- Campaigns (2026-10-06, $5/day each, campaign budget, manual FB + IG
+  placements): "Activity Log (Android) – Installs" `52586848618189` and
+  "Activity Log (iOS) – Installs" `52586847840589`, each with a Video and a
+  Carousel ad set (1 ad each). Copy: video "One tap. Real answers." / "Tap to
+  start. Tap to stop. Track from your lock screen [Android: notifications] and
+  get stats you'll actually use. Your data stays on your phone." / "Free to
+  download"; carousel "Busy all week with nothing to show for it? Track
+  workouts, hobbies and side projects in one tap and see where the hours go."
+  Creatives: iOS video `2271107360412381`, iOS carousel `1119157603778300`,
+  Android video `2229159977866258`, Android carousel `1763512701585473`.
+- **iOS 14+ install ads need the Meta SDK for this app.** Meta rejects
+  SKAdNetwork for it ("App is Ineligible for Apple's SKAdNetwork", 3955033, on
+  both the old and new Meta app), and the iOS ad sets the user built in Ads
+  Manager use Aggregated Event Measurement, which fails edits with "No Opt Out
+  Data … set up the Facebook SDK for iOS" (3955014). The user is adding the
+  Facebook SDK to all apps (2026-10-06). The iOS ad sets still have Advantage+
+  audience on (18–65 is a suggestion, not a hard limit); fix once edits work.
+- Old-app campaigns to delete: `52586731380989` (iOS), `52586731383789`
+  (Android, paused).
 
 ### Anglers' Log
 
@@ -46,7 +69,8 @@ Store links: `https://apps.apple.com/app/<App Store ID>` and
   material). Images in the library: "iOS (1:1)" (iPhones) and "Android (1:1)"
   (Pixels).
 - Minimum OS: iOS 15.6, Android 7.0 (API 24).
-- New campaigns (2026-10-05, $10/day each): "Anglers' Log (iOS) – Installs"
+- New campaigns (2026-10-05, $10/day each; lowered to $5/day on 2026-10-06 for
+  the user's $20/day account-wide cap): "Anglers' Log (iOS) – Installs"
   `52586620875189` (SKAdNetwork) and "Anglers' Log (Android) – Installs"
   `52586620889189`. Copy: "Never lose a great fishing spot again. Log every
   catch, map every spot and learn what really works. Free to download." /
@@ -55,3 +79,10 @@ Store links: `https://apps.apple.com/app/<App Store ID>` and
 - Install measurement: neither app has the Meta SDK yet (only SKAdNetwork IDs
   in the iOS Info.plist), so Android installs aren't measured at all. Tracked
   in cohenadair/anglers-log#1163.
+
+### Tapd
+
+- iOS bundle ID and Android package are both `com.cohenadair.colortap`
+  (the app's original name was Color Tap). Minimum iOS: 15.6.
+- Meta app ID is read on Android from
+  `tapd/mobile/android/app/src/main/res/values/strings.xml`.
