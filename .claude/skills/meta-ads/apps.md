@@ -42,13 +42,29 @@ Store links: `https://apps.apple.com/app/<App Store ID>` and
   workouts, hobbies and side projects in one tap and see where the hours go."
   Creatives: iOS video `2271107360412381`, iOS carousel `1119157603778300`,
   Android video `2229159977866258`, Android carousel `1763512701585473`.
-- **iOS 14+ install ads need the Meta SDK for this app.** Meta rejects
-  SKAdNetwork for it ("App is Ineligible for Apple's SKAdNetwork", 3955033, on
-  both the old and new Meta app), and the iOS ad sets the user built in Ads
-  Manager use Aggregated Event Measurement, which fails edits with "No Opt Out
-  Data … set up the Facebook SDK for iOS" (3955014). The user is adding the
-  Facebook SDK to all apps (2026-10-06). The iOS ad sets still have Advantage+
-  audience on (18–65 is a suggestion, not a hard limit); fix once edits work.
+- **Not yet eligible for SKAdNetwork campaigns (2026-10-07).** When Activity
+  Log is picked in a new iOS 14+ campaign, the "Apple's SKAdNetwork Reporting"
+  checkbox doesn't appear. It does appear for Anglers' Log and Tapd, which use
+  the same SKAdNetwork-only iOS setup (`adair_install_attribution` plugin, no
+  Meta SDK on iOS, Meta's SKAN IDs in Info.plist since v2.0.3), so it isn't a
+  code problem. The API rejection is "App is Ineligible for Apple's
+  SKAdNetwork" (3955033), on both the old and new Meta app. Meta's in-product
+  AI says the app is likely below an install threshold and to release the new
+  version and wait; no threshold is documented in Meta's help center.
+  - Plan: release as planned, then recheck the checkbox every week or two by
+    starting a new campaign draft. Once it appears, create a new iOS campaign
+    with SKAdNetwork Reporting ticked (it can't be added to an existing
+    campaign) and delete the AEM one. If it hasn't appeared after about a
+    month, ask Meta support, citing Anglers' Log and Tapd as eligible.
+  - Android installs (Meta SDK) are likely what counts toward the threshold;
+    the iOS app sends Meta nothing.
+- **Current iOS campaign uses AEM, not SKAdNetwork.** "Activity Log (iOS) –
+  Installs" is an iOS 14+ campaign without SKAdNetwork Reporting, so it relies
+  on Aggregated Event Measurement, which only gets data from the Meta SDK. Its
+  installs aren't measured or optimized. The user chose to keep it running
+  anyway (2026-10-07); don't pause it without asking. Edits fail with "No Opt
+  Out Data … set up the Facebook SDK for iOS" (3955014). Its ad sets still have
+  Advantage+ audience on (18–65 is a suggestion, not a hard limit).
 - Old-app campaigns to delete: `52586731380989` (iOS), `52586731383789`
   (Android, paused).
 
@@ -86,3 +102,6 @@ Store links: `https://apps.apple.com/app/<App Store ID>` and
   (the app's original name was Color Tap). Minimum iOS: 15.6.
 - Meta app ID is read on Android from
   `tapd/mobile/android/app/src/main/res/values/strings.xml`.
+- Eligible for SKAdNetwork campaigns: "Apple's SKAdNetwork Reporting" appears
+  when Tapd is picked in a new iOS 14+ campaign (checked 2026-10-07). Tick it
+  when creating Tapd's iOS campaign; it can't be added later.
