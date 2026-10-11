@@ -14,7 +14,7 @@ description: >
   after large refactors or before a release.
 ---
 
-# Flutter Code Review
+# Adair Code Audit
 
 A systematic review of a Flutter codebase for bugs, convention violations,
 code quality issues, and efficiency/cost problems — either scoped to
@@ -189,6 +189,12 @@ Universal Flutter checks:
   return, or sign-in/role check, work out which inputs it used to reject (e.g. a
   user with no roles) and follow them through the new code path. Also grep
   `test/` for tests that still assert the old behavior or a removed string.
+- **Caller stops logging because the callee "logs everything"** — when the
+  diff removes a caller's `_log.e` because the callee now logs before
+  rethrowing, check every throwing path in the callee: code before its
+  `try`, synchronous throws from calls that start async work (e.g. a
+  `putFile` before the `try` that awaits it), and any "already logged"
+  skip conditions (e.g. a step label) that also cover later code.
 - **Leftover debug overrides** — a getter or flag hardcoded to a constant in the
   diff (e.g. `bool get isPro => true;` replacing a real state check), often in a
   file unrelated to the rest of the change. Always critical: it ships to every
@@ -331,6 +337,11 @@ the user decide during review (Step 4).
 - **Loading a full list into memory** where pagination or streaming would do (e.g. a
   `ListView` fed by a fully-materialized list instead of `ListView.builder` with lazy
   data).
+- **App-lifetime polling** — a `Timer.periodic` (network probe, location or
+  status poll) that runs for the whole session, including in the background,
+  drains battery and keeps the cellular radio awake. Check who consumes the
+  value; if it's only read occasionally (e.g. on failure), prefer measuring on
+  demand or an event-driven source.
 
 **Firebase cost efficiency** (only when the project/submodule uses Firebase — check
 `pubspec.yaml` and CLAUDE.md before running these checks; skip entirely otherwise)
