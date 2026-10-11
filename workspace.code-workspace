@@ -75,6 +75,17 @@
                 ]
             },
             {
+                "name": "hill-method-coaching (prod)",
+                "cwd": "${workspaceFolder:pro-iq}",
+                "request": "launch",
+                "type": "dart",
+                "program": "lib/main.dart",
+                "args": [
+                    "--flavor=hillMethodCoaching",
+                    "--dart-define-from-file=dart-defines/hill-method-coaching.json"
+                ]
+            },
+            {
                 "name": "hill-method-coaching (emulator)",
                 "cwd": "${workspaceFolder:pro-iq}",
                 "request": "launch",
