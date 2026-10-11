@@ -140,6 +140,11 @@ When a wrapper or manager that exists in a downstream project (`pro-iq`,
 - **No empty `catch` blocks.** Every `catch` must at minimum call
   `_log.e(e, reason: "…")` to log the exception to Firebase Crashlytics. Declare
   `_log` at the file level: `final _log = Log("ClassName");`.
+  **Exception:** a caller may skip `_log.e` when the callee's documented
+  contract is that it logs every failure before rethrowing (e.g.
+  `VideoUpload.uploadClips`), so the error isn't recorded twice. Leave a
+  comment in the `catch` saying where it's logged; the catch still handles
+  the error (e.g. shows a snackbar), so it isn't empty.
 - **User-action errors** (thrown by a button tap outside a form, e.g. toggling a
   group membership): call `_log.e`, then show
   `showErrorSnackBar(context, <message>)` with a meaningful message. Check
