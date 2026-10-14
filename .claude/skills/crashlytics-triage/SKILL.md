@@ -47,11 +47,30 @@ Three modes, all starting from the same Firebase MCP fetch:
 
 ## Firebase projects covered
 
-| Firebase project ID | Repo dir | GitHub remote |
-|---|---|---|
-| `pro-iq` | `/Users/cohen/Documents/flutter-projects/pro-iq` | `Pro-IQ-Inc/pro-iq` (SSH) |
-| `anglers-log` | `/Users/cohen/Documents/flutter-projects/anglers-log` | `cohenadair/anglers-log` |
-| `activity-log-ed0d0` | `/Users/cohen/Documents/flutter-projects/activity-log/mobile` | `cohenadair/activity-log` |
+| Firebase project ID | Repo dir | GitHub remote | Crashlytics `appId`s |
+|---|---|---|---|
+| `pro-iq` | `/Users/cohen/Documents/flutter-projects/pro-iq` | `Pro-IQ-Inc/pro-iq` (SSH) | Android `1:471654200598:android:d78feedb6a6d675f038c37`, iOS/macOS `1:471654200598:ios:860649be7b6fc80b038c37` |
+| `anglers-log` | `/Users/cohen/Documents/flutter-projects/anglers-log` | `cohenadair/anglers-log` | Android `1:1018039459325:android:f4b10d819dbf3934`, iOS `1:1018039459325:ios:b91fa700d0742896244d94` |
+| `activity-log-ed0d0` | `/Users/cohen/Documents/flutter-projects/activity-log/mobile` | `cohenadair/activity-log` | Android `1:369664271784:android:63e4cb098ece2abe`, iOS `1:369664271784:ios:63e4cb098ece2abe` |
+
+### Never change the Firebase CLI's active project
+
+Every `crashlytics_*` tool takes an explicit `appId`, so this skill never
+needs an active project. **Do not call `firebase_update_environment`** (it's
+no longer in `.mcp.json`'s `--tools` allow-list) and do not run
+`firebase use`. Setting `active_project` writes a per-directory override
+into `~/.config/configstore/firebase-tools.json` that persists after the
+session and silently outranks each repo's `.firebaserc` — past runs left
+`pro-iq/` pointing at `anglers-log`, which made a later `firebase deploy`
+from `pro-iq/` target the wrong project.
+
+**Source of truth for `appId`s:** the table above mirrors the `appId:` lines
+in each app's `lib/firebase_options.dart` (pro-iq: `pro-iq/lib/`;
+anglers-log: `anglers-log/mobile/lib/`; activity-log:
+`activity-log/mobile/lib/`). If a Crashlytics call 404s for a listed
+`appId`, or an app may have been added since, re-read those files and update
+this table. Skip web app IDs (no Crashlytics). pro-iq's macOS build shares
+the iOS `appId`, so it's not a separate app.
 
 `activity-log` is structured differently from the other two: the repo root
 holds both `mobile/` (the Flutter app, config in `mobile/firebase.json`) and
@@ -73,7 +92,7 @@ lives, not by which Firebase project the crash came from.
 ## Prerequisites
 
 - The Firebase MCP server must be registered (`.mcp.json` at repo root, scoped
-  via `--tools` to an explicit allow-list: 4 `firebase_*` env/project tools
+  via `--tools` to an explicit allow-list: 3 read-only `firebase_*` env/project tools
   plus 8 `crashlytics_*` tools). If the `crashlytics_*` / `firebase_*` tools
   aren't showing up via `ToolSearch`, the session likely needs a restart to
   pick up `.mcp.json` — tell the user.
@@ -116,25 +135,13 @@ Ask the user only for what isn't already implied by their request:
 Fatal and non-fatal issues are always both included — that distinction is a
 column in the output, not a filter.
 
-### SM-2 — Set active project and enumerate apps
+### SM-2 — Enumerate apps
 
-For each project in scope:
-
-1. `firebase_update_environment` with `active_project` (and `project_dir` the
-   first time you touch a given repo dir). **Verify it actually took** with a
-   follow-up `firebase_get_environment` call before proceeding — confirmed
-   live (2026-08-19) that setting `active_project` and `project_dir` in the
-   same call can silently leave the *previous* project active. If
-   `firebase_get_environment` still shows the old project, call
-   `firebase_update_environment` again with just `active_project` (no
-   `project_dir`) and re-verify. Don't call `firebase_list_apps` until the
-   active project is confirmed correct — otherwise you silently fetch the
-   wrong project's apps.
-2. `firebase_list_apps` (`platform: "all"`) to get every `appId` in the
-   project. Skip `WEB` apps (no Crashlytics). Every call below is
-   per-`appId` — a project with both an Android and iOS app produces two
-   separate sections (platforms aren't comparable — see the multi-platform
-   note in Fix Mode Step 2).
+For each project in scope, take its `appId`s from the **Firebase projects
+covered** table — no active-project switch (see **Never change the Firebase
+CLI's active project**). Every call below is per-`appId` — a project with
+both an Android and iOS app produces two separate sections (platforms aren't
+comparable — see the multi-platform note in Fix Mode Step 2).
 
 ### SM-3 — Fetch issues per app
 
@@ -547,11 +554,10 @@ independently, same reasoning as the multi-platform note in Fix Mode Step
 2). If a project/appId key is absent, this is the **first-ever run** for
 that app — see UM-5.
 
-### UM-3 — Set active project and enumerate apps
+### UM-3 — Enumerate apps
 
-Same as **SM-2** — for each project in scope, confirm the active project via
-`firebase_update_environment` + `firebase_get_environment`, then
-`firebase_list_apps` to get every non-`WEB` `appId`.
+Same as **SM-2** — take each project's `appId`s from the **Firebase projects
+covered** table. Never switch the active project.
 
 ### UM-4 — Fetch current open issues per app
 
@@ -718,12 +724,11 @@ Ask the user only for what isn't already implied by their request:
 
 ---
 
-## Step 1 — Set the active Firebase project
+## Step 1 — Look up the target `appId`s
 
-Call `firebase_get_environment` to see current state, then
-`firebase_update_environment` to point at the target project ID (`pro-iq`,
-`anglers-log`, or `activity-log-ed0d0`). Repeat per project when running the
-default all-projects scope.
+Take each target project's `appId`s from the **Firebase projects covered**
+table and pass them explicitly to every `crashlytics_*` call. Never switch
+the active project (see **Never change the Firebase CLI's active project**).
 
 ---
 
