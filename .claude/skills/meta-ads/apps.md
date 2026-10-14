@@ -67,6 +67,10 @@ Store links: `https://apps.apple.com/app/<App Store ID>` and
   Advantage+ audience on (18–65 is a suggestion, not a hard limit).
 - Old-app campaigns to delete: `52586731380989` (iOS), `52586731383789`
   (Android, paused).
+- Status (2026-10-13): the user is leaving all campaigns as they are for now
+  and needs more time to sort out iOS install tracking. Keep reporting the iOS
+  campaign's unmeasured spend, but don't re-recommend pausing it or moving its
+  budget until they say the tracking work is done.
 
 ### Anglers' Log
 
@@ -75,7 +79,8 @@ Store links: `https://apps.apple.com/app/<App Store ID>` and
   but Spanish ads were dropped on 2026-10-05 because the ad images contain
   English text; only the English countries run until there are Spanish
   images.
-- Legacy campaign "Anglers' Log" `6320243059585` (2019). Its link-click ad sets
+- Legacy campaign "Anglers' Log (OG)" `6320243059585` (2019, paused; formerly
+  named "Anglers' Log"). Its link-click ad sets
   can't be switched to installs (legacy `smart_pse_enabled`), and it isn't
   SKAdNetwork-enabled, so Meta limits its iOS install ad sets to iOS ≤14.4.
   Being replaced by new, separate iOS (SKAdNetwork) and Android campaigns, then
@@ -92,9 +97,16 @@ Store links: `https://apps.apple.com/app/<App Store ID>` and
   catch, map every spot and learn what really works. Free to download." /
   "Stop guessing. Start catching." Previews page:
   `~/Downloads/anglers-log-ad-previews.html`.
-- Install measurement: neither app has the Meta SDK yet (only SKAdNetwork IDs
-  in the iOS Info.plist), so Android installs aren't measured at all. Tracked
-  in cohenadair/anglers-log#1163.
+- Install measurement: shipped in v2.8.1 (2026-10-07, commit `d59d7773`
+  "#1163: Add Meta install attribution") through the
+  `adair_install_attribution` plugin, with the Meta app ID and client token in
+  the Android manifest. Android installs have shown in `results` since
+  2026-10-07/08; iOS installs come through SKAdNetwork (late, and hidden at low
+  volume). cohenadair/anglers-log#1163 is still open because it also covers
+  Activity Log.
+- Status (2026-10-13): new creatives are in progress. Until they arrive, don't
+  recommend creative changes (e.g. Meta's 9:16 Reels video suggestion); the
+  user is leaving both campaigns as they are for now.
 
 ### Tapd
 

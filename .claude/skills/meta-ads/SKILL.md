@@ -126,6 +126,16 @@ applies to another.
   `ad_entities`, with no metrics. Whenever listing campaigns, make both
   calls (in parallel) so drafts aren't silently missed.
 - **Budgets** are in cents of the account currency (`500` = $5.00).
+- **Field quirks** (2026-10-13): `learning_stage_info` is accepted at
+  `level: "adset"` but not returned, and `promoted_object` comes back with only
+  empty pixel fields (no app ID or store URL), so neither can confirm learning
+  status or the promoted app. Campaign `objective` reads
+  `OUTCOME_APP_PROMOTION`. `ctr` is CTR (all) and can show 0.00% on an ad that
+  has a link click; use `link_click` for real clicks.
+  `ads_insights_industry_benchmark` returns no data for these campaigns.
+- **Invoke this skill without arguments.** Skill arguments are substituted
+  into `$1`, `$5`, etc., which corrupts the dollar amounts in this file (e.g.
+  "$5/day" turns into a word from the arguments).
 
 ## Setting up app-install campaigns
 
