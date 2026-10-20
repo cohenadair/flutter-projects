@@ -6,7 +6,7 @@ fill it in **before** creating anything.
 
 | App | Languages | Countries | Ages / demographics | Meta app ID | App Store | Google Play | Assets folder |
 |---|---|---|---|---|---|---|---|
-| Activity Log | English | US, CA, GB, AU, NZ, IE | 18–65 (both platforms) | 1423092639929446 | id1458926666 | com.cohenadair.activitylog | `~/Downloads/activity-log-ads/` |
+| Activity Log | English | US, CA, GB, AU, NZ, IE | 18–65 (both platforms) | 1423092639929446 | id1458926666 | com.cohenadair.activitylog | ? |
 | Anglers' Log | English (app also supports Spanish) | US, CA, GB, AU, NZ, IE (Spanish markets MX, ES, AR, CL, CO once there are Spanish images) | 18–64 (hard limit; smartphone users) | 1100097140947439 | id959989008 | com.cohenadair.anglerslog | ? |
 | Tapd | ? | ? | ? | 906547471192431 | id1019522139 | com.cohenadair.colortap | ? |
 
@@ -21,11 +21,6 @@ Store links: `https://apps.apple.com/app/<App Store ID>` and
 - Countries chosen by the user (2026-10) over worldwide: English-only app, and
   worldwide targeting at a small budget buys the cheapest installs, mostly from
   markets unlikely to become paying users.
-- Asset folder layout: current assets are in `01 Creatives/ActivityLog_Final/`
-  (`Images/` per store, `Videos/Meta/<platform>/` 4:5 and 9:16,
-  `Images_meta_v2/` = the carousel images actually uploaded). Copy docs
-  (`.docx`) are in `02 Copy and briefs/`. The older `01 Creatives/Images/` and
-  `Video/` folders are superseded.
 - Minimum OS: iOS 15.6, Android 7.0 (API 24). Bundle ID and Android package
   are both `com.cohenadair.activitylog`.
 - Meta app: the original app `1059232339882913` was deleted on 2026-10-06 and
@@ -42,35 +37,32 @@ Store links: `https://apps.apple.com/app/<App Store ID>` and
   workouts, hobbies and side projects in one tap and see where the hours go."
   Creatives: iOS video `2271107360412381`, iOS carousel `1119157603778300`,
   Android video `2229159977866258`, Android carousel `1763512701585473`.
-- **Not yet eligible for SKAdNetwork campaigns (2026-10-07).** When Activity
-  Log is picked in a new iOS 14+ campaign, the "Apple's SKAdNetwork Reporting"
-  checkbox doesn't appear. It does appear for Anglers' Log and Tapd, which use
-  the same SKAdNetwork-only iOS setup (`adair_install_attribution` plugin, no
-  Meta SDK on iOS, Meta's SKAN IDs in Info.plist since v2.0.3), so it isn't a
-  code problem. The API rejection is "App is Ineligible for Apple's
-  SKAdNetwork" (3955033), on both the old and new Meta app. Meta's in-product
-  AI says the app is likely below an install threshold and to release the new
-  version and wait; no threshold is documented in Meta's help center.
-  - Plan: release as planned, then recheck the checkbox every week or two by
-    starting a new campaign draft. Once it appears, create a new iOS campaign
-    with SKAdNetwork Reporting ticked (it can't be added to an existing
-    campaign) and delete the AEM one. If it hasn't appeared after about a
-    month, ask Meta support, citing Anglers' Log and Tapd as eligible.
-  - Android installs (Meta SDK) are likely what counts toward the threshold;
-    the iOS app sends Meta nothing.
-- **Current iOS campaign uses AEM, not SKAdNetwork.** "Activity Log (iOS) –
-  Installs" is an iOS 14+ campaign without SKAdNetwork Reporting, so it relies
-  on Aggregated Event Measurement, which only gets data from the Meta SDK. Its
-  installs aren't measured or optimized. The user chose to keep it running
-  anyway (2026-10-07); don't pause it without asking. Edits fail with "No Opt
-  Out Data … set up the Facebook SDK for iOS" (3955014). Its ad sets still have
-  Advantage+ audience on (18–65 is a suggestion, not a hard limit).
+- **SKAdNetwork-eligible since 2026-10-14.** Before that, the "Apple's
+  SKAdNetwork Reporting" checkbox didn't appear for Activity Log, and the API
+  rejected it with "App is Ineligible for Apple's SKAdNetwork" (3955033). After
+  about a week of the new app version (Meta SDK on Android only; iOS is
+  SKAdNetwork-only via `adair_install_attribution`) it became eligible without
+  any change on our side.
+- **iOS campaigns (2026-10-14):**
+  - "Activity Log (iOS) - Installs (NEW)" `52588620593789`: the SKAdNetwork
+    campaign, built from scratch in Ads Manager ($5/day). Published
+    2026-10-14 after changing its objective to `OUTCOME_APP_PROMOTION` via the
+    tool. Live creatives: Video `1129981892877832`, Carousel
+    `1088411367440498`. Ad sets Video
+    `52588620593989` and Carousel `52588621009789` (`campaign_attribution:
+    SKADNETWORK`). Ads: Video `52588624034789` (duplicated in Ads Manager
+    from `52588604263189`; 4:5 video `1654538436181709`, 9:16 video
+    `2568809266877475` for Stories/Reels), Carousel `52588621290189` (copied
+    with `source_ad_id`; creative `1668148758265736`, a newer copy of
+    `1119157603778300`). Placements FB + IG + Threads; 6 countries; iOS 15.6+.
+  - "Activity Log (iOS) – Installs" `52588604262989`: a duplicate of the
+    original, with SKAdNetwork ticked at the campaign level, but its ad sets
+    kept AEM (`attribution_setting: 1d_click`). Paused by the user; delete it.
+  - "Activity Log (iOS) – Installs (OLD)" `52586847840589`: the original AEM
+    campaign. Paused; delete it. AEM only gets data from the Meta SDK, which the
+    iOS app doesn't have, so these AEM campaigns' installs were never measured.
 - Old-app campaigns to delete: `52586731380989` (iOS), `52586731383789`
   (Android, paused).
-- Status (2026-10-13): the user is leaving all campaigns as they are for now
-  and needs more time to sort out iOS install tracking. Keep reporting the iOS
-  campaign's unmeasured spend, but don't re-recommend pausing it or moving its
-  budget until they say the tracking work is done.
 
 ### Anglers' Log
 
@@ -95,8 +87,7 @@ Store links: `https://apps.apple.com/app/<App Store ID>` and
   `52586620875189` (SKAdNetwork) and "Anglers' Log (Android) – Installs"
   `52586620889189`. Copy: "Never lose a great fishing spot again. Log every
   catch, map every spot and learn what really works. Free to download." /
-  "Stop guessing. Start catching." Previews page:
-  `~/Downloads/anglers-log-ad-previews.html`.
+  "Stop guessing. Start catching."
 - Install measurement: shipped in v2.8.1 (2026-10-07, commit `d59d7773`
   "#1163: Add Meta install attribution") through the
   `adair_install_attribution` plugin, with the Meta app ID and client token in

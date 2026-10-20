@@ -178,21 +178,36 @@ applies to another.
   App Store URL), and ad set `campaign_attribution: "SKADNETWORK"` (not `SKAN`).
   In a legacy campaign without it, Meta quietly limits iOS install ad sets to
   iOS ≤14.4.
+- **Build SKAdNetwork campaigns from scratch — never duplicate an AEM one.**
+  A duplicate copies its ad sets with AEM attribution, even when SKAdNetwork is
+  ticked on the new campaign, and an ad set's attribution can't be changed
+  after publishing (seen with Activity Log, 2026-10-14). Check each ad set's
+  `attribution_setting`: `skan` = SKAdNetwork; `1d_click` (or other click
+  windows) = AEM ("Meta's attribution for iOS 14+"). An AEM ad set without the
+  Meta SDK shows a "Take action to keep eligibility for Meta's attribution for
+  iOS 14+" warning. Copy the old ads into the new ad sets with `source_ad_id`
+  — except per-placement video ads (see Troubleshooting).
+- **Check ad sets the user built in Ads Manager before publishing** — targeting
+  (countries, `user_os`, Advantage+ audience), placements, and DSA fields often
+  come out wrong (e.g. one country only, Audience Network/Messenger placements
+  on).
 - Countries and ages from `apps.md`. With Advantage+ audience on, ages are
   suggestions; set `targeting_automation.advantage_audience: 0` for a hard
   limit.
-- **Placements: always manual, Facebook + Instagram only** (user's default for
-  every campaign and app, 2026-10-05). Never use Advantage+ (automatic)
-  placements unless the user asks. Put these in `targeting`:
+- **Placements: always manual — Facebook, Instagram and Threads** (user's
+  default for every campaign and app; Threads added 2026-10-14). Never use
+  Advantage+ (automatic) placements unless the user asks. Put these in
+  `targeting`:
   ```json
   "device_platforms": ["mobile"],
-  "publisher_platforms": ["facebook", "instagram"],
+  "publisher_platforms": ["facebook", "instagram", "threads"],
   "facebook_positions": ["feed", "instream_video", "marketplace", "story",
     "search", "facebook_reels", "facebook_reels_overlay", "profile_feed"],
   "instagram_positions": ["stream", "story", "reels", "explore_home",
-    "profile_feed", "ig_search"]
+    "profile_feed", "ig_search"],
+  "threads_positions": ["threads_stream"]
   ```
-  No Audience Network, Messenger or Threads. Don't add retired positions:
+  No Audience Network or Messenger. Don't add retired positions:
   Facebook `video_feeds`, Instagram `explore` (keep `explore_home`). Don't
   send `targeting_optimization`, which has been removed; Advantage+ detailed
   targeting now applies automatically.
@@ -294,6 +309,18 @@ applies to another.
 - **A deleted Meta app breaks campaigns that point to it.** A live ad set's
   app can't be changed, so rebuild the campaign on the new app ID and pause
   the old one.
+- **"Objective APP_INSTALLS is invalid. Use one of: … OUTCOME_APP_PROMOTION"**
+  blocks publishing a campaign created in Ads Manager that saved the legacy
+  `APP_INSTALLS` objective. It shows on every ad set and ad, in both the tool
+  and Ads Manager (whose "Review and publish" may just hang), and Ads Manager
+  has no way to change it. Fix (2026-10-14, with the user's OK): on the
+  **unpublished draft** campaign, `ads_update_entity` with `{"objective":
+  "OUTCOME_APP_PROMOTION"}`, then publish everything with
+  `ads_activate_entity`. Setup and SKAdNetwork attribution were kept.
+- **`regional_regulated_categories` in drafts isn't a user setting.** Values
+  like `IRELAND_FINSERV` / `AUSTRALIA_UNIVERSAL` appear just because those
+  countries are targeted. They don't mean the "financial products and
+  services" checkbox is ticked, so don't flag them (2026-10-14).
 - **Per-placement video ads (`placement_videos`) get rewritten by Ads Manager**
   when the ad set's placements change. The rewritten creative can fail with
   unrelated errors (e.g. "WhatsApp number required" #2446880). The live ad is
