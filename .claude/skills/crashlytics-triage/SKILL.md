@@ -52,6 +52,7 @@ Three modes, all starting from the same Firebase MCP fetch:
 | `pro-iq` | `/Users/cohen/Documents/flutter-projects/pro-iq` | `Pro-IQ-Inc/pro-iq` (SSH) | Android `1:471654200598:android:d78feedb6a6d675f038c37`, iOS/macOS `1:471654200598:ios:860649be7b6fc80b038c37` |
 | `anglers-log` | `/Users/cohen/Documents/flutter-projects/anglers-log` | `cohenadair/anglers-log` | Android `1:1018039459325:android:f4b10d819dbf3934`, iOS `1:1018039459325:ios:b91fa700d0742896244d94` |
 | `activity-log-ed0d0` | `/Users/cohen/Documents/flutter-projects/activity-log/mobile` | `cohenadair/activity-log` | Android `1:369664271784:android:63e4cb098ece2abe`, iOS `1:369664271784:ios:63e4cb098ece2abe` |
+| `tapd-game` | `/Users/cohen/Documents/flutter-projects/tapd/mobile` | `cohenadair/tapd` | Android `1:57081871029:android:6fe4cf3079718070499cfc`, iOS `1:57081871029:ios:33fc9ffc13bd140f499cfc` |
 
 ### Never change the Firebase CLI's active project
 
@@ -67,16 +68,18 @@ from `pro-iq/` target the wrong project.
 **Source of truth for `appId`s:** the table above mirrors the `appId:` lines
 in each app's `lib/firebase_options.dart` (pro-iq: `pro-iq/lib/`;
 anglers-log: `anglers-log/mobile/lib/`; activity-log:
-`activity-log/mobile/lib/`). If a Crashlytics call 404s for a listed
+`activity-log/mobile/lib/`; tapd: `tapd/mobile/lib/`). If a Crashlytics call 404s for a listed
 `appId`, or an app may have been added since, re-read those files and update
 this table. Skip web app IDs (no Crashlytics). pro-iq's macOS build shares
 the iOS `appId`, so it's not a separate app.
 
-`activity-log` is structured differently from the other two: the repo root
-holds both `mobile/` (the Flutter app, config in `mobile/firebase.json`) and
-`web/` (a separate web app, config in `web/.firebaserc`). Crashlytics only
+`activity-log` and `tapd` are structured differently from the other two: the
+repo root holds both `mobile/` (the Flutter app, config in
+`mobile/firebase.json`) and `web/` (a separate web app). Crashlytics only
 applies to the mobile app, so fixes land in `mobile/`, but commits/PRs are
-still made against the `activity-log` repo (not a separate repo per platform).
+still made against the `activity-log`/`tapd` repo (not a separate repo per
+platform). tapd's Dart package is named `mobile`, so its app-code frames are
+`package:mobile/...` (relevant to SM-5's App code bucket).
 
 `adair-flutter-lib` has no Firebase project of its own, but crashes in any
 app can originate from shared code there — check it when a stack frame points
@@ -111,6 +114,68 @@ lives, not by which Firebase project the crash came from.
 
 ---
 
+## Fix-status cross-reference (every mode, every invocation)
+
+Before reporting or acting on any issue, check whether a fix for it already
+exists but hasn't reached users — so the report never presents an
+already-fixed issue as unaddressed, and Fix mode never re-fixes one. Read-only:
+only `git fetch`, `git log`, `git diff`, and `gh pr list`/`gh pr view`.
+
+Scope: every issue this run reports or considers — Summary mode's full open
+set, Update Me's new + regressed + still-occurring-ignored issues, and Fix
+mode's Step 2 candidates.
+
+1. **Unreleased commits, per repo** (`pro-iq`, `anglers-log`,
+   `activity-log`, `tapd`, and `adair-flutter-lib`): `git -C <repo> fetch -q --tags
+   origin`, then `git log --oneline <last-tag>..origin/HEAD`. The last tag
+   is `git describe --tags --abbrev=0 origin/HEAD` for the apps;
+   `adair-flutter-lib` tags per app (`pro-iq-vX`, `anglers-log-vX`,
+   `activity-log-vX`), so use the tag for the app that reported the issue.
+   tapd has no `tapd-vX` lib tag yet (its app tags are plain `vX.Y.Z`); for a
+   tapd issue blamed in `adair-flutter-lib`, compare against the lib commit
+   closest to tapd's last tag date instead.
+   **Check `version:` in the app's `pubspec.yaml` too** — a version bump
+   after the last tag (confirmed live 2026-10-15: pro-iq had untagged 1.3.0
+   commits that were already reporting in Crashlytics) means those commits
+   are *built and possibly distributed*, not unreleased. An issue still
+   occurring on that version was not fixed by those commits.
+2. **Open PRs, per repo**: `gh pr list --repo <owner/repo> --state open
+   --json number,title,headRefName,body`. In zsh, loop over repos with a
+   literal list (`for repo in a/b c/d; do …`) — `set -- $r` word-splitting
+   breaks under zsh.
+3. **Match each issue**, strongest signal first:
+   - **ID match**: the issue ID or its 8-char prefix in a PR's title, body,
+     or `crashlytics-<short-id>` branch, or in a commit message (`git log
+     --all -i --grep=<prefix>`). Fix-mode PRs embed the console link, so
+     this catches most of them.
+   - **Code match**: an unreleased commit or open PR that touches the
+     blamed file/symbol — read the diff and only count it as a fix if it
+     actually changes the failing path. Touching the file isn't enough.
+   - **Keyword match**: the blamed symbol or exception text in PR bodies.
+     Also search recently **merged** PRs (`--state all`); a match that
+     merged before the last tag shipped already, which explains why it's
+     still occurring rather than linking a pending fix.
+4. **Classify** each issue's Fix status:
+   - `Fixed — unreleased <sha>` (merged after the last tag; link the commit)
+   - `Fix in open PR #N` (link the PR; note if it's only in
+     `adair-flutter-lib`, since the app also needs its lib ref bumped)
+   - `Related, not a fix — <link>` (touches the same area but doesn't
+     address the failure; say why in a few words)
+   - `Shipped in <version> — still occurring` (a merged fix that's already
+     released, yet the issue recurs on that version or later)
+   - `—` (nothing found)
+5. **Flag closed-but-unshipped fixes.** If an issue is `SIGNAL_REGRESSED`
+   or still occurring after being closed, and its only fix is an *open* PR,
+   say so explicitly — the issue was closed before the fix shipped, which
+   is why it regressed.
+
+Use the result in each mode's output (SM-7's Fix status column, UM-7's
+tables, Fix mode Step 2's shortlist). Link PRs as
+`[owner/repo#N](https://github.com/owner/repo/pull/N)` and commits as
+`[repo@sha](https://github.com/owner/repo/commit/sha)`.
+
+---
+
 ## Summary Mode
 
 Read-only: fetches and summarizes issues, then renders them as a self-contained
@@ -122,7 +187,7 @@ skill in **Fix mode** — the user picks issues by Reference ID.
 
 Ask the user only for what isn't already implied by their request:
 
-1. **Which project(s)?** Defaults to **all three** (see the projects table
+1. **Which project(s)?** Defaults to **all four** (see the projects table
    above). If the user names one, scope to that one only.
 2. **Time window?** Defaults to the last ~85 days (the widest range the
    Crashlytics API allows — see the 90-day boundary note in Prerequisites).
@@ -234,11 +299,16 @@ For every issue, using its `blameFrame` and full stack trace from SM-4:
    This is the same reasoning Fix Mode Step 4 does before proposing a fix —
    here it's surfaced to the user instead of acted on.
 
+### SM-5b — Fix-status cross-reference
+
+Run **Fix-status cross-reference** (top of this file) for every issue from
+SM-3. Its result fills SM-7's Fix status column.
+
 ### SM-6 — Cross-platform duplicate detection
 
 For each project with issues on both Android and iOS, flag any pair that's
 likely the same underlying bug surfacing on both platforms (common for
-anglers-log/activity-log, whose Dart code is shared across platforms).
+anglers-log/activity-log/tapd, whose Dart code is shared across platforms).
 
 - **Don't match on `blameFrame`/title alone.** Several blamed frames are
   generic wrapper call sites hit by many unrelated errors —
@@ -267,7 +337,7 @@ anglers-log/activity-log, whose Dart code is shared across platforms).
 Write one self-contained `.html` file (no external requests, inline CSS/JS)
 to `~/Downloads/crashlytics-summary-<YYYYMMDD-HHMM>.html` and deliver it to
 the user (`SendUserFile`) — don't just paste markdown tables into chat, the
-volume (often 30–50+ open issues across three projects) is unreadable that
+volume (often 30–50+ open issues across four projects) is unreadable that
 way.
 
 **Always declare `<meta charset="UTF-8">` as the first tag in `<head>`.**
@@ -315,7 +385,9 @@ Structure:
   Last Occurred, Affected Users, App Version Range, Stack Trace
   (App code/Third-party/Unknown-native badge), Cross-Platform (SM-6 — a
   badge naming the matched platform + issue ID as a tooltip, or an em-dash
-  if no match), Likely Origin (the SM-5 sentence).
+  if no match), Likely Origin (the SM-5 sentence), Fix status (from
+  **Fix-status cross-reference** — the status text with the PR/commit
+  linked, or an em-dash).
 - **Last Occurred display format has no timezone suffix** — render as e.g.
   `Aug 05, 2026 13:00`, not `Aug 05, 2026 13:00 UTC`. The values are still
   UTC (Crashlytics' `eventTime` is UTC and this skill doesn't convert it),
@@ -332,7 +404,7 @@ Structure:
   of row-level expand/collapse: clicking it toggles the whole table below.
   Use a `<button>` header (not a bare `<div>`) with `aria-expanded` reflecting
   state, so it's keyboard-accessible. Sections start expanded by default —
-  30–50 issues across three projects is a lot to page through, so letting
+  30–50 issues across four projects is a lot to page through, so letting
   the user collapse projects/platforms they don't care about this run is
   the point, not making them collapse everything first.
 - **Every row is independently expandable/collapsible** (click to toggle, no
@@ -494,7 +566,7 @@ issue" is fetched or classified.
 
 Ask the user only for what isn't already implied by their request:
 
-1. **Which project(s)?** Defaults to **all three** (see the projects table
+1. **Which project(s)?** Defaults to **all four** (see the projects table
    above). If the user names one, scope to that one only.
 
 No time-window or issue-state question here (unlike SM-1) — the checkpoint
@@ -623,6 +695,13 @@ and classify exactly per **SM-4** (blame frame, stack trace) and **SM-5**
 (App code / Third-party / Unknown-native bucket, one-sentence likely
 origin).
 
+### UM-6b — Fix-status cross-reference
+
+Run **Fix-status cross-reference** (top of this file) for the new issues,
+any `SIGNAL_REGRESSED` issue, and the still-occurring ignored issues from
+UM-4b. A regressed issue whose only fix is an open PR is called out in
+UM-7 as closed before its fix shipped.
+
 ### UM-7 — Report
 
 - **If the total new-issue count across all scoped apps is small** (rough
@@ -630,7 +709,7 @@ origin).
   directly in chat. One short section per project/app (even the empty
   ones, per UM-5's rule), a compact markdown table per app with columns
   Reference ID, Type (Fatal/Non-fatal), Occurrences, Affected Users,
-  Likely Origin — no need for the full SM-7 HTML machinery (sort/expand/
+  Likely Origin, Fix status (UM-6b) — no need for the full SM-7 HTML machinery (sort/expand/
   collapse) for a handful of rows.
 - **If the count is large** (a first-ever run per UM-5.3, or a long gap
   since the last check): render as an HTML page reusing **SM-7** verbatim
@@ -711,8 +790,8 @@ This is the only checkpoint write outside UM-8, and it never touches
 
 Ask the user only for what isn't already implied by their request:
 
-1. **Which project(s)?** Defaults to **all three** — `pro-iq`, `anglers-log`,
-   `activity-log-ed0d0` — run sequentially, not parallel (keeps output
+1. **Which project(s)?** Defaults to **all four** — `pro-iq`, `anglers-log`,
+   `activity-log-ed0d0`, `tapd-game` — run sequentially, not parallel (keeps output
    readable and avoids interleaved branch/PR work). If the user's prompt
    names a specific project (e.g. "check pro-iq crashes"), scope to that one
    project only — don't ask, just narrow the run.
@@ -762,6 +841,11 @@ the active project (see **Never change the Firebase CLI's active project**).
   shortlist surfaces both. Presenting this as "top 3 Android + top 3 iOS = 6
   candidates" and asking the user to confirm scope (all of them / one
   platform / a subset) works well in practice.
+- Run **Fix-status cross-reference** (top of this file) on the
+  candidates. Drop any issue with `Fixed — unreleased` or `Fix in open PR`
+  from the shortlist, and list it separately with its link, so an issue
+  isn't fixed twice. Keep `Shipped in <version> — still occurring` issues
+  as candidates, since the shipped fix didn't hold.
 - Present the shortlist (issue title, release, event count, impacted users)
   and confirm with the user before deep-diving — avoids burning time
   analyzing issues they don't care about.
@@ -1086,7 +1170,7 @@ even though nothing here required their approval first.
 
 ## Running across projects
 
-Default scope is **all three projects**, one at a time — repeat Steps 1–8 per
+Default scope is **all four projects**, one at a time — repeat Steps 1–8 per
 project sequentially. If the user's prompt named a single project (Step 0),
 run Steps 1–8 for that one project only.
 
