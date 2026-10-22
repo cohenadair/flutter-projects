@@ -49,6 +49,7 @@ languages or grow/drop a change log page.
 | Anglers' Log | English, Spanish | Yes |
 | Activity Log | English | No |
 | Pro IQ | English | No |
+| Tapd | English (en, en-AU, en-CA, en-GB ARBs) | No |
 
 If the sub-project isn't in this table, ask the user which languages it
 ships copy in and whether it has an in-app change log page (or discover
