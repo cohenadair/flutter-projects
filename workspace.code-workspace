@@ -114,6 +114,60 @@
                 "cwd": "${workspaceFolder:tapd}/mobile",
                 "request": "launch",
                 "type": "dart"
+            },
+            {
+                "name": "tapd screenshot 01 (game)",
+                "cwd": "${workspaceFolder:tapd}/mobile",
+                "request": "launch",
+                "type": "dart",
+                "args": [
+                    "--dart-define=SCREENSHOT_SCENE=game"
+                ]
+            },
+            {
+                "name": "tapd screenshot 02 (instructions)",
+                "cwd": "${workspaceFolder:tapd}/mobile",
+                "request": "launch",
+                "type": "dart",
+                "args": [
+                    "--dart-define=SCREENSHOT_SCENE=instructions"
+                ]
+            },
+            {
+                "name": "tapd screenshot 03 (expert)",
+                "cwd": "${workspaceFolder:tapd}/mobile",
+                "request": "launch",
+                "type": "dart",
+                "args": [
+                    "--dart-define=SCREENSHOT_SCENE=expert"
+                ]
+            },
+            {
+                "name": "tapd screenshot 04 (veryEasy)",
+                "cwd": "${workspaceFolder:tapd}/mobile",
+                "request": "launch",
+                "type": "dart",
+                "args": [
+                    "--dart-define=SCREENSHOT_SCENE=veryEasy"
+                ]
+            },
+            {
+                "name": "tapd screenshot 05 (highScore)",
+                "cwd": "${workspaceFolder:tapd}/mobile",
+                "request": "launch",
+                "type": "dart",
+                "args": [
+                    "--dart-define=SCREENSHOT_SCENE=highScore"
+                ]
+            },
+            {
+                "name": "tapd screenshot 06 (stats)",
+                "cwd": "${workspaceFolder:tapd}/mobile",
+                "request": "launch",
+                "type": "dart",
+                "args": [
+                    "--dart-define=SCREENSHOT_SCENE=stats"
+                ]
             }
         ]
     }
