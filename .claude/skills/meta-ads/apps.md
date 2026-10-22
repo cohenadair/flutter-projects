@@ -28,9 +28,10 @@ Store links: `https://apps.apple.com/app/<App Store ID>` and
   isn't offered for new apps). Android reads the app ID and client token from
   `mobile/android/app/src/main/res/values/strings.xml`.
 - Campaigns (2026-10-06, $5/day each, campaign budget, manual FB + IG
-  placements): "Activity Log (Android) – Installs" `52586848618189` and
-  "Activity Log (iOS) – Installs" `52586847840589`, each with a Video and a
-  Carousel ad set (1 ad each). Copy: video "One tap. Real answers." / "Tap to
+  placements): "Activity Log (Android)" `52586848618189` (originally
+  "… – Installs") and the original iOS campaign `52586847840589` (since
+  replaced; see below), each with a Video and a Carousel ad set (1 ad each).
+  Copy: video "One tap. Real answers." / "Tap to
   start. Tap to stop. Track from your lock screen [Android: notifications] and
   get stats you'll actually use. Your data stays on your phone." / "Free to
   download"; carousel "Busy all week with nothing to show for it? Track
@@ -44,8 +45,9 @@ Store links: `https://apps.apple.com/app/<App Store ID>` and
   SKAdNetwork-only via `adair_install_attribution`) it became eligible without
   any change on our side.
 - **iOS campaigns (2026-10-14):**
-  - "Activity Log (iOS) - Installs (NEW)" `52588620593789`: the SKAdNetwork
-    campaign, built from scratch in Ads Manager ($5/day). Published
+  - "Activity Log (iOS)" `52588620593789` (originally "… - Installs (NEW)"):
+    the SKAdNetwork campaign, built from scratch in Ads Manager ($5/day).
+    Published
     2026-10-14 after changing its objective to `OUTCOME_APP_PROMOTION` via the
     tool. Live creatives: Video `1129981892877832`, Carousel
     `1088411367440498`. Ad sets Video
@@ -55,14 +57,17 @@ Store links: `https://apps.apple.com/app/<App Store ID>` and
     `2568809266877475` for Stories/Reels), Carousel `52588621290189` (copied
     with `source_ad_id`; creative `1668148758265736`, a newer copy of
     `1119157603778300`). Placements FB + IG + Threads; 6 countries; iOS 15.6+.
-  - "Activity Log (iOS) – Installs" `52588604262989`: a duplicate of the
-    original, with SKAdNetwork ticked at the campaign level, but its ad sets
-    kept AEM (`attribution_setting: 1d_click`). Paused by the user; delete it.
-  - "Activity Log (iOS) – Installs (OLD)" `52586847840589`: the original AEM
-    campaign. Paused; delete it. AEM only gets data from the Meta SDK, which the
-    iOS app doesn't have, so these AEM campaigns' installs were never measured.
-- Old-app campaigns to delete: `52586731380989` (iOS), `52586731383789`
-  (Android, paused).
+    Until 2026-10-22 both ad sets also delivered to Audience Network (hidden
+    under "spend on excluded placements"; ~a third of spend, accidental taps);
+    the user unticked it on 2026-10-22, and Advantage+ audience was turned
+    off the same day (18–65 is now a hard limit). Learning restarted
+    2026-10-22.
+  - Deleted (gone from the account by 2026-10-20): AEM iOS campaigns
+    `52588604262989` (a duplicate whose ad sets kept AEM) and `52586847840589`
+    (the original). AEM only gets data from the Meta SDK, which the iOS app
+    doesn't have, so their installs were never measured.
+- Old-app campaigns `52586731380989` (iOS) and `52586731383789` (Android):
+  deleted (gone from the account by 2026-10-20).
 
 ### Anglers' Log
 
@@ -83,11 +88,11 @@ Store links: `https://apps.apple.com/app/<App Store ID>` and
   (Pixels).
 - Minimum OS: iOS 15.6, Android 7.0 (API 24).
 - New campaigns (2026-10-05, $10/day each; lowered to $5/day on 2026-10-06 for
-  the user's $20/day account-wide cap): "Anglers' Log (iOS) – Installs"
-  `52586620875189` (SKAdNetwork) and "Anglers' Log (Android) – Installs"
-  `52586620889189`. Copy: "Never lose a great fishing spot again. Log every
-  catch, map every spot and learn what really works. Free to download." /
-  "Stop guessing. Start catching."
+  the user's $20/day account-wide cap): "Anglers' Log (iOS)"
+  `52586620875189` (SKAdNetwork) and "Anglers' Log (Android)"
+  `52586620889189` (both originally "… – Installs"). Copy: "Never lose a
+  great fishing spot again. Log every catch, map every spot and learn what
+  really works. Free to download." / "Stop guessing. Start catching."
 - Install measurement: shipped in v2.8.1 (2026-10-07, commit `d59d7773`
   "#1163: Add Meta install attribution") through the
   `adair_install_attribution` plugin, with the Meta app ID and client token in

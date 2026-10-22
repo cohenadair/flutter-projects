@@ -190,7 +190,10 @@ applies to another.
 - **Check ad sets the user built in Ads Manager before publishing** — targeting
   (countries, `user_os`, Advantage+ audience), placements, and DSA fields often
   come out wrong (e.g. one country only, Audience Network/Messenger placements
-  on).
+  on). Activity Log's iOS ad sets (2026-10-14) also came with Advantage+
+  audience on (`advantage_audience: 1`), the Facebook `biz_disco_feed`
+  placement, and Audience Network hidden under "spend on excluded placements"
+  (see Troubleshooting).
 - Countries and ages from `apps.md`. With Advantage+ audience on, ages are
   suggestions; set `targeting_automation.advantage_audience: 0` for a hard
   limit.
@@ -325,6 +328,17 @@ applies to another.
   when the ad set's placements change. The rewritten creative can fail with
   unrelated errors (e.g. "WhatsApp number required" #2446880). The live ad is
   unaffected; have the user discard the ad's draft.
+- **Audience Network delivering on manual placements.** Ads Manager's "spend
+  on excluded placements" setting can have Audience Network on for ad sets
+  built in Ads Manager, even though it isn't in the main placements list. In
+  the API it shows only as `mobileexternal` in `targeting.page_types`, while
+  `publisher_platforms` lists only Facebook/Instagram/Threads. It can't be
+  cleared through the API: replacing `targeting` keeps the old `page_types`,
+  and writing `page_types` fails with "Page types have been replaced with Ad
+  placements" (1885366), which leaves a broken draft. Have the user untick it
+  under "spend on excluded placements" in Ads Manager (fixed for Activity Log
+  iOS, 2026-10-22; it had taken ~a third of that campaign's spend as
+  accidental taps at a ~40% click-through rate).
 
 ## Status Update mode
 
@@ -354,7 +368,10 @@ name one.
    by `country`. A wrong performance goal (e.g. `LINK_CLICKS` on an install
    campaign), worldwide targeting, or one placement eating the budget are the
    biggest problems, and **Meta's Opportunity Score and anomaly tools don't flag
-   them**. Compare countries with the app's row in `apps.md`. A country
+   them**. Flag any `audience_network` rows in the `publisher_platform`
+   breakdown and any `mobileexternal` in an ad set's `targeting.page_types`
+   (hidden Audience Network; see Troubleshooting). Compare countries with the
+   app's row in `apps.md`. A country
    breakdown can exceed the response limit; when it's saved to a file,
    summarize it with `jq` (top spenders, plus the share going to target
    countries).
