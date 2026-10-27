@@ -157,6 +157,10 @@ applies to another.
   1. With the user's OK, push the images to a temporary branch of a public
      repo and create the creative with each card's `image_url`
      (`raw.githubusercontent.com/...`). Meta downloads them into the account.
+     Build the branch with git plumbing so the user's working tree and index
+     aren't touched: `git hash-object -w` each file, `git mktree`, `git
+     commit-tree`, then `git push origin "<sha>:refs/heads/<branch>"`. Quote
+     the refspec: in zsh, `$c:refs/...` is read as the `:r` modifier.
   2. Check a preview in the browser pane, then build the **final** creative
      from the resulting `image_hash` values only. A creative made from URLs
      stores both `picture` and `image_hash`, and `ads_create_ad` rejects it
@@ -243,6 +247,9 @@ applies to another.
 - Previews need an existing creative or ad. Creating a creative just for
   previews is low-risk (it can't run on its own) but still needs the user's
   OK.
+- Preview by `creative_id`, not by the ad's ID. Previews of draft ads come
+  back with enormous URLs that bloat the preview page; creative previews
+  show the same thing with short URLs.
 - `ads_get_ad_preview` sometimes returns all placements and sometimes only
   the requested one — request each `ad_format` you need (Facebook Feed/Reels,
   Instagram Feed/Reels/Stories, Messenger Stories, Threads).

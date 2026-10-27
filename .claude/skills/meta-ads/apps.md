@@ -7,7 +7,7 @@ fill it in **before** creating anything.
 | App | Languages | Countries | Ages / demographics | Meta app ID | App Store | Google Play | Assets folder |
 |---|---|---|---|---|---|---|---|
 | Activity Log | English | US, CA, GB, AU, NZ, IE | 18–65 (both platforms) | 1423092639929446 | id1458926666 | com.cohenadair.activitylog | ? |
-| Anglers' Log | English (app also supports Spanish) | US, CA, GB, AU, NZ, IE (Spanish markets MX, ES, AR, CL, CO once there are Spanish images) | 18–64 (hard limit; smartphone users) | 1100097140947439 | id959989008 | com.cohenadair.anglerslog | ? |
+| Anglers' Log | English (app also supports Spanish) | US, CA, GB, AU, NZ, IE (Spanish markets MX, ES, AR, CL, CO once there are Spanish images) | 18–64 (hard limit; smartphone users) | 1100097140947439 | id959989008 | com.cohenadair.anglerslog | `~/Downloads/anglers-log-meta-ads` |
 | Tapd | ? | ? | ? | 906547471192431 | id1019522139 | com.cohenadair.colortap | ? |
 
 Store links: `https://apps.apple.com/app/<App Store ID>` and
@@ -100,9 +100,23 @@ Store links: `https://apps.apple.com/app/<App Store ID>` and
   2026-10-07/08; iOS installs come through SKAdNetwork (late, and hidden at low
   volume). cohenadair/anglers-log#1163 is still open because it also covers
   Activity Log.
-- Status (2026-10-13): new creatives are in progress. Until they arrive, don't
-  recommend creative changes (e.g. Meta's 9:16 Reels video suggestion); the
-  user is leaving both campaigns as they are for now.
+- **Creative refresh (published 2026-10-27).** New marketing videos and
+  carousels (not AI). Each campaign now has two ad sets, and Threads was added
+  to the existing ones. The static "Stop guessing (free)" ads (iOS
+  `52586622477989`, Android `52586622487989`) are paused.
+  - iOS: "– Installs" ad set `52586620932789` (SKAdNetwork) with Carousel ad
+    `52591152809789` (creative `1136952555514233`); "– Video" ad set
+    `52591152570589` (SKAdNetwork) with Spot `52591152780989` (creative
+    `2177334672994874`) and Bite `52591152790789` (creative
+    `1393620549226090`).
+  - Android: "– Installs" ad set `52586620965189` with Carousel ad
+    `52591152811389` (creative `5139533152939836`); "– Video" ad set
+    `52591152584189` with Spot `52591152803189` (creative
+    `1146725914970346`) and Bite `52591152805389` (creative
+    `4608780849367271`).
+  - Carousel cards 4 and 6 say "(Pro)" because GPS trails and the species
+    counter are Pro features. Card headlines truncate in Facebook Feed.
+  - Spanish App Store previews are still pending from marketing.
 
 ### Tapd
 
