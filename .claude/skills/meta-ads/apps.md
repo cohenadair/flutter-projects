@@ -38,6 +38,9 @@ Store links: `https://apps.apple.com/app/<App Store ID>` and
   workouts, hobbies and side projects in one tap and see where the hours go."
   Creatives: iOS video `2271107360412381`, iOS carousel `1119157603778300`,
   Android video `2229159977866258`, Android carousel `1763512701585473`.
+  With the campaign budget, Meta gives the Android Video ad set almost
+  nothing (0.04 CAD in Oct 20–26), so in practice the campaign runs only the
+  carousel ad.
 - **SKAdNetwork-eligible since 2026-10-14.** Before that, the "Apple's
   SKAdNetwork Reporting" checkbox didn't appear for Activity Log, and the API
   rejected it with "App is Ineligible for Apple's SKAdNetwork" (3955033). After
@@ -61,7 +64,11 @@ Store links: `https://apps.apple.com/app/<App Store ID>` and
     under "spend on excluded placements"; ~a third of spend, accidental taps);
     the user unticked it on 2026-10-22, and Advantage+ audience was turned
     off the same day (18–65 is now a hard limit). Learning restarted
-    2026-10-22.
+    2026-10-22. Confirmed in the 2026-10-27 status update: no Audience Network
+    impressions after 2026-10-22, and `page_types` no longer lists
+    `mobileexternal`. SKAdNetwork installs now show in `results` (3 in
+    Oct 20–26, 2 of them credited to Audience Network impressions from before
+    the fix).
   - Deleted (gone from the account by 2026-10-20): AEM iOS campaigns
     `52588604262989` (a duplicate whose ad sets kept AEM) and `52586847840589`
     (the original). AEM only gets data from the Meta SDK, which the iOS app
@@ -98,8 +105,8 @@ Store links: `https://apps.apple.com/app/<App Store ID>` and
   `adair_install_attribution` plugin, with the Meta app ID and client token in
   the Android manifest. Android installs have shown in `results` since
   2026-10-07/08; iOS installs come through SKAdNetwork (late, and hidden at low
-  volume). cohenadair/anglers-log#1163 is still open because it also covers
-  Activity Log.
+  volume). cohenadair/anglers-log#1163 (which also covered Activity Log) was
+  closed on 2026-10-14.
 - **Creative refresh (published 2026-10-27).** New marketing videos and
   carousels (not AI). Each campaign now has two ad sets, and Threads was added
   to the existing ones. The static "Stop guessing (free)" ads (iOS

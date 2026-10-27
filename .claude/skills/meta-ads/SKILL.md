@@ -395,6 +395,10 @@ Notes on the metrics:
   Meta SDK.
 - iOS install results come through SKAdNetwork and arrive 1–3 days late, so
   the last couple of days undercount iOS. Say so when it matters.
+- In a daily `publisher_platform` breakdown, a SKAdNetwork install can appear
+  on a day and placement with no spend or impressions (e.g. Audience Network
+  on 2026-10-25, three days after it was removed). Read it as a late install
+  credited to an earlier impression, not as new delivery.
 
 ### Step 2 — Assess
 
