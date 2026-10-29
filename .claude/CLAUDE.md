@@ -76,6 +76,15 @@ expect(Activity.fromMap(map).createdAt, 0);
   source of truth. Editing a lock file directly can leave it inconsistent with
   `pubspec.yaml` and silently reverts on the next resolve.
 
+## Dev tooling
+
+- `screenshots/capture/` and each app's `screenshots/capture/` are dev
+  tooling (host CLIs and an on-device capture harness), not app code. The
+  app-code rules don't apply there: `TimeManager` instead of `DateTime`,
+  `_log.e` in every `catch` (there's no Crashlytics), wrappers for
+  third-party libraries, and generated mocks. The Dart style, constants, and
+  test conventions still do.
+
 ## Wrappers vs. managers
 
 - **Wrappers** (`adair-flutter-lib/lib/wrappers/`) are thin, 1:1 delegations to a

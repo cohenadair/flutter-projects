@@ -142,9 +142,9 @@ Only when the user asks for screenshots, previews, or a video to be
 uploaded. Never upload media the user didn't point at, and never reuse an
 old export without asking.
 
-**Source.** `--media` takes the screenshots tool's (`screenshots/`
-submodule) **Export bundle** / **Export all** zip as downloaded, or that
-zip extracted. Its layout is
+**Source.** `--media` takes the screenshots studio's
+(`screenshots/studio`) **Export bundle** / **Export all** zip as downloaded,
+or that zip extracted. Its layout is
 `<ios|android>/<device>/<WxH>/<locale>/NN-<layout>.png`. Pass `--media`
 more than once to combine exports (e.g. an iOS zip and an Android zip).
 Ask the user which file to use; it's usually the newest
