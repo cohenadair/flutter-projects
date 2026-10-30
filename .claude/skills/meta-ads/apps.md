@@ -8,7 +8,7 @@ fill it in **before** creating anything.
 |---|---|---|---|---|---|---|---|
 | Activity Log | English | US, CA, GB, AU, NZ, IE | 18–65 (both platforms) | 1423092639929446 | id1458926666 | com.cohenadair.activitylog | ? |
 | Anglers' Log | English (app also supports Spanish) | US, CA, GB, AU, NZ, IE (Spanish markets MX, ES, AR, CL, CO once there are Spanish images) | 18–64 (hard limit; smartphone users) | 1100097140947439 | id959989008 | com.cohenadair.anglerslog | `~/Downloads/anglers-log-meta-ads` |
-| Tapd | ? | ? | ? | 906547471192431 | id1019522139 | com.cohenadair.colortap | ? |
+| Tapd | English | US, CA, GB, AU, NZ, IE | 18–65 (hard limit) | 906547471192431 | id1019522139 | com.cohenadair.colortap | `~/Downloads/tapd-campaign-videos` (cut videos in `ads/`) |
 
 Store links: `https://apps.apple.com/app/<App Store ID>` and
 `https://play.google.com/store/apps/details?id=<package>`.
@@ -134,3 +134,25 @@ Store links: `https://apps.apple.com/app/<App Store ID>` and
 - Eligible for SKAdNetwork campaigns: "Apple's SKAdNetwork Reporting" appears
   when Tapd is picked in a new iOS 14+ campaign (checked 2026-10-07). Tick it
   when creating Tapd's iOS campaign; it can't be added later.
+- Minimum Android: 7.0 (`minSdk` is Flutter's default).
+- Structure (2026-10-30): one campaign per platform with a **single ad set**
+  each, $5/day. Placements are the defaults **plus Messenger** (Tapd only).
+- Approved copy (2026-10-30):
+  - Primary text: "Tap the matching targets as fast as you can. Then watch
+    out: the target changes! Take it slow on Very Easy or test your reflexes
+    on Expert."
+  - Headline: "Tap faster than you can think"
+  - Description: "Free to play, always"
+  - CTA: "Play Game" (`PLAY_GAME`) if Meta accepts it for app installs,
+    otherwise "Install Now".
+- Videos: not AI-generated. **One set for both platforms**
+  (`ads/tapd_9x16.mp4`, `ads/tapd_4x5.mp4`): the phone frame is generic and
+  the status bar is cropped, so nothing in them is iOS- or Android-specific.
+  Cut from the raw iPhone simulator preview with the full gameplay in a 30px
+  black phone frame on the icon's dark purple (`#1E0336`); a two-line "Tap
+  the matching / targets as they fall" hook over the first frame, frozen for
+  1.5s so it can be read; and an end card (icon,
+  "Tapd", "Play for free, always") on `#333333`. The app icon artwork has
+  compression noise baked into its background; denoise it (`ffmpeg -vf
+  nlmeans=s=6:p=7:r=21`) before showing it large. The iPad recording isn't
+  used yet.

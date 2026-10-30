@@ -69,8 +69,8 @@ applies to another.
 
 - **One campaign per platform** (iOS / Android). Creative, copy, and store
   wording are platform-specific — never mix platforms in one ad.
-- **Budget cap: at most $20/day across all campaigns in the account**
-  (2026-10-06; currently $5/day per campaign). Check the total before adding
+- **Budget cap: at most $30/day across all campaigns in the account**
+  (raised from $20 on 2026-10-30; currently $5/day per campaign). Check the total before adding
   or raising any budget.
 - Budget at the **campaign level** (CBO) by default — let Meta split it
   between ad sets.
@@ -214,7 +214,8 @@ applies to another.
     "profile_feed", "ig_search"],
   "threads_positions": ["threads_stream"]
   ```
-  No Audience Network or Messenger. Don't add retired positions:
+  No Audience Network or Messenger — except Tapd, which also runs on
+  Messenger (see `apps.md`). Don't add retired positions:
   Facebook `video_feeds`, Instagram `explore` (keep `explore_home`). Don't
   send `targeting_optimization`, which has been removed; Advantage+ detailed
   targeting now applies automatically.
@@ -238,6 +239,12 @@ applies to another.
   and the CTA/caption overlay covers roughly the bottom third. Key content
   should stay out of the outer ~6% on each side and the bottom ~35% (and the
   top ~14%).
+- **Export cut videos at 1080 wide** (1080x1920 for 9:16, 1080x1350 for
+  4:5). Meta accepts larger files with the same aspect ratio, but delivers at
+  about 1080 wide, and simulator/emulator recordings are ≤1080 wide anyway.
+  Render text overlays as PNGs (the local ffmpeg has no `drawtext`); in zsh,
+  brace variables inside filter strings (`${pad}`, `${XOFF}[v]`), or `:c` and
+  `[x]` are parsed as modifiers/subscripts.
 - **Creatives are immutable.** Changing one means creating a new creative.
   `ads_creative_delete` isn't rolled out to this account yet, so ask the user
   to delete orphaned creatives in Ads Manager → Creatives.

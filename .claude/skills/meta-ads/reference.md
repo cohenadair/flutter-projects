@@ -36,4 +36,5 @@ Advertiser (`dsa_beneficiary`) and payer (`dsa_payor`): **Cohen Adair**.
 | Account | ID | Linked Page |
 |---|---|---|
 | @activitylogapp | 17841414881325774 | Activity Log |
+| @tapdgame | 17841470313603150 | Tapd: A Coordination Game |
 | (Anglers' Log) | 17841401891198301 | Anglers' Log — used by its existing creatives; doesn't appear in `ads_get_ig_accounts` but works as `instagram_user_id` |
