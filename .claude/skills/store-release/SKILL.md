@@ -1,5 +1,5 @@
 ---
-name: create-store-release
+name: store-release
 description: >
   Creates the store release for a build that's already uploaded and submits
   it for app review — a new App Store Connect version (iOS) and a Google
@@ -12,19 +12,23 @@ description: >
   "publish the release", "create the store releases", "promote to
   production", "send 2.8.1 to app review", "create the release but don't
   submit it", "prepare the release", "set up 2.8.1 in the stores",
-  "upload the new screenshots", or asks what state a release is in on the
-  stores ("is tapd in review yet?"). Works for anglers-log, activity-log, and
-  tapd only — not pro-iq, whose releases are created manually. This skill
-  never builds or uploads anything — that is `build-and-upload-release`,
+  or asks what state a release is in on the stores ("is tapd in review
+  yet?"). Use Media mode (screenshots/banners only, no build, notes, or
+  review submission) when they say "upload the new screenshots", "update
+  the store screenshots", "attach screenshots to 2.8.2", "update the Play
+  listing images", or otherwise want media uploaded without submitting.
+  Works for anglers-log, activity-log, and tapd only — not pro-iq, whose
+  releases are created manually. This skill never builds or uploads a
+  build — that is `build-and-upload-release`,
   which is run (and release-tested) beforehand; don't chain into this skill
   from it unless the user asks.
 ---
 
-# create-store-release Skill
+# store-release Skill
 
 Takes a build that `build-and-upload-release` already put on App Store
 Connect / Google Play's internal track and turns it into a release that's
-submitted for review. Everything goes through `create_store_release.py`
+submitted for review. Everything goes through `store_release.py`
 (next to this file); no dependencies beyond `python3` and `openssl`.
 
 ## Modes
@@ -34,6 +38,7 @@ submitted for review. Everything goes through `create_store_release.py`
 | **Status** — "is tapd in review yet?" | `status` | A report; nothing changes. |
 | **Prepare** — "create the release but don't submit it" | `prepare` | App Store version in "Prepare for Submission"; Google Play **draft** production release. Nobody sees it. |
 | **Submit** — "submit the release" (default) | `submit` | Both sent for review. |
+| **Media** — "upload the new screenshots" | `media` | Media only (see Step 4 → Media mode). Nothing attached, nothing sent for review. |
 
 `prepare` followed later by `submit` is a normal flow: `submit` picks up
 the prepared release and, without `--notes-file`, reuses its What's New.
@@ -46,7 +51,7 @@ so an explicit request to prepare is the go-ahead — show the plan and run
 it.
 
 ```bash
-python3 /Users/cohen/Documents/flutter-projects/.claude/skills/create-store-release/create_store_release.py <status|prepare|submit> <project> [flags]
+python3 /Users/cohen/Documents/flutter-projects/.claude/skills/store-release/store_release.py <status|prepare|submit|media> <project> [flags]
 ```
 
 | Flag | Meaning |
@@ -56,6 +61,7 @@ python3 /Users/cohen/Documents/flutter-projects/.claude/skills/create-store-rele
 | `--notes-file <path>` | What's New JSON (Step 3). Omit to keep the release's current text; `submit` then fails if any locale's text is empty. |
 | `--media <zip-or-folder>` | Repeatable. Screenshots/previews to upload (Step 4). |
 | `--play-video-url <url>` | Google Play promo video (YouTube) for every listing locale (Step 4). |
+| `--play-send-for-review` | `media` only: commit the Play listing changes normally, sending them for review (Step 4 → Media mode). Only with the user's explicit OK. |
 | `--release-type manual\|after-approval` | App Store. Default: same as the live version. |
 | `--phased` / `--no-phased` | App Store 7-day phased release. Default: same as the live version. |
 | `--rollout-fraction F` | Google Play staged rollout, `0 < F <= 1`. Default `1` (everyone). Ignored by `prepare`. |
@@ -73,7 +79,7 @@ it with another project's key or by calling the store APIs directly.
 ## Step 2 — Run `status` and check the build
 
 ```bash
-python3 .../create_store_release.py status <project>
+python3 .../store_release.py status <project>
 ```
 
 Read-only (on Google Play it opens an edit and discards it). Per target:
@@ -226,6 +232,43 @@ App Store Connect.
   still the current one. `prepare` reports Play media as not uploaded;
   pass the same `--media` / `--play-video-url` to `submit` later.
 
+**Media mode** (`media`). Uploads `--media` / `--play-video-url` and
+nothing else, for when the user wants new screenshots in place but will
+review and submit themselves:
+
+```bash
+python3 .../store_release.py media <project> --version X.Y.Z --media <zip-or-folder> [--platform ios|android]
+```
+
+- **App Store**: replaces the media on the existing editable `--version`
+  (e.g. one in "Prepare for Submission"). No build is needed, and it
+  attaches none, leaves What's New, the release type, and phased release
+  as they are, and creates no review submission. If the version doesn't
+  exist, it stops; run `prepare` first. Banners already in the asset
+  library under the same reference name (same file, e.g. the `en` banner
+  placed on another locale) are reused, not uploaded again.
+- **Google Play**: replaces the main store listing's images (every listing
+  locale, matched as above) and commits with `changesNotSentForReview`, so
+  the changes wait in the Play Console until the user sends them. Google
+  Play only accepts that flag while the app already has changes waiting to
+  be sent from the console (e.g. after a rejection). Otherwise, Play
+  refuses ("Changes are sent for review automatically"), nothing is
+  changed, and the script says so. This happens even with managed
+  publishing on (confirmed 2026-10-29 on anglers-log): managed publishing
+  only holds approved changes back from going live. It doesn't stop the
+  API from sending them for review. Tell the user to upload the images in
+  the Play Console, or, with their explicit OK in this conversation, re-run
+  with `--play-send-for-review`. That commits normally and sends the
+  listing for review. With managed publishing on (anglers-log has it on as
+  of 2026-10-29), approved changes still wait for the user to publish them
+  in Publishing overview. Never add the flag on your own. Custom store
+  listings aren't touched.
+
+Media mode changes nothing customers can see (the App Store media goes out
+with the version; Play waits for the user), so a request for it is the
+go-ahead. Show the plan from Step 5 (slots replaced, ignored files) and
+run it. No confirmation is needed.
+
 ## Step 5 — Show the plan (and, for `submit`, get a yes)
 
 One table, one row per target: store, app, version (build), what will
@@ -250,7 +293,7 @@ go-ahead. For `prepare`, go straight on.
 ## Step 6 — Prepare or submit
 
 ```bash
-python3 .../create_store_release.py <prepare|submit> <project> [--notes-file <path>] [--media <zip>] [flags]
+python3 .../store_release.py <prepare|submit> <project> [--notes-file <path>] [--media <zip>] [flags]
 ```
 
 What it does, per target:
@@ -268,7 +311,8 @@ What it does, per target:
 It's idempotent: a target that's already in review or live comes back as
 `already_<state>` and is left alone, and media slots already up to date
 are skipped, so re-running after a partial failure is safe. Each target
-reports `result` (`submitted`, `prepared`, `already_*`), the `actions`
+reports `result` (`submitted`, `prepared`, `media_uploaded`,
+`media_sent_for_review`, `already_*`), the `actions`
 taken, `media` (what was replaced / unchanged / left alone), and `error`.
 
 ## Step 7 — Handle errors
@@ -276,6 +320,9 @@ taken, `media` (what was replaced / unchanged / left alone), and `error`.
 Never retry by changing what's being submitted (a different build, dropped
 locales, shortened notes) without asking.
 
+- `Google Play sends this app's changes for review automatically` (Media
+  mode) → Play can't stage this app's listing changes through the API;
+  see Step 4 → Media mode. Nothing was changed on Play.
 - `missing_asc_key` → `config.json` or its key is missing; walk the user
   through **Setup**. The Android target still ran — report it.
 - `Build is PROCESSING` → Apple hasn't finished; try again in a few minutes.
@@ -287,7 +334,11 @@ locales, shortened notes) without asking.
   attention in App Store Connect first.
 - `HTTP 401` → wrong key/issuer ID or a revoked key. `HTTP 403` → the key's
   role is too low (needs App Manager), or for Google Play the service
-  account lacks release permissions for that app.
+  account lacks release permissions for that app. A Google Play 403 on
+  `:commit` after listing images uploaded fine means the service account
+  can't edit the store listing. The user grants "Edit store listing,
+  pricing & distribution" for that app in Play Console → Users and
+  permissions. The edit is discarded, so nothing changed.
 - `HTTP 409` from App Store Connect → the message names what's missing
   (screenshots for a new device size, an unanswered questionnaire, …).
   Usually something only the console can fix; relay it verbatim.
@@ -360,7 +411,7 @@ checkout.
 
 ## Adding a project
 
-Projects are listed in `PROJECTS` at the top of `create_store_release.py`
+Projects are listed in `PROJECTS` at the top of `store_release.py`
 (project dir, Apple bundle ID, Android package, platforms). A project on a
 different Apple team also needs that team's key in `config.json`. The
 script assumes one app per project; a multi-tenant project like pro-iq

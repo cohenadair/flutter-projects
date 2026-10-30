@@ -10,6 +10,10 @@ Commands:
                      "What's New" text and media, but doesn't send it for
                      review (Google Play: a draft production release).
   submit <project>   Everything `prepare` does, then submits it for review.
+  media <project>    Uploads --media / --play-video-url only: App Store, onto
+                     the existing editable --version (no build, notes, or
+                     review submission); Google Play, onto the store listing,
+                     committed without sending it for review.
 
 Media (--media): a folder or .zip exported by the screenshots tool, laid out
 as <ios|android>/<device>/<WxH>/<locale>/<files>. iOS folders may also hold
@@ -965,6 +969,25 @@ def asc_upload_banner(app_id, path, token):
         time.sleep(3)
 
 
+def asc_library_image(app_id, reference_name, token):
+    """The id of a processed asset library image with this reference name,
+    or None. Apple rejects a second upload under the same name, so a banner
+    already uploaded for another locale or version is reused."""
+    page = asc_get("/v1/appAssetLibraries/{}/images".format(app_id), token,
+                   {"limit": 200})
+    while True:
+        for item in page["data"]:
+            attributes = item["attributes"]
+            if attributes.get("referenceName") == reference_name and \
+                    attributes.get("imageAsset") is not None and \
+                    attributes.get("state") not in ("FAILED", "ARCHIVED"):
+                return item["id"]
+        next_url = page.get("links", {}).get("next")
+        if next_url is None:
+            return None
+        page = api("GET", next_url, token)
+
+
 def asc_apply_banners(app_id, localizations, media, token):
     """Place each banner `media` has, per locale, replacing what's there.
 
@@ -991,7 +1014,10 @@ def asc_apply_banners(app_id, localizations, media, token):
                 report["unchanged"].append(label)
                 continue
             # Upload first, so a rejected file leaves the old banner placed.
-            image_id = asc_upload_banner(app_id, path, token)
+            image_id = asc_library_image(
+                app_id, asc_banner_reference_name(path), token)
+            if image_id is None:
+                image_id = asc_upload_banner(app_id, path, token)
             if current is not None:
                 api("DELETE", ASC_API + "/v1/appAssetLibraryPlacements/"
                     + current["id"], token)
@@ -1049,6 +1075,39 @@ def asc_status(target, token):
         "locales": locales,
         "media": media,
     }
+
+
+def asc_media(target, token, media):
+    """Upload media onto an existing editable version, changing nothing
+    else."""
+    loaded = asc_load(target, token)
+    version = next(
+        (v for v in loaded["versions"] if v["version"] == target["version"]),
+        None,
+    )
+    if version is None:
+        raise Stop("Version {} isn't on App Store Connect; create it first "
+                   "(prepare)".format(target["version"]))
+    if version["state"] not in ASC_EDITABLE_STATES:
+        raise Stop("Version {} is {}; its media can't be changed".format(
+            target["version"], version["state"]))
+
+    actions = []
+    media_report = None
+    localizations = asc_localizations(version["id"], token)
+    if media["app_store"]:
+        media_report = asc_apply_media(localizations, media, token)
+        actions.append("replaced {} media set(s), {} already up to date"
+                       .format(len(media_report["replaced"]),
+                               len(media_report["unchanged"])))
+    if media["app_store_banners"]:
+        banner_report = asc_apply_banners(
+            loaded["app"]["id"], localizations, media, token)
+        media_report = dict(media_report or {}, banners=banner_report)
+        actions.append("replaced {} banner(s), {} already up to date".format(
+            len(banner_report["replaced"]), len(banner_report["unchanged"])))
+    return {"result": "media_uploaded", "actions": actions,
+            "media": media_report}
 
 
 def asc_submit(target, token, notes, media, args):
@@ -1431,6 +1490,49 @@ def play_apply_media(edit, listings, media, video_url):
     return report
 
 
+def play_media(target, token, media, args):
+    """Update the store listing's media, committed without sending it for
+    review. Google Play only allows that while the app already has changes
+    waiting to be sent from the Play Console (e.g. after a rejection);
+    managed publishing doesn't affect it. With --play-send-for-review, the
+    edit is committed normally, which sends it for review."""
+    with PlayEdit(target["android_package"], token) as edit:
+        media_report = play_apply_media(
+            edit, edit.listings(), media or {"google_play": {}},
+            args.play_video_url)
+        if args.play_send_for_review:
+            edit.call("POST", ":commit")
+            edit.committed = True
+            return {
+                "result": "media_sent_for_review",
+                "actions": ["replaced {} listing asset(s), {} already up to "
+                            "date; sent for review".format(
+                                len(media_report["replaced"]),
+                                len(media_report["unchanged"]))],
+                "media": media_report,
+            }
+        try:
+            edit.call("POST", ":commit?changesNotSentForReview=true")
+        except ApiError as e:
+            if e.code == 400 and "sent for review automatically" in str(e):
+                raise Stop(
+                    "Google Play sends this app's changes for review "
+                    "automatically, so media can't be committed through the "
+                    "API without submitting it. Nothing was changed. Upload "
+                    "the images in the Play Console, or re-run with "
+                    "--play-send-for-review.")
+            raise
+        edit.committed = True
+        return {
+            "result": "media_uploaded",
+            "actions": ["replaced {} listing asset(s), {} already up to date; "
+                        "not sent for review".format(
+                            len(media_report["replaced"]),
+                            len(media_report["unchanged"]))],
+            "media": media_report,
+        }
+
+
 def play_production_release(tracks, version_code):
     """The production release holding this version code, if any."""
     for track in tracks:
@@ -1530,6 +1632,8 @@ def run_target(target, args, notes, media, config):
         token = play_token(key_path)
         if args.command == "status":
             return play_status(target, token)
+        if args.command == "media":
+            return play_media(target, token, media, args)
         return play_submit(target, token, notes, media, args)
 
     team_id = target["credentials"]["apple_team_id"]
@@ -1541,12 +1645,17 @@ def run_target(target, args, notes, media, config):
     token = asc_token(key)
     if args.command == "status":
         return asc_status(target, token)
+    if args.command == "media":
+        if media is None:
+            return {"result": "skipped", "actions": ["no --media"]}
+        return asc_media(target, token, media)
     return asc_submit(target, token, notes, media, args)
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    parser.add_argument("command", choices=["status", "prepare", "submit"])
+    parser.add_argument(
+        "command", choices=["status", "prepare", "submit", "media"])
     parser.add_argument("project", choices=sorted(PROJECTS))
     parser.add_argument(
         "--platform", action="append", default=[],
@@ -1574,6 +1683,11 @@ def main():
              "Only sent with submit.",
     )
     parser.add_argument(
+        "--play-send-for-review", action="store_true",
+        help="media only: commit the Google Play listing changes normally, "
+             "which sends them for review.",
+    )
+    parser.add_argument(
         "--release-type", choices=sorted(ASC_RELEASE_TYPES),
         help="App Store: release manually or automatically after approval. "
              "Default: same as the live version.",
@@ -1597,6 +1711,13 @@ def main():
             args.notes_file or args.media or args.play_video_url):
         parser.error("status doesn't take --notes-file, --media, or "
                      "--play-video-url")
+    if args.command == "media":
+        if args.notes_file:
+            parser.error("media doesn't take --notes-file")
+        if not args.media and not args.play_video_url:
+            parser.error("media needs --media and/or --play-video-url")
+    elif args.play_send_for_review:
+        parser.error("--play-send-for-review only applies to media")
 
     with tempfile.TemporaryDirectory() as scratch:
         return run(args, scratch)

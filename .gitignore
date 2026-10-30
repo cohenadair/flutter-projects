@@ -10,5 +10,5 @@ google-play-release-pipeline-key.json
 .claude/skills/app-store-reviews/config.json
 .claude/skills/app-store-reviews/state.json
 .claude/skills/app-store-reviews/*.p8
-.claude/skills/create-store-release/config.json
-.claude/skills/create-store-release/*.p8
+.claude/skills/store-release/config.json
+.claude/skills/store-release/*.p8
