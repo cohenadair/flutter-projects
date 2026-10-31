@@ -143,8 +143,15 @@ Store links: `https://apps.apple.com/app/<App Store ID>` and
     on Expert."
   - Headline: "Tap faster than you can think"
   - Description: "Free to play, always"
-  - CTA: "Play Game" (`PLAY_GAME`) if Meta accepts it for app installs,
-    otherwise "Install Now".
+  - CTA: "Play Game" (`PLAY_GAME`); Meta accepts it for app installs.
+- Campaigns (published 2026-10-30, CAD 5/day each). Messenger positions
+  `messenger_home` and `story` were accepted.
+  - iOS: campaign `52591843605589` (SKAdNetwork), ad set `52591843623389`,
+    ad `52591846070989`, creative `1440615194341089`.
+  - Android: campaign `52591843631389`, ad set `52591843638789`, ad
+    `52591846080189`, creative `1663866981931055`.
+  - Videos: 4:5 `2241089453128653` (fallback), 9:16 `1119899097086286`
+    (Stories/Reels, including Messenger Stories).
 - Videos: not AI-generated. **One set for both platforms**
   (`ads/tapd_9x16.mp4`, `ads/tapd_4x5.mp4`): the phone frame is generic and
   the status bar is cropped, so nothing in them is iOS- or Android-specific.

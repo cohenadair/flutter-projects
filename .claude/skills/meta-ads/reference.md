@@ -31,6 +31,11 @@ Advertiser (`dsa_beneficiary`) and payer (`dsa_payor`): **Cohen Adair**.
 | Anglers' Log | 1596128913937921 |
 | Tapd: A Coordination Game | 476507835549225 |
 
+All three Pages and their Instagram accounts are in the Cohen Adair Apps
+portfolio, with the ad account connected (2026-10-30). Tapd's Page was
+originally owned by the user's personal profile, which blocked its creatives
+(see Troubleshooting in `SKILL.md`).
+
 ## Instagram accounts
 
 | Account | ID | Linked Page |

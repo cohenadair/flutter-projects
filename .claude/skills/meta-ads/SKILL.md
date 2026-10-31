@@ -305,6 +305,13 @@ applies to another.
   2. If it shows in Ads Manager but not here, the connector lacks Instagram
      permission: remove the integration and reconnect the Meta Ads connector,
      granting "all and future" access.
+- **"Ad account has no access to this Instagram account" (1815199)** on
+  `ads_create_creative`, even though `ads_get_ig_accounts` lists the account
+  and the ad account is a connected asset. The app's Facebook Page was owned
+  by the user's personal profile, not the portfolio (Ads Manager's Page picker
+  shows it under "Personal", and its Instagram account isn't offered). Fix:
+  move both the Page and the Instagram account into Cohen Adair Apps, with the
+  ad account added as a connected asset on each (Tapd, 2026-10-30).
 - **Portfolios can't be merged.** Move individual assets (Instagram accounts,
   Pages) between portfolios instead; ad accounts can't be moved.
 - **"App is Ineligible for Apple's SKAdNetwork" (3955033) / "No Opt Out
