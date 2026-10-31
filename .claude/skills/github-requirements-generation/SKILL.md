@@ -8,7 +8,9 @@ description: >
   "generate requirements for this issue", "write the spec for this feature",
   "prepare this issue for implementation", or "make a prompt for this issue".
   Always invoke this skill when the user pastes or mentions a GitHub issue URL
-  alongside any request related to planning, speccing, or implementing a feature.
+  alongside any request related to planning or speccing a feature. When the
+  user wants the issue implemented and a PR opened, use `ship-ticket`
+  instead (it runs this skill's steps itself).
 ---
 
 # GitHub Requirements Generation
