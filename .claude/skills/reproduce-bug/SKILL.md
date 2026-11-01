@@ -183,7 +183,8 @@ Remove a worktree this step created at the end (Step 7).
 they take up disk space, and the existing ones are known to work. The user
 doesn't mind the app's data on them being wiped, so uninstalling the app
 for a fresh install is fine. Only the app under test, though: don't erase
-the whole device (`simctl erase`, `-wipe-data`).
+the whole device (`simctl erase`, `-wipe-data`), except when the Android
+emulator is too full to install the build (see Android below).
 
 **Only one simulator or emulator at a time.** More than one strains the
 user's CPU too much. Before booting anything, check what's running (`xcrun
@@ -197,6 +198,9 @@ simctl list devices booted`, `adb devices`):
   ask them to stop the session instead.
 - For a two-platform check, do one platform, shut its device down, then
   boot the other.
+- **Always close the Android emulator before opening an iOS simulator, and
+  vice versa**, and confirm it's gone (`adb devices` lists nothing; `xcrun
+  simctl list devices booted` is empty) before booting the other.
 
 ### iOS
 
@@ -219,8 +223,12 @@ Use the user's phone AVD, `Pixel_9_Pro` (`emulator -list-avds`; the
 `emulator -avd Pixel_9_Pro -no-audio -no-boot-anim`. It keeps its quick-boot
 snapshot, so it boots in seconds.
 
-- **Never `-wipe-data`.** It redoes several minutes of first-boot Google
-  services setup, and a fresh app install doesn't need a fresh device.
+- **Don't `-wipe-data` routinely.** It redoes several minutes of first-boot
+  Google services setup, and a fresh app install doesn't need a fresh
+  device. The exception: if an install fails with
+  `INSTALL_FAILED_INSUFFICIENT_STORAGE` (check `adb shell df -h /data`),
+  shut it down and boot it with `-wipe-data` without asking. Don't
+  uninstall the user's other apps to make room instead.
 - **Turn off animations** after it boots (`adb shell settings put global
   window_animation_scale 0`, and the same for `transition_animation_scale`
   and `animator_duration_scale`). Turn them back on (`1`) before shutting it

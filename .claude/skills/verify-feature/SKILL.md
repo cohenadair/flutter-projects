@@ -30,6 +30,16 @@ screenshot naming, and the per-app notes. Prefer iOS when one platform is
 enough. Running the app is the point of this skill. Never kill the user's
 own `flutter run` sessions, and never change app code here.
 
+Two device rules to keep in mind (details in `reproduce-bug` Step 4):
+
+- **Always close the Android emulator before opening an iOS simulator, and
+  vice versa**, and confirm it's gone (`adb devices` lists nothing; `xcrun
+  simctl list devices booted` is empty) before booting the other.
+- **If the Android emulator is too full to install the build**
+  (`INSTALL_FAILED_INSUFFICIENT_STORAGE`), shut it down and boot it with
+  `-wipe-data` without asking. Don't uninstall the user's other apps to
+  make room.
+
 ## Inputs
 
 - **A PR** (URL, or number with repo), or

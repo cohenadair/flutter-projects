@@ -106,6 +106,12 @@ expect(Activity.fromMap(map).createdAt, 0);
   `adair_flutter_lib/managers/auth_manager.dart`), never a page-level or
   util sign-out helper. A manager only gets the hook if it's in
   `AdairFlutterLibApp.managers`.
+- **Singleton constructors stay private.** Never give a manager (or wrapper)
+  a public or `@visibleForTesting` constructor — only the private `._()`.
+  Tests swap instances with `set()` (a mock) or `reset()` (a fresh real
+  instance, then use `.get`). **Exception:** anglers-log's `AppManager`
+  keeps its public constructor for now, because `TestAppManager` in
+  `test/app_manager_test.dart` subclasses it (see its TODO).
 - **Managers aren't Riverpod consumers.** Singletons have no `Ref`, so they
   can't read providers like `currentUserProvider`. When a manager needs the
   current user, the caller passes it in.
