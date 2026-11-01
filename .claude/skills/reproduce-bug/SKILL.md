@@ -163,17 +163,10 @@ Then prepare it. This is the same setup `ship-ticket` uses:
      | while read -r f; do mkdir -p "<worktree>/$(dirname "$f")"; cp "$f" "<worktree>/$f"; done
    ```
 2. **Android signing.** Never copy release keystores or
-   `keystore.properties` into a worktree. Some apps' Gradle files need a
-   `keystore.properties` even for debug builds; anglers-log's fallback to
-   debug signing is broken, so its build fails with `Cannot convert 'null'
-   to File` without one. When a project has `android/keystore.properties`
-   in its main checkout, write a temporary one in the worktree that points
-   at the standard Android debug key (public, well-known values):
-   ```bash
-   printf 'storeFile=%s\nstorePassword=android\nkeyAlias=androiddebugkey\nkeyPassword=android\n' \
-     "$HOME/.android/debug.keystore" > <worktree>/<app root>/android/keystore.properties
-   ```
-   It's gitignored and goes away with the worktree.
+   `keystore.properties` into a worktree, and don't write one. Every app
+   builds debug APKs without it, signed with the standard debug key, so
+   repro with debug builds (anglers-log and activity-log release builds
+   fail without it).
 3. `flutter pub get` in the worktree's app root. App dependencies on
    `adair-flutter-lib` are relative paths, and a sibling worktree resolves
    them to the main checkout's lib.

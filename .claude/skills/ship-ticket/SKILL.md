@@ -54,9 +54,9 @@ git -C <repo-dir> worktree add ../<repo-name>-issue-<n> -b issue-<n> "origin/$DE
 
 The worktree is a sibling of the submodule inside the monorepo root, so the
 apps' relative `adair-flutter-lib` paths still resolve. Prepare it exactly
-as `reproduce-bug` Step 3 describes (copy gitignored config, a debug-key
-`keystore.properties` where needed and never the release one, `flutter pub
-get`, generators if needed). Do all remaining work, including tests and
+as `reproduce-bug` Step 3 describes (copy gitignored config, never a
+`keystore.properties` or release keystore, `flutter pub get`, generators
+if needed). Do all remaining work, including tests and
 `dart format`, in the worktree, never in the main checkout.
 
 **If `adair-flutter-lib` must change too**, create a second worktree for it
