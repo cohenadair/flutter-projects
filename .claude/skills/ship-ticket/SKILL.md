@@ -159,7 +159,7 @@ the user says to.
 4. `git push -u origin issue-<n>`, then:
    ```bash
    gh pr create --repo <owner>/<repo> --base "$DEFAULT" --head issue-<n> \
-     --title "<imperative summary>" --body-file <scratchpad>/pr-<n>.md
+     --title "#<n>: <imperative summary>" --body-file <scratchpad>/pr-<n>.md
    ```
    Add `--label ios` / `--label android` if the change is specific to one
    platform and the label exists in the repo (`gh label list`).

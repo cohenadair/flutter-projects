@@ -155,11 +155,13 @@ git -C <repo-dir> worktree add --detach ../<repo-name>-repro-<n> "origin/$DEFAUL
 Then prepare it. This is the same setup `ship-ticket` uses:
 
 1. **Copy gitignored config** the build needs (Firebase options and plists,
-   `sensitive.properties`, pro-iq's `dart-defines/`) from the main checkout:
+   `firebase.json`, `sensitive.properties`, pro-iq's `dart-defines/`) from
+   the main checkout. Without `firebase.json`, iOS builds fail in the
+   FlutterFire Crashlytics upload step:
    ```bash
    cd <repo-dir> && git ls-files --others --ignored --exclude-standard \
      | grep -vE '(^|/)(build|\.dart_tool|Pods|node_modules)/' \
-     | grep -E '(firebase_options.*\.dart|GoogleService-Info\.plist|google-services\.json|sensitive\.properties|^dart-defines/)' \
+     | grep -E '(firebase_options.*\.dart|GoogleService-Info\.plist|google-services\.json|(^|/)firebase\.json$|sensitive\.properties|^dart-defines/)' \
      | while read -r f; do mkdir -p "<worktree>/$(dirname "$f")"; cp "$f" "<worktree>/$f"; done
    ```
 2. **Android signing.** Never copy release keystores or
