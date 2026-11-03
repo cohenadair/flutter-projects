@@ -145,7 +145,10 @@ Store links: `https://apps.apple.com/app/<App Store ID>` and
   - Description: "Free to play, always"
   - CTA: "Play Game" (`PLAY_GAME`); Meta accepts it for app installs.
 - Campaigns (published 2026-10-30, CAD 5/day each). Messenger positions
-  `messenger_home` and `story` were accepted.
+  `messenger_home` and `story` were accepted, but **Meta doesn't deliver
+  there**: both ad sets list `messenger` in `publisher_platforms` but not in
+  `effective_publisher_platforms`, and the Oct 27 – Nov 2 breakdown had no
+  Messenger rows (checked 2026-11-03).
   - iOS: campaign `52591843605589` (SKAdNetwork), ad set `52591843623389`,
     ad `52591846070989`, creative `1440615194341089`.
   - Android: campaign `52591843631389`, ad set `52591843638789`, ad

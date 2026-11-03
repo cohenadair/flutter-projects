@@ -391,7 +391,11 @@ name one.
    biggest problems, and **Meta's Opportunity Score and anomaly tools don't flag
    them**. Flag any `audience_network` rows in the `publisher_platform`
    breakdown and any `mobileexternal` in an ad set's `targeting.page_types`
-   (hidden Audience Network; see Troubleshooting). Compare countries with the
+   (hidden Audience Network; see Troubleshooting). Also compare each ad
+   set's `targeting.publisher_platforms` with
+   `targeting.effective_publisher_platforms`: a platform in the first but not
+   the second was accepted but is silently not delivered (e.g. Messenger for
+   Tapd, 2026-11-03). Compare countries with the
    app's row in `apps.md`. A country
    breakdown can exceed the response limit; when it's saved to a file,
    summarize it with `jq` (top spenders, plus the share going to target
