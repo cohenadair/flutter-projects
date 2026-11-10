@@ -38,9 +38,12 @@ Store links: `https://apps.apple.com/app/<App Store ID>` and
   workouts, hobbies and side projects in one tap and see where the hours go."
   Creatives: iOS video `2271107360412381`, iOS carousel `1119157603778300`,
   Android video `2229159977866258`, Android carousel `1763512701585473`.
-  With the campaign budget, Meta gives the Android Video ad set almost
-  nothing (0.04 CAD in Oct 20–26), so in practice the campaign runs only the
-  carousel ad.
+  With the campaign budget, Meta gave the Android Video ad set almost
+  nothing (0.04 CAD in Oct 20–26, 0.57 in Nov 3–9). **Merged 2026-11-10:**
+  the video ad was copied into the Carousel ad set `52586848842589` as ad
+  `52594319892189` (same creative, via `source_ad_id`), and the Video ad set
+  `52586848840589` was paused. The Android ad sets target Facebook and
+  Instagram only, no Threads (they predate the Threads default).
 - **SKAdNetwork-eligible since 2026-10-14.** Before that, the "Apple's
   SKAdNetwork Reporting" checkbox didn't appear for Activity Log, and the API
   rejected it with "App is Ineligible for Apple's SKAdNetwork" (3955033). After
@@ -68,7 +71,11 @@ Store links: `https://apps.apple.com/app/<App Store ID>` and
     impressions after 2026-10-22, and `page_types` no longer lists
     `mobileexternal`. SKAdNetwork installs now show in `results` (3 in
     Oct 20–26, 2 of them credited to Audience Network impressions from before
-    the fix).
+    the fix), and keep reporting as numbers (1–2 a week), not "Not available".
+    **2026-11-10:** Video ad set `52588620593989` paused (Oct 23–Nov 9: CAD
+    37.83 for 1 install, CTR 0.44%, against the Carousel's 4 installs at CAD
+    12.61), and the campaign budget lowered from $5 to $4/day, with the $1
+    moved to Tapd (Android).
   - Deleted (gone from the account by 2026-10-20): AEM iOS campaigns
     `52588604262989` (a duplicate whose ad sets kept AEM) and `52586847840589`
     (the original). AEM only gets data from the Meta SDK, which the iOS app
@@ -124,6 +131,9 @@ Store links: `https://apps.apple.com/app/<App Store ID>` and
   - Carousel cards 4 and 6 say "(Pro)" because GPS trails and the species
     counter are Pro features. Card headlines truncate in Facebook Feed.
   - Spanish App Store previews are still pending from marketing.
+  - In Nov 3–9, Meta gave the "Bite" ads almost no budget in both Video ad
+    sets (CAD 0.17 Android, 3.80 iOS) and put nearly all of it into "Spot"
+    (the best Anglers' Log ad: Android 8 installs at CAD 3.18).
 
 ### Tapd
 
@@ -144,7 +154,9 @@ Store links: `https://apps.apple.com/app/<App Store ID>` and
   - Headline: "Tap faster than you can think"
   - Description: "Free to play, always"
   - CTA: "Play Game" (`PLAY_GAME`); Meta accepts it for app installs.
-- Campaigns (published 2026-10-30, CAD 5/day each). Messenger positions
+- Campaigns (published 2026-10-30, CAD 5/day each; Android raised to 6/day
+  on 2026-11-10 with $1 from Activity Log iOS, after CAD 1.09 per install in
+  Nov 3–9). Messenger positions
   `messenger_home` and `story` were accepted, but **Meta doesn't deliver
   there**: both ad sets list `messenger` in `publisher_platforms` but not in
   `effective_publisher_platforms`, and the Oct 27 – Nov 2 breakdown had no

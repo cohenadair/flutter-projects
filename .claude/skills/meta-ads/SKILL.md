@@ -70,7 +70,8 @@ applies to another.
 - **One campaign per platform** (iOS / Android). Creative, copy, and store
   wording are platform-specific — never mix platforms in one ad.
 - **Budget cap: at most $30/day across all campaigns in the account**
-  (raised from $20 on 2026-10-30; currently $5/day per campaign). Check the total before adding
+  (raised from $20 on 2026-10-30; currently $5/day per campaign, except Tapd Android $6 and Activity Log
+  iOS $4 since 2026-11-10). Check the total before adding
   or raising any budget.
 - Budget at the **campaign level** (CBO) by default — let Meta split it
   between ad sets.
