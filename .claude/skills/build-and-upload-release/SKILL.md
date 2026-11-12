@@ -72,7 +72,7 @@ Narrow the scope only when:
   pass those platform tokens (`ios`/`macos`/`android`) through.
 - The user names specific pro-iq tenants ("just pro-iq, not
   hill-method-coaching") → pass `--tenant=<id>` (repeatable).
-- **This is a retry of a previous failed run** — see Step 7. Scope to
+- **This is a retry of a previous failed run** — see Step 8. Scope to
   exactly the tenant/platform combinations that failed; don't rebuild ones
   that already succeeded.
 
@@ -122,10 +122,42 @@ bool get isPro => _state == SubscriptionState.pro;
    `grep -n 'bool get isPro' lib/managers/subscription_manager.dart` must
    print `bool get isPro => _state == SubscriptionState.pro;`. If it
    doesn't, stop and ask.
-5. In the final report (Step 8), say that the override was reverted and give
+5. In the final report (Step 9), say that the override was reverted and give
    the patch path.
 
-## Step 5 — Run it
+## Step 5 — Pre-build check: in-app change log
+
+**Skip this on retries** (Step 8). They reuse the build number from the
+original run, and the check already passed then.
+
+The change log page is compiled into the app. A release without an entry
+for its version would need a new build and upload to fix it.
+
+1. **Does the project have a change log page?** Use the **Project reference
+   table** in
+   `/Users/cohen/Documents/flutter-projects/.claude/skills/public-release-notes/SKILL.md`
+   as the source of truth. If it says "No", skip this step. If the project
+   isn't listed, ask the user rather than guessing.
+2. **Find the page.** Its path is project-specific. For example,
+   anglers-log's is `mobile/lib/pages/onboarding/change_log_page.dart`. If
+   it has moved, find it with the grep in `public-release-notes` Step 4.
+3. **Check for an entry for the release version** from Step 2 (the new
+   `X.Y.Z`, or the current one if it's being kept). Look at the working
+   tree, not `HEAD`, because the build compiles the working tree. In the
+   anglers-log pattern, version `2.8.3` needs both of these:
+   - a `_build2_8_3(context)` call at the top of the children list in
+     `build()`
+   - `changeLog_283_<n>` keys in every locale ARB file
+   Other projects may use a different pattern. Match what the page
+   actually does.
+4. **If the entry is missing or incomplete** (for example, one locale has
+   no keys), **stop before building.** Tell the user what's missing, and
+   offer to run the `public-release-notes` skill to add it. Build only once
+   the entry exists, or if the user explicitly says to release without it.
+5. If the entry exists but is uncommitted, say so in the final report
+   (Step 9). The build includes it, but the user needs to commit it.
+
+## Step 6 — Run it
 
 ```bash
 # anglers-log / activity-log / tapd — root script, project dir as an argument
@@ -149,7 +181,7 @@ step-by-step output lives in log files under `build/release_logs/`, printed
 in the table). Use a generous timeout; if using a background invocation,
 check back rather than assuming it's done from silence.
 
-## Step 6 — Read the report
+## Step 7 — Read the report
 
 Every run ends with a table listing each platform (pro-iq: each
 tenant/platform pair) as `uploaded`/`built`/`FAILED - <reason>`, plus the
@@ -160,7 +192,7 @@ actual compiler/signing/upload error.
 
 Report the table to the user first, in full, before doing any auto-fix work.
 
-## Step 7 — Auto-fix and retry failures
+## Step 8 — Auto-fix and retry failures
 
 For each failed platform, in order:
 
@@ -179,7 +211,7 @@ For each failed platform, in order:
    excerpts — don't loop indefinitely on the same platform.
 
 **Always retry with `--skip-version-bump`.** The version/build number was
-already bumped once during Step 5's run; other platforms in that same run
+already bumped once during Step 6's run; other platforms in that same run
 may have already uploaded successfully under that exact build number.
 Re-bumping on retry would give the retried platform a *different* build
 number than its siblings from the same release. Pass `--skip-version-bump`
@@ -230,7 +262,7 @@ cd /Users/cohen/Documents/flutter-projects && \
   a real bug, not a release-pipeline issue. Report it; fixing app code is
   outside this skill's scope unless the user explicitly asks you to.
 
-## Step 8 — Final report
+## Step 9 — Final report
 
 After all retries (successful or exhausted), give one final table covering
 every platform from the original run — including ones fixed on retry (note
