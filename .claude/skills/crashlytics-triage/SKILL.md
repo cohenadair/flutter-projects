@@ -58,8 +58,9 @@ Three modes, all starting from the same Firebase MCP fetch:
 
 Every `crashlytics_*` tool takes an explicit `appId`, so this skill never
 needs an active project. **Do not call `firebase_update_environment`** (it's
-no longer in `.mcp.json`'s `--tools` allow-list) and do not run
-`firebase use`. Setting `active_project` writes a per-directory override
+not in `.mcp.json`'s `--tools` allow-list, but the Firebase plugin's server
+exposes it as `mcp__plugin_firebase_firebase__firebase_update_environment`
+— don't call that one either) and do not run `firebase use`. Setting `active_project` writes a per-directory override
 into `~/.config/configstore/firebase-tools.json` that persists after the
 session and silently outranks each repo's `.firebaserc` — past runs left
 `pro-iq/` pointing at `anglers-log`, which made a later `firebase deploy`
@@ -96,18 +97,29 @@ lives, not by which Firebase project the crash came from.
 
 - The Firebase MCP server must be registered (`.mcp.json` at repo root, scoped
   via `--tools` to an explicit allow-list: 3 read-only `firebase_*` env/project tools
-  plus 8 `crashlytics_*` tools). If the `crashlytics_*` / `firebase_*` tools
-  aren't showing up via `ToolSearch`, the session likely needs a restart to
-  pick up `.mcp.json` — tell the user.
+  plus 8 `crashlytics_*` tools). Its tools are `mcp__firebase__*`. If the
+  `crashlytics_*` / `firebase_*` tools aren't showing up via `ToolSearch`, the
+  session likely needs a restart to pick up `.mcp.json` — tell the user.
+- **Two Firebase servers are loaded.** The Firebase Claude plugin adds a
+  second, unscoped server (`mcp__plugin_firebase_firebase__*`). It has **no**
+  `crashlytics_*` tools: it starts in `pro-iq/` and enables only the features
+  that `pro-iq/firebase.json` declares (Firestore, Functions, Hosting,
+  Storage). Always use the `mcp__firebase__crashlytics_*` tools from
+  `.mcp.json` for this skill. When `ToolSearch`ing, search
+  `+firebase crashlytics` so both servers' tool names are visible. Never use
+  the plugin server's write tools (deploy, `firestore_*` writes, environment
+  changes) from this skill.
 - Auth rides on `firebase login` (already logged in as the maintainer's
   Google account at the time this skill was written — reconfirm with
   `firebase_get_environment` if calls fail with an auth error).
 - Tool names below have been exercised live (first full run: 2026-08-16,
   anglers-log). Two confirmed corrections to the MCP docs' own descriptions:
   - `crashlytics_get_report`'s description says to read the Crashlytics
-    Reports Guide via a `firebase_read_resources` tool — that tool doesn't
-    exist in this harness. Use `ReadMcpResourceTool` instead, with
-    `server: "firebase"` and `uri: "firebase://guides/crashlytics/reports"`.
+    Reports Guide via a `firebase_read_resources` tool. The `.mcp.json`
+    server doesn't expose it (the plugin server's
+    `firebase_read_resources` serves only that server's resources). Use
+    `ReadMcpResourceTool` instead, with `server: "firebase"` and
+    `uri: "firebase://guides/crashlytics/reports"`.
   - `intervalStartTime`/`intervalEndTime` filters reject a start time exactly
     90 days back (`"must be less than 90 days in the past"`). Use ~85 days
     back, not a full 90, to avoid the boundary error.

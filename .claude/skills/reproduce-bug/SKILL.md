@@ -287,6 +287,14 @@ machine-loadable form where the project supports one:
 | pro-iq | Firestore documents (path + fields, matching the protos) and Auth users, written to the local emulator via its REST API or the emulator UI. |
 | activity-log, tapd | None. Use in-app steps only. |
 
+**Never seed through the Firebase MCP.** The Firebase plugin's
+`mcp__plugin_firebase_firebase__firestore_*` tools talk to the **production**
+project (`pro-iq`), not the local emulator. Write seed data only to the
+emulator. The read-only tools (`firestore_get_document`,
+`firestore_query_collection`, `firestore_list_collections`) are fine for
+looking up the real shape of a production document a bug report mentions.
+Copy that shape into the emulator seed with any personal data replaced.
+
 Load the seed in a way the report can repeat exactly. Usually that means
 entering it through the app's own UI from a fresh install. Seed steps are
 part of the reproduction and must be verified like the rest. A

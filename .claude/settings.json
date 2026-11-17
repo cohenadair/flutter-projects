@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "ask": [
+      "mcp__plugin_firebase_firebase__firebase_create_android_sha",
+      "mcp__plugin_firebase_firebase__firebase_create_app",
+      "mcp__plugin_firebase_firebase__firebase_create_project",
+      "mcp__plugin_firebase_firebase__firebase_deploy",
+      "mcp__plugin_firebase_firebase__firebase_init",
+      "mcp__plugin_firebase_firebase__firebase_login",
+      "mcp__plugin_firebase_firebase__firebase_logout",
+      "mcp__plugin_firebase_firebase__firebase_update_environment",
+      "mcp__plugin_firebase_firebase__firestore_add_document",
+      "mcp__plugin_firebase_firebase__firestore_create_backup_schedule",
+      "mcp__plugin_firebase_firebase__firestore_create_database",
+      "mcp__plugin_firebase_firebase__firestore_create_index",
+      "mcp__plugin_firebase_firebase__firestore_delete_backup",
+      "mcp__plugin_firebase_firebase__firestore_delete_backup_schedule",
+      "mcp__plugin_firebase_firebase__firestore_delete_database",
+      "mcp__plugin_firebase_firebase__firestore_delete_document",
+      "mcp__plugin_firebase_firebase__firestore_delete_index",
+      "mcp__plugin_firebase_firebase__firestore_update_backup_schedule",
+      "mcp__plugin_firebase_firebase__firestore_update_database",
+      "mcp__plugin_firebase_firebase__firestore_update_document"
+    ]
+  }
+}
