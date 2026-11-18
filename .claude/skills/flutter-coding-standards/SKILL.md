@@ -114,6 +114,31 @@ class _ProfileCard extends StatelessWidget {
 }
 ```
 
+### No `@visibleForTesting` fields to shorten waits
+
+Don't add a mutable `@visibleForTesting` field just so a test can shrink a
+timeout, delay, or interval — it bloats production code for the test's sake.
+Keep the value a private `static const`, and have the test hardcode the same
+duration and advance fake time past it (`FakeAsync().run` from
+`package:quiver/testing/async.dart` in unit tests, `tester.pump(duration)` in
+widget tests).
+
+```dart
+// Bad — production field exists only for tests:
+static const _defaultAuthenticateTimeout = Duration(minutes: 1);
+@visibleForTesting
+Duration authenticateTimeout = _defaultAuthenticateTimeout;
+
+// Good:
+static const _authenticateTimeout = Duration(minutes: 1);
+
+// Test:
+FakeAsync().run((async) {
+  manager.signIn();
+  async.elapse(const Duration(minutes: 1));
+});
+```
+
 ### Curly braces / double quotes
 
 ```dart

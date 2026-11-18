@@ -153,6 +153,22 @@ read the actual file):
 - One short sentence per bullet. Plain language. No jargon, no ticket or
   PR numbers.
 
+### Get the user's approval before editing anything
+
+**Always stop here and show the user the proposed entries before you edit
+a file.** Show the English bullets, plus every translation that will go
+into the other locale ARBs. Then wait for an explicit yes. The change log
+ships inside the app binary, so a wording problem found after a build
+means another build and upload. This holds even when another skill runs
+this one (for example, `build-and-upload-release` Step 6) and the user
+already said "add the entry". Agreeing to *have* an entry is not
+approving its *wording*. Revise until the user approves, then go to
+Step 5. Never start a build that includes entries the user hasn't
+approved.
+
+For a "No" project (no change log page), there are no file edits, so no
+approval is needed before Step 6.
+
 ---
 
 ## Step 5 — Update the change log page (project-specific pattern)

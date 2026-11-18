@@ -72,11 +72,46 @@ Narrow the scope only when:
   pass those platform tokens (`ios`/`macos`/`android`) through.
 - The user names specific pro-iq tenants ("just pro-iq, not
   hill-method-coaching") → pass `--tenant=<id>` (repeatable).
-- **This is a retry of a previous failed run** — see Step 8. Scope to
+- **This is a retry of a previous failed run** — see Step 9. Scope to
   exactly the tenant/platform combinations that failed; don't rebuild ones
   that already succeeded.
 
-## Step 4 — Pre-build check: hardcoded Pro override
+## Step 4 — Pull the latest default branch
+
+**Skip this on retries** (Step 9). A retry must build the same code as the
+original run's other platforms, which share its build number.
+
+The build compiles whatever is checked out locally. Merged PRs that haven't
+been pulled are silently left out of the release. This happened with
+activity-log `2.0.5+2026111701`, which shipped without two merged fixes.
+
+Pull **both** of these repos:
+
+- **The app repo:** the project's own submodule (`pro-iq`, `anglers-log`,
+  `activity-log` or `tapd`), not the `<project>/mobile` dir or the parent
+  monorepo.
+- **`adair-flutter-lib`:** every app depends on it by path, so its working
+  tree is compiled into the release too. Its default branch is `main`.
+
+Run steps 1–3 for each repo.
+
+1. **Check the branch:** `git -C <repo> branch --show-current` must be the
+   repo's default branch (`main` or `master`). If it isn't, stop and ask.
+   Don't switch branches yourself.
+2. **Pull without touching local changes:**
+   ```bash
+   git -C <repo> pull --ff-only
+   ```
+   `--ff-only` works with uncommitted changes as long as the incoming
+   commits don't touch those files. **Never stash, unstage or reset** to
+   make a pull work.
+3. **If the pull fails, stop and ask.** It fails when local commits haven't
+   been pushed (the branches diverged), or when incoming commits touch a
+   file with uncommitted changes. Report which case it is.
+4. Note in the final report (Step 10) which commits each pull brought in,
+   from `git log --oneline <old HEAD>..HEAD`.
+
+## Step 5 — Pre-build check: hardcoded Pro override
 
 **Run this before every build, including retries.** Every project depends
 on `adair-flutter-lib` by path, so a local dev override in its
@@ -122,12 +157,12 @@ bool get isPro => _state == SubscriptionState.pro;
    `grep -n 'bool get isPro' lib/managers/subscription_manager.dart` must
    print `bool get isPro => _state == SubscriptionState.pro;`. If it
    doesn't, stop and ask.
-5. In the final report (Step 9), say that the override was reverted and give
+5. In the final report (Step 10), say that the override was reverted and give
    the patch path.
 
-## Step 5 — Pre-build check: in-app change log
+## Step 6 — Pre-build check: in-app change log
 
-**Skip this on retries** (Step 8). They reuse the build number from the
+**Skip this on retries** (Step 9). They reuse the build number from the
 original run, and the check already passed then.
 
 The change log page is compiled into the app. A release without an entry
@@ -152,12 +187,41 @@ for its version would need a new build and upload to fix it.
    actually does.
 4. **If the entry is missing or incomplete** (for example, one locale has
    no keys), **stop before building.** Tell the user what's missing, and
-   offer to run the `public-release-notes` skill to add it. Build only once
-   the entry exists, or if the user explicitly says to release without it.
+   offer to run the `public-release-notes` skill to add it. That skill
+   shows the proposed entries (every locale) for approval before it edits
+   anything. **Don't start the build until the user has approved the
+   wording.** A yes to "add the entry" doesn't count as approving it.
+   Build only once the approved entry exists, or if the user explicitly
+   says to release without it.
 5. If the entry exists but is uncommitted, say so in the final report
-   (Step 9). The build includes it, but the user needs to commit it.
+   (Step 10). The build includes it, but the user needs to commit it.
 
-## Step 6 — Run it
+## Step 7 — Run it
+
+### Before every run: no other builds
+
+**Do this on retries too.** A release build shares `build/` with any other
+build of the same project. That includes another Claude session's
+`flutter run` or `flutter build`, or Xcode. A concurrent build corrupts the
+shared SPM cache: activity-log `2.0.5+2026111702` failed on iOS with
+`Could not resolve package dependencies` because a Debug build was
+resolving packages into the same `build/ios/SourcePackages` at the same
+time. A concurrent session can also edit files mid-build. That release's
+Android upload picked up another session's uncommitted edit.
+
+1. **Look for other builds of this project:**
+   ```bash
+   ps -axo pid,lstart,command | grep -E 'xcodebuild|flutter|gradle' \
+     | grep '<flutter dir>' | grep -v grep
+   ```
+   `<flutter dir>` is `<project>/mobile`, or `pro-iq` for pro-iq. If
+   anything shows up, **stop and ask** the user to finish or stop it. Never
+   kill it yourself, since it may be the user's own `flutter run`.
+2. **Re-check `git status`** in the project repo. If files have
+   uncommitted changes that weren't there at Step 4, someone else is
+   editing. Stop and ask before building them into the release.
+
+### Run the script
 
 ```bash
 # anglers-log / activity-log / tapd — root script, project dir as an argument
@@ -181,7 +245,7 @@ step-by-step output lives in log files under `build/release_logs/`, printed
 in the table). Use a generous timeout; if using a background invocation,
 check back rather than assuming it's done from silence.
 
-## Step 7 — Read the report
+## Step 8 — Read the report
 
 Every run ends with a table listing each platform (pro-iq: each
 tenant/platform pair) as `uploaded`/`built`/`FAILED - <reason>`, plus the
@@ -192,7 +256,7 @@ actual compiler/signing/upload error.
 
 Report the table to the user first, in full, before doing any auto-fix work.
 
-## Step 8 — Auto-fix and retry failures
+## Step 9 — Auto-fix and retry failures
 
 For each failed platform, in order:
 
@@ -211,7 +275,7 @@ For each failed platform, in order:
    excerpts — don't loop indefinitely on the same platform.
 
 **Always retry with `--skip-version-bump`.** The version/build number was
-already bumped once during Step 6's run; other platforms in that same run
+already bumped once during Step 7's run; other platforms in that same run
 may have already uploaded successfully under that exact build number.
 Re-bumping on retry would give the retried platform a *different* build
 number than its siblings from the same release. Pass `--skip-version-bump`
@@ -236,6 +300,16 @@ cd /Users/cohen/Documents/flutter-projects && \
 - **Transient network failure** (upload step: connection reset, timeout, 5xx
   from Apple/Google's API): retry as-is, no code change needed — but only
   once; a second consecutive network failure likely isn't transient.
+- **SPM resolve failure** (`Could not resolve package dependencies`, a
+  missing `.zip` under `SourcePackages/artifacts`, or an archive that
+  "does not contain a binary artifact"): usually a corrupted SPM cache,
+  often from a concurrent build. Only now clear the cache, since a healthy
+  one saves a full re-download on every build. Re-run the Step 7 pre-run
+  checks first so nothing else is building, then clear the cache for that
+  platform and retry:
+  ```bash
+  rm -rf <flutter dir>/build/ios/SourcePackages    # or build/macos/...
+  ```
 - **App Store Connect "duplicate build number"**: means a build with that
   exact version+build already exists — check `pubspec.yaml`'s current value
   against what was actually uploaded (e.g. this platform partially uploaded
@@ -262,7 +336,7 @@ cd /Users/cohen/Documents/flutter-projects && \
   a real bug, not a release-pipeline issue. Report it; fixing app code is
   outside this skill's scope unless the user explicitly asks you to.
 
-## Step 9 — Final report
+## Step 10 — Final report
 
 After all retries (successful or exhausted), give one final table covering
 every platform from the original run — including ones fixed on retry (note
