@@ -9,7 +9,7 @@ description: >
   log page", "changelog for the next version", or asks to prepare
   submission copy for anglers-log, pro-iq, or another sub-project. This is
   about customer-facing copy — distinct from `github-releases` (tags/GitHub
-  release bodies with commit hashes) and `github-release-testing-checklist`
+  release bodies with commit hashes) and `release-testing-checklist`
   (internal QA checklists); don't reach for those when the user wants
   wording a customer will actually read.
 ---

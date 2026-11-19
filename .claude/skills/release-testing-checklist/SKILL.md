@@ -1,19 +1,22 @@
 ---
-name: github-release-testing-checklist
+name: release-testing-checklist
 description: >
   Compiles a manual QA checklist covering everything changed since a Flutter
-  sub-project's last release, then opens it as a GitHub issue. Use when the
+  sub-project's last release, and saves it as a note in the user's Obsidian
+  vault (Notes/Dev/<project>/Testing Checklists/v<version>.md). Use when the
   user says things like "create a release testing checklist", "release
-  testing issue", "QA checklist for the next release", or asks to do "the
+  testing checklist", "QA checklist for the next release", or asks to do "the
   same thing we did for Activity Log" / "the same thing we did last time" for
   release testing.
 ---
 
-# GitHub Release Testing Checklist Skill
+# Release Testing Checklist Skill
 
-Turns the commit range since a sub-project's last tagged release into a
-GitHub issue the user can manually work through and check off, device by
-device. Reference examples this skill was built from:
+Turns the commit range since a sub-project's last tagged release into an
+Obsidian note the user can manually work through and check off, device by
+device. It does **not** create a GitHub issue unless the user asks for one
+afterwards (see Step 7). Reference examples this skill was built from (older
+runs, posted as GitHub issues):
 [anglers-log#1136](https://github.com/cohenadair/anglers-log/issues/1136) and
 [activity-log#141](https://github.com/cohenadair/activity-log/issues/141).
 
@@ -35,15 +38,20 @@ device. Reference examples this skill was built from:
 The platforms a sub-project ships to, used by the sub-list rule in Step 4.
 Keep this updated as projects add/drop platforms.
 
-| Sub-project | Platforms |
-|---|---|
-| Activity Log | iOS, Android |
-| Anglers' Log | iOS, Android |
-| Pro IQ | iOS, Android, macOS |
-| Tapd | iOS, Android |
+The **Obsidian folder** column is the project's folder under
+`/Users/cohen/Library/Mobile Documents/iCloud~md~obsidian/Documents/Notes/Dev/`
+(see Step 5).
+
+| Sub-project | Platforms | Obsidian folder |
+|---|---|---|
+| Activity Log | iOS, Android | `Activity Log` |
+| Anglers' Log | iOS, Android | `Anglers' Log` |
+| Pro IQ | iOS, Android, macOS | `Freelance/Pro IQ` |
+| Tapd | iOS, Android | `Tapd` |
 
 If the sub-project isn't in this table, ask the user which platforms it
-ships to, then add a row here so future runs don't have to ask again.
+ships to and which Obsidian folder it uses, then add a row here so future
+runs don't have to ask again.
 
 ---
 
@@ -53,8 +61,8 @@ ships to, then add a row here so future runs don't have to ask again.
 2. **Repo owner is per-project, not always `cohenadair`.** Check
    `git -C <sub-project dir> remote -v` before running any `gh` command — e.g.
    `pro-iq` lives under `Pro-IQ-Inc/pro-iq`.
-3. Ask the user for `{version}` (the title of the issue is
-   `v{version} Release testing checklist`) if they haven't already given one.
+3. Ask the user for `{version}` (it names the note, `v{version}.md`) if they
+   haven't already given one.
    This is typically the next unreleased version, even if `pubspec.yaml`
    hasn't been bumped yet — don't assume it must match the current
    `pubspec.yaml` version.
@@ -185,37 +193,50 @@ any platform:
 
 ---
 
-## Step 5 — Confirm before posting
+## Step 5 — Save the checklist to Obsidian
 
-**Creating a GitHub issue is publishing public content — always show the
-full draft body to the user and get explicit confirmation before running
-`gh issue create`.** Write the draft to a temp file first so it's easy to
-review and revise:
+Write the checklist to the user's Obsidian vault — a local file, so no
+confirmation is needed before writing it:
 
-```bash
-# write draft to e.g. /tmp/{project-slug}-v{version}-checklist.md
+```
+/Users/cohen/Library/Mobile Documents/iCloud~md~obsidian/Documents/Notes/Dev/{Obsidian folder}/Testing Checklists/v{version}.md
 ```
 
-Iterate on the draft with the user until they're satisfied — don't post on
-the first draft unless they explicitly say to.
+- `{Obsidian folder}` comes from the **platform reference table**, e.g.
+  `Anglers' Log` or `Freelance/Pro IQ`.
+- The filename is the version with a `v` prefix: `v2.7.19.md`.
+- Create `Testing Checklists/` if it doesn't exist yet (`mkdir -p`). The path
+  has spaces and apostrophes, so quote it in every shell command.
+- **If `v{version}.md` already exists, don't overwrite it** — it may already
+  have items checked off. Show the user what's there and ask whether to
+  replace it, merge new items into it, or stop.
+- The note body is the Step 4 markdown as-is; Obsidian renders `- [ ]` and
+  nested `  - [ ]` as checkable boxes.
+
+Then give the user the full path, and a short summary of the sections and
+item count. Revise the note in place if they ask for changes.
 
 ---
 
-## Step 6 — Create the issue
+## Step 6 — Closing the loop
+
+The user works through the checklist themselves in Obsidian (checking items
+off, one device/platform at a time). Don't check off items, rename, move, or
+delete the note on the user's behalf.
+
+---
+
+## Step 7 — GitHub issue (only if asked)
+
+Don't create a GitHub issue as part of this skill. If the user later asks to
+post the checklist as an issue, that's publishing public content: show the
+full body and get explicit confirmation first, then:
 
 ```bash
 gh issue create --repo <owner>/<repo> \
   --title "v{version} Release testing checklist" \
-  --body-file /tmp/{project-slug}-v{version}-checklist.md
+  --body-file "<path to the Obsidian note>"
 ```
 
-Report the issue URL back to the user.
-
----
-
-## Step 7 — Closing the loop
-
-The user works through the checklist themselves (checking items off, one
-device/platform at a time) and closes the issue manually when done. This
-skill's job ends at Step 6 — don't check off items, comment on, or close the
-issue on the user's behalf.
+The repo owner is per-project (Step 1.2). Report the issue URL back to the
+user.
