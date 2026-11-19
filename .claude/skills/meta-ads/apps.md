@@ -7,7 +7,7 @@ fill it in **before** creating anything.
 | App | Languages | Countries | Ages / demographics | Meta app ID | App Store | Google Play | Assets folder |
 |---|---|---|---|---|---|---|---|
 | Activity Log | English | US, CA, GB, AU, NZ, IE | 18–65 (both platforms) | 1423092639929446 | id1458926666 | com.cohenadair.activitylog | ? |
-| Anglers' Log | English (app also supports Spanish) | US, CA, GB, AU, NZ, IE (Spanish markets MX, ES, AR, CL, CO once there are Spanish images) | 18–64 (hard limit; smartphone users) | 1100097140947439 | id959989008 | com.cohenadair.anglerslog | `~/Downloads/anglers-log-meta-ads` |
+| Anglers' Log | English (app also supports Spanish) | US, CA, GB, AU, NZ, IE (Spanish markets MX, ES, AR, CL, CO once there are Spanish images) | 18–64 (a suggestion: Advantage+ audience on since 2026-11-19) | 1100097140947439 | id959989008 | com.cohenadair.anglerslog | `~/Downloads/anglers-log-meta-ads` |
 | Tapd | English | US, CA, GB, AU, NZ, IE | 18–65 (hard limit) | 906547471192431 | id1019522139 | com.cohenadair.colortap | `~/Downloads/tapd-campaign-videos` (cut videos in `ads/`) |
 
 Store links: `https://apps.apple.com/app/<App Store ID>` and
@@ -82,11 +82,21 @@ Store links: `https://apps.apple.com/app/<App Store ID>` and
     doesn't have, so their installs were never measured.
 - Old-app campaigns `52586731380989` (iOS) and `52586731383789` (Android):
   deleted (gone from the account by 2026-10-20).
+- **Paused 2026-11-19:** both campaigns ("Activity Log (iOS)"
+  `52588620593789`, "Activity Log (Android)" `52586848618189`), on the
+  user's call. Their $4 + $4 a day went to Tapd. In Nov 10–16 Android got
+  1 install for CAD 34.95 and iOS 5 for CAD 28.71, against Tapd's 68 at
+  about CAD 1.10. Their daily budgets are still set to $4 each, so turning
+  them back on would put the account over the $30 cap unless other budgets
+  come down first.
 
 ### Anglers' Log
 
 - Countries/ages chosen 2026-10-04: 18–64 as a hard limit (smartphone users),
-  Fishing interest with Advantage+ detailed targeting. The app supports Spanish,
+  Fishing interest with Advantage+ detailed targeting. **Since 2026-11-19
+  Advantage+ audience is on** (user accepted Meta's recommendation), so
+  18–64 and Fishing are suggestions. Only `age_min` 18 is a hard limit, and
+  the API now reads back `age_max` 65 with `age_range` [18, 64]. The app supports Spanish,
   but Spanish ads were dropped on 2026-10-05 because the ad images contain
   English text; only the English countries run until there are Spanish
   images.
@@ -133,7 +143,24 @@ Store links: `https://apps.apple.com/app/<App Store ID>` and
   - Spanish App Store previews are still pending from marketing.
   - In Nov 3–9, Meta gave the "Bite" ads almost no budget in both Video ad
     sets (CAD 0.17 Android, 3.80 iOS) and put nearly all of it into "Spot"
-    (the best Anglers' Log ad: Android 8 installs at CAD 3.18).
+    (the best Anglers' Log ad: Android 8 installs at CAD 3.18). Same again
+    in Nov 10–16 (CAD 0.22 Android, 0.48 iOS).
+  - Meta has since rewritten the Carousel creatives: the live ones are iOS
+    `1837549557682013` and Android `2978537462493735` (seen 2026-11-19).
+- **Ad sets merged 2026-11-19** (Meta's "fragmentation" recommendation;
+  the user dropped the 2-ads-per-ad-set rule the same day). Each campaign
+  now runs one ad set, the "– Video" one, with three ads: Spot, Bite and
+  Carousel.
+  - The Carousel ads were copied in with `source_ad_id`: iOS
+    `52596597234589` (into `52591152570589`) and Android `52596597211989`
+    (into `52591152584189`).
+  - The "– Installs" ad sets (iOS `52586620932789`, Android
+    `52586620965189`) are paused.
+  - Both Video ad sets have Advantage+ audience on, and their learning
+    restarted on 2026-11-19.
+  - This also cleared Meta's "add a 9:16 Reels video" recommendations,
+    which were only for the carousel-only Installs ad sets. Spot and Bite
+    already have 9:16 versions (`placement_videos`).
 
 ### Tapd
 
@@ -146,7 +173,7 @@ Store links: `https://apps.apple.com/app/<App Store ID>` and
   when creating Tapd's iOS campaign; it can't be added later.
 - Minimum Android: 7.0 (`minSdk` is Flutter's default).
 - Structure (2026-10-30): one campaign per platform with a **single ad set**
-  each, $5/day. Placements are the defaults **plus Messenger** (Tapd only).
+  each, $5/day at launch. Placements are the defaults **plus Messenger** (Tapd only).
 - Approved copy (2026-10-30):
   - Primary text: "Tap the matching targets as fast as you can. Then watch
     out: the target changes! Take it slow on Very Easy or test your reflexes
@@ -156,7 +183,10 @@ Store links: `https://apps.apple.com/app/<App Store ID>` and
   - CTA: "Play Game" (`PLAY_GAME`); Meta accepts it for app installs.
 - Campaigns (published 2026-10-30, CAD 5/day each; Android raised to 6/day
   on 2026-11-10 with $1 from Activity Log iOS, after CAD 1.09 per install in
-  Nov 3–9). Messenger positions
+  Nov 3–9; iOS raised to 6/day on 2026-11-19 with $1 from Activity Log
+  Android). **Both at $10/day since 2026-11-19**, after Activity Log was
+  paused and its $8/day was split evenly. That's a jump of about 67% each,
+  so expect learning to restart. Meta still marks both as budget-limited. Messenger positions
   `messenger_home` and `story` were accepted, but **Meta doesn't deliver
   there**: both ad sets list `messenger` in `publisher_platforms` but not in
   `effective_publisher_platforms`, and the Oct 27 – Nov 2 breakdown had no

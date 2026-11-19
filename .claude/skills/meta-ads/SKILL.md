@@ -70,13 +70,12 @@ applies to another.
 - **One campaign per platform** (iOS / Android). Creative, copy, and store
   wording are platform-specific — never mix platforms in one ad.
 - **Budget cap: at most $30/day across all campaigns in the account**
-  (raised from $20 on 2026-10-30; currently $5/day per campaign, except Tapd Android $6 and Activity Log
-  iOS $4 since 2026-11-10). Check the total before adding
-  or raising any budget.
+  (raised from $20 on 2026-10-30). Since 2026-11-19: Tapd $10/day per
+  platform, Anglers' Log $5/day per platform, and Activity Log paused (its
+  campaigns still have $4/day set). Check the total before adding, raising
+  or reactivating any budget.
 - Budget at the **campaign level** (CBO) by default — let Meta split it
   between ad sets.
-- At small budgets (~$5/day per campaign), **at most 2 ads per ad set** so
-  the budget isn't split too thin for Meta to learn.
 - Goal: **maximize installs** (optimize for `APP_INSTALLS`). Don't try to
   link installs to subscribers or suggest subscription optimization unless
   the user asks.
@@ -219,7 +218,15 @@ applies to another.
   Messenger (see `apps.md`). Don't add retired positions:
   Facebook `video_feeds`, Instagram `explore` (keep `explore_home`). Don't
   send `targeting_optimization`, which has been removed; Advantage+ detailed
-  targeting now applies automatically.
+  targeting now applies automatically. (When a targeting edit turns
+  Advantage+ audience on, `ads_update_entity` adds `targeting_optimization:
+  "expansion_all"` by itself. That validated and published fine on
+  2026-11-19.)
+- **Turning Advantage+ audience on for an existing ad set:** resend the full
+  `targeting` with `targeting_automation.advantage_audience: 1`, an
+  `age_range` pair instead of a hard `age_max`, and no `page_types` or
+  `effective_*` fields. Ages and interests become suggestions; only
+  `age_min` stays a hard limit.
 - **Ad transparency (EU/DSA):** set `dsa_beneficiary` and `dsa_payor` to the
   value in `reference.md`. Meta otherwise defaults to the business name, which
   the user had to fix by hand.
@@ -447,8 +454,8 @@ For each campaign, judge it against the goal (maximize installs):
   restarts learning.
 - Filter Meta's Opportunity Score recommendations through the user's
   preferences and `apps.md`. Don't suggest anything that conflicts with them
-  (e.g. worldwide targeting for Activity Log, more than 2 ads per ad set at
-  the current budget, copy with prices, Advantage+ placements), or flag the conflict explicitly if
+  (e.g. worldwide targeting for Activity Log, copy with prices, Advantage+
+  placements), or flag the conflict explicitly if
   the data really argues for it.
 - Typical levers: pause the clearly losing ad in an ad set; refresh fatigued
   creative; move budget between platform campaigns of the same app; scale a
