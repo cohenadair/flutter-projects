@@ -336,6 +336,52 @@ print(json.dumps({
     "${base_url}/${pkg}/edits/${edit_id}:commit" > /dev/null || return 1
 }
 
+# ── Helper: upload an archive's dSYMs to Crashlytics ─────────────────────────
+#
+# The FlutterFire "upload-crashlytics-symbols" Xcode build phase only starts
+# the upload as a background process ("Symbol uploading will proceed in the
+# background"). When `flutter build ipa` / `xcodebuild archive` exits, that
+# process can be cut off before it finishes, leaving the release's dSYMs
+# "Missing (required)" in Crashlytics with no error anywhere (Anglers' Log
+# 2.8.4 and Activity Log 2.0.5 both shipped this way). This uploads them
+# again synchronously from the archive; Crashlytics dedupes by UUID, so a
+# successful build-phase upload is harmless to repeat.
+#
+# Uses the GoogleService-Info.plist inside the archived app, i.e. the one
+# that actually shipped, so flavored builds (pro-iq tenants) pick up the
+# right Firebase project. Failure is reported as a warning, not a release
+# failure: the build itself is fine, and the symbols can be re-uploaded
+# from the archive later.
+
+upload_crashlytics_symbols() {
+  local platform="$1"
+  local archive_path="$2"
+  local warning_file="$3"
+
+  local upload_script
+  upload_script=$(find "$PROJECT_DIR/build/$platform/SourcePackages" \
+    -type f -path "*firebase-ios-sdk/Crashlytics/upload-symbols" \
+    -print -quit 2>/dev/null)
+  if [[ -z "$upload_script" ]]; then
+    echo "Crashlytics upload-symbols not found" > "$warning_file"
+    return 1
+  fi
+
+  local gsp_path
+  gsp_path=$(find "$archive_path/Products/Applications" \
+    -name "GoogleService-Info.plist" -print -quit 2>/dev/null)
+  if [[ -z "$gsp_path" ]]; then
+    echo "no GoogleService-Info.plist in archive" > "$warning_file"
+    return 1
+  fi
+
+  echo "==> [$platform] Crashlytics upload-symbols"
+  "$upload_script" -gsp "$gsp_path" -p "$platform" "$archive_path/dSYMs" || {
+    echo "Crashlytics dSYM upload failed" > "$warning_file"
+    return 1
+  }
+}
+
 # ── Helper: build + upload one platform; echoes result to a status file ───────
 
 build_and_upload() {
@@ -397,6 +443,13 @@ build_and_upload() {
       echo "ok" > "$status_file"
       return 0
     fi
+
+    # build/ios/ is cleared before every run, so this is the only archive.
+    local archive_path
+    archive_path=$(find "build/ios/archive" -maxdepth 1 -name "*.xcarchive" \
+      -print -quit)
+    upload_crashlytics_symbols "$platform" "$PROJECT_DIR/$archive_path" \
+      "$status_file.warning"
 
     echo "==> [$platform] xcrun altool --upload-app"
     xcrun altool --upload-app \
@@ -487,6 +540,9 @@ build_and_upload() {
       echo "ok" > "$status_file"
       return 0
     fi
+
+    upload_crashlytics_symbols "$platform" "$archive_path" \
+      "$status_file.warning"
 
     echo "==> [$platform] xcrun altool --upload-app"
     xcrun altool --upload-app \
@@ -626,6 +682,10 @@ for platform in "${PLATFORMS[@]}"; do
     else
       result="uploaded"
       echo " $platform: Uploaded ✓ — log: $log_file"
+    fi
+    warning_file="$TMPDIR_WORK/${platform}.status.warning"
+    if [[ -f "$warning_file" ]]; then
+      echo "   ⚠ $(cat "$warning_file") — upload the archive's dSYMs manually"
     fi
     printf '%s\t%s\t%s\t%s\n' "$platform" "$result" "-" "$log_file" >> "$RESULTS_FILE"
   else
