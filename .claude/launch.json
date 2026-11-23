@@ -5,7 +5,7 @@
       "name": "screenshots",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["dev"],
-      "cwd": "screenshots",
+      "cwd": "screenshots/studio",
       "port": 3000,
       "autoPort": true
     },
