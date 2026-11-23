@@ -1,8 +1,10 @@
 ---
 name: flutter-test
 description: >
-  Guidelines and patterns for writing Flutter unit tests and widget tests in
-  the pro-iq monorepo and related projects (adair-flutter-lib, anglers-log).
+  Patterns and worked examples for writing Flutter unit tests and widget
+  tests in this monorepo (pro-iq, anglers-log, activity-log, tapd,
+  adair-flutter-lib). The test rules themselves are in `flutter-conventions`
+  (`tests.md`); load both.
   Use this skill whenever writing, reviewing, or scaffolding any Flutter test —
   including unit tests for business logic, widget tests for UI components, or
   tests for manager/singleton classes. Trigger on requests like "write tests
@@ -11,6 +13,12 @@ description: >
 ---
 
 # Flutter Test Skill
+
+The rules (no `group()`, one test per branch, `pumpContext`, description
+casing, helper placement, …) are in `flutter-conventions` →
+[tests.md](../flutter-conventions/tests.md). This skill adds patterns and
+examples. When an example here and a rule there disagree, the rule wins:
+fix the example.
 
 ## Singleton / Manager pattern
 
@@ -109,26 +117,21 @@ void main() {
     managers = await StubbedManagers.create();
   });
 
-  test('returns cached value when cache is valid', () {
+  test("Returns cached value when cache is valid", () {
     when(managers.myManager.isCacheValid).thenReturn(true);
     when(managers.myManager.cachedValue).thenReturn(42);
     expect(MyClass().compute(), 42);
   });
 
-  test('recomputes when cache is invalid', () {
+  test("Recomputes when cache is invalid", () {
     when(managers.myManager.isCacheValid).thenReturn(false);
     expect(MyClass().compute(), isNot(42));
   });
 }
 ```
 
-- One `test()` per logical branch (including each side of a ternary).
-- Keep the description as a single, concise string literal — never split it
-  across lines with string concatenation, even if it exceeds 80 characters.
 - Use `verify()` / `verifyNever()` to assert that methods were (or were not)
   called when behavior, not just return value, is the thing under test.
-- Prefer `thenReturn` for synchronous values, `thenAnswer((_) async => ...)`
-  for futures/streams.
 
 ---
 
@@ -146,6 +149,7 @@ Future<BuildContext> pumpContext(
   WidgetTester tester,
   Widget Function(BuildContext) builder, {
   MediaQueryData mediaQueryData = const MediaQueryData(),
+  ThemeData? theme,
   ThemeMode? themeMode,
   Locale? locale,
   bool useMaterial3 = false,
@@ -169,14 +173,14 @@ void main() {
     managers = await StubbedManagers.create();
   });
 
-  testWidgets('shows label when value is non-null', (tester) async {
-    await pumpContext(tester, (_) => MyWidget(value: 'hello'));
-    expect(find.text('hello'), findsOneWidget);
+  testWidgets("Shows label when value is non-null", (tester) async {
+    await pumpContext(tester, (_) => MyWidget(value: "hello"));
+    expect(find.text("hello"), findsOneWidget);
   });
 
-  testWidgets('shows placeholder when value is null', (tester) async {
+  testWidgets("Shows placeholder when value is null", (tester) async {
     await pumpContext(tester, (_) => MyWidget(value: null));
-    expect(find.text('—'), findsOneWidget);
+    expect(find.text("—"), findsOneWidget);
   });
 }
 ```
@@ -184,7 +188,7 @@ void main() {
 ### Accessing BuildContext
 
 ```dart
-testWidgets('uses theme color', (tester) async {
+testWidgets("Uses theme color", (tester) async {
   final context = await pumpContext(tester, (ctx) => MyWidget());
   expect(Theme.of(context).colorScheme.primary, isNotNull);
 });
@@ -192,14 +196,15 @@ testWidgets('uses theme color', (tester) async {
 
 ### Pumping after interaction
 
-Use `tester.pumpAndSettle()` after tap/scroll/stream events:
+Use the `*AndSettle` helpers from `adair-flutter-lib/test/test_utils/widget.dart`
+(`tapAndSettle`, `enterTextAndSettle`, `ensureVisibleAndSettle`), or
+`tester.pumpAndSettle()` after stream events:
 
 ```dart
-testWidgets('tapping button triggers callback', (tester) async {
+testWidgets("Tapping button triggers callback", (tester) async {
   var tapped = false;
   await pumpContext(tester, (_) => MyButton(onTap: () => tapped = true));
-  await tester.tap(find.byType(MyButton));
-  await tester.pumpAndSettle();
+  await tapAndSettle(tester, find.byType(MyButton));
   expect(tapped, isTrue);
 });
 ```
@@ -242,5 +247,5 @@ verifyNever(mock.method());
 final captured = verify(mock.method(captureAny)).captured;
 
 // Named arguments
-when(mock.method(any, named: anyNamed('named'))).thenReturn(value);
+when(mock.method(any, named: anyNamed("named"))).thenReturn(value);
 ```

@@ -53,22 +53,21 @@ the whole codebase reviewed instead.
 
 ---
 
-## Before launching agents — read CLAUDE.md
+## Before launching agents — read the conventions
 
-Read `.claude/CLAUDE.md` (and any sub-project CLAUDE.md files) before
-briefing the exploration agents. Three things to extract:
+Load the `flutter-conventions` skill (`SKILL.md`, `tests.md`, and
+`firestore-protos.md`), and read `.claude/CLAUDE.md` plus any sub-project
+`CLAUDE.md`, before briefing the exploration agents. Three things to
+extract:
 
-1. **Project-specific conventions** — naming rules, base classes, shared
-   libraries, spacing/constant systems, test utilities, import paths. These
-   get folded into Agent 2's checklist alongside the universal checks below.
+1. **Conventions** — every rule in `flutter-conventions`, plus any
+   sub-project rules. They become Agent 2's checklist.
 2. **Project architecture** — does the project have a wrapper/manager
    pattern? A shared lib? Separate sub-projects? Agent 3 needs this to know
    where extracted shared code should live.
 3. **Whether the project/submodule uses Firebase** (Firestore, Storage,
-   Cloud Functions) — check `pubspec.yaml` dependencies and CLAUDE.md. Agent
-   4 only runs its Firebase-cost checks when this is true.
-
-If no CLAUDE.md exists, proceed with the universal checks only.
+   Cloud Functions) — check `pubspec.yaml` dependencies. Agent 4 only runs
+   its Firebase-cost checks when this is true.
 
 ---
 
@@ -240,50 +239,21 @@ is required on every `AsyncBuilder` instance.
 
 ### Agent 2 — Coding Convention Violations
 
-These are the universal Dart/Flutter conventions for all projects in this repo. Also
-fold in any additional project-specific conventions found in the project's CLAUDE.md.
+Checks the changed code against the `flutter-conventions` skill. Brief the
+agent with the full text of `.claude/skills/flutter-conventions/SKILL.md`
+and `tests.md`, plus `firestore-protos.md` when the submodule uses
+Firestore, and the convention rules from each affected submodule's
+project-level file. Don't summarize them; the agent needs the exact rules
+and their exceptions.
 
-**Dart style**
-- **String literals** — double quotes, not single quotes. **Exception: `import` and `export` directives always use single quotes** — do not flag them.
-- **If bodies** — always use curly braces, even for single-line returns.
-- **Magic numbers** — raw numeric values for sizing, elevation, or radii must be
-  declared as `static const` fields at the top of the class, or use the project's
-  named spacing constants. Never use inline numeric literals for layout values.
-- **Boolean naming** — prefer a 3rd-person verb form over adding a prefix word:
-  - Multi-word: use the verb in present-tense 3rd person, e.g. `extendsBodyBehindAppBar`,
-    `centersContent`, `restrictsWidth`, `alignsRight`, `obscuresText`, `popsOnTap`,
-    `includesYears`. This avoids the extra `should`/`is` word.
-  - Single-word or past-participle state: `is` prefix is fine, e.g. `isEnabled`,
-    `isRequired`, `isAutofocused`, `isNavRailContent`.
-  - Never use `should` as a prefix — it's always replaceable with the verb form above.
-- **`final` constants that could be `static const`** — a `final double _size = 20.0`
-  that is not instance-dependent (no constructor parameters, no state) should be
-  `static const double _size = 20.0`.
-- **Doc comments for instance variables** — go directly above each variable declaration,
-  not inside the class-level doc comment. See `AutocompleteTextInput` in
-  `adair-flutter-lib/lib/widgets/autocomplete_text_input.dart` as the reference.
-- **Unused required parameters** — must use the `_` wildcard, not a named identifier
-  (e.g. `void onTap(BuildContext _)` when `context` is not used).
-
-**Widget structure**
-- **Widget method order** — `build()` must appear after lifecycle methods (`initState`,
-  `dispose`, `didUpdateWidget`, etc.) but before any other methods or helpers.
-- **Conditional widgets** — `if (cond) ...[widget]` spread syntax inside a widget list
-  is a violation when the condition could instead be handled by a `_build*` method that
-  returns `const SizedBox()` early. (Spread is fine in `actions:` lists and similar
-  places where there is no single widget to return.)
-
-**Imports**
-- **Dead imports** — imports that are no longer referenced anywhere in the file.
-
-**Project-specific checks (from CLAUDE.md)**
-Append any additional rules found in the project's CLAUDE.md here. Examples of what
-to look for:
-- Custom spacing/constant system (e.g., named padding constants instead of raw numbers)
-- Required base classes for pages, dialogs, or async builders
-- Specific color extensions for action vs. destructive icons
-- Stale or non-canonical import paths
-- Test utility conventions (custom pump helpers, assertion helpers, `group()` ban, etc.)
+The rules most often missed in review, to call out in the briefing:
+- Double quotes (except `import`/`export`), curly braces on every `if`, and
+  `== null` ordering in ternaries.
+- Magic numbers, `final` fields that could be `static const`, boolean
+  naming, and `_` for unused parameters.
+- `build()` placement and `_build*` + early `SizedBox()` for conditional
+  widgets.
+- Dead imports.
 
 ### Agent 3 — Code Quality & Duplication
 
@@ -344,7 +314,7 @@ the user decide during review (Step 4).
   demand or an event-driven source.
 
 **Firebase cost efficiency** (only when the project/submodule uses Firebase — check
-`pubspec.yaml` and CLAUDE.md before running these checks; skip entirely otherwise)
+`pubspec.yaml` before running these checks; skip entirely otherwise)
 - **Unbounded queries** — Firestore queries missing `.limit()`.
 - **Over-fetching** — reading an entire collection where a targeted query or a
   single-doc `get()` would work.
@@ -443,7 +413,7 @@ the Step 4 false positives in each affected submodule's project-level file.
   constructed with default field values, clearing those fields before writing is about
   explicitness and safety rather than a functional bug. Still worth doing, but low severity.
 - **Single-line if without braces** — some projects explicitly allow this for `return`
-  statements. Check CLAUDE.md before flagging.
+  statements. Check `flutter-conventions` before flagging.
 - **"Won't compile" claims from read-only agents** — agents can't run the
   analyzer, and extension methods (e.g. `firstWhereOrNull`) often resolve via
   re-exports they can't see. Run `dart analyze lib test` from the Flutter
@@ -454,7 +424,7 @@ the Step 4 false positives in each affected submodule's project-level file.
 
 When the user dismisses a finding:
 - Remove it from the findings.
-- If the dismissal reveals an ambiguity or gap in `CLAUDE.md`, update the relevant rule
+- If the dismissal reveals an ambiguity or gap in `flutter-conventions`, update the relevant rule
   there too — so the same thing isn't flagged again in a future review.
 
 ---
@@ -500,9 +470,9 @@ Once the user approves the revised finding list, exit plan mode and implement al
   `ManageableListPage`'s `EntityListenerBuilder`), only the child rebuilds and the
   parent's hoisted value goes stale — keep the lookup in the item builder instead.
 
-### CLAUDE.md updates
+### Convention updates
 
-If a finding reveals a rule that's ambiguous or missing from `CLAUDE.md`, update it as
+If a finding reveals a rule that's ambiguous or missing from `flutter-conventions`, update it as
 part of this fix pass — not as a separate follow-up.
 
 ---
@@ -513,7 +483,7 @@ For each affected Flutter submodule, read every changed `.dart` file under
 `lib/` — including any files touched by Step 5's fixes — and write or update
 tests to achieve as close to **100% branch coverage** as possible.
 
-See [CLAUDE.md](../../.claude/CLAUDE.md) for full testing conventions (no
+See `flutter-conventions` → [tests.md](../flutter-conventions/tests.md) for full testing conventions (no
 `group()`, one test per branch, `StubbedManagers`, `pumpContext`, stub
 patterns, etc.) and Dart/Flutter style rules.
 
@@ -720,7 +690,7 @@ separate follow-up:
 
 ## Reminders — generated files & regeneration scripts
 
-See [CLAUDE.md](../../.claude/CLAUDE.md) for style and coding rules. Never
+See the `flutter-conventions` skill for style and coding rules. Never
 edit generated files by hand, such as mocks, localizations and protobuf
 output. Each project-level file lists its own generated files and the
 commands that regenerate them.

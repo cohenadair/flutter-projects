@@ -1,38 +1,38 @@
 ---
 name: flutter-coding-standards
 description: >
-  Coding conventions, patterns, and reuse checks for Flutter code in the pro-iq monorepo
-  (and its shared lib, adair-flutter-lib). Use this skill whenever creating, refactoring,
-  or reviewing any Flutter widget, page, manager, or utility — including StatelessWidget
-  and StatefulWidget subclasses in lib/widgets/ and lib/pages/, and non-widget logic in
-  lib/managers/, lib/utils/, and lib/wrappers/. Trigger on any Flutter implementation
-  request: new widgets, layout changes, theming, new manager/utility methods, or
-  questions about where to put new code or whether something reusable already exists.
+  Worked examples, reusable-code checks, and project layout for Flutter code
+  in this monorepo (pro-iq, anglers-log, activity-log, tapd, and the shared
+  adair-flutter-lib). Use whenever creating, refactoring, or reviewing a
+  widget, page, manager, wrapper, or utility, or deciding where new code
+  goes or whether something reusable already exists. The rules themselves
+  are in `flutter-conventions`; load both.
 ---
 
 # Flutter Coding Standards Skill
 
+The rules live in the `flutter-conventions` skill. This skill adds worked
+examples, the check for reusable code, and where things live. When an
+example here and a rule there disagree, the rule wins: fix the example.
+
 ## Project layout
 
-```
-pro-iq/lib/
-  pages/        # Full-screen pages (one widget per file, named *_page.dart)
-  widgets/      # Reusable widgets shared across pages
-  models/gen/protobuf/   # Protobuf-generated data classes (canonical, up-to-date)
-  managers/     # Data access layer (DataManager, etc.)
-  res/          # App-specific resources
-adair-flutter-lib/lib/
-  res/dimen.dart   # Padding, spacing, and size constants — always import from here
-  res/style.dart   # Font weight constants and text style helpers
-  res/theme.dart   # Theme extension helpers (colorApp, colorOnApp, etc.)
-  widgets/         # Shared cross-app widgets
-```
+Each app's Flutter root and its main `lib/` folders:
 
-**Canonical protobuf import path:**
-```dart
-import 'package:pro_iq/models/gen/protobuf/pro_iq.pb.dart';
-```
-The `models/gen/` (non-`protobuf/`) files are stale — always use the `protobuf/` subdirectory.
+| App | Flutter root | Notable `lib/` folders |
+|---|---|---|
+| pro-iq | `pro-iq/` | `managers/`, `wrappers/`, `riverpod/`, `models/gen/protobuf/` |
+| anglers-log | `anglers-log/mobile/` | `database/`, `map/`, `channels/`, `model/`, `wrappers/` |
+| activity-log | `activity-log/mobile/` | `database/`, `model/`, `i18n/`, `wrappers/` |
+| tapd | `tapd/mobile/` | `components/`, `effects/`, `overlays/`, `managers/`, `wrappers/` |
+| adair-flutter-lib | `adair-flutter-lib/` | shared `managers/`, `wrappers/`, `widgets/`, `pages/`, `utils/` |
+
+Every app also has `pages/` (one page per `*_page.dart`), `widgets/`,
+`utils/`, and `l10n/`. Shared resources come from adair-flutter-lib:
+
+- `res/dimen.dart`: padding, spacing, and size constants
+- `res/style.dart`: font weight constants and text style helpers
+- `res/theme.dart`: theme extension helpers (`colorApp`, `colorError`, …)
 
 ---
 
@@ -52,8 +52,8 @@ bug, not a style nit.
   ```
 - Skim `lib/widgets/` (and `adair-flutter-lib/lib/widgets/` for cross-app widgets) for
   anything visually or structurally similar to what you're about to build.
-- Check the **Existing reusable code** reference below — it's a non-exhaustive sample
-  of the most commonly reused pieces, not a substitute for actually searching.
+- Check the **Existing reusable code** reference below. It's a non-exhaustive sample
+  of commonly reused pieces, not a substitute for actually searching.
 
 **Non-widget logic** (managers, utils, wrappers) — search `lib/managers/`,
 `adair-flutter-lib/lib/managers/`, `lib/utils/`, and `adair-flutter-lib/lib/utils/` for
@@ -116,12 +116,7 @@ class _ProfileCard extends StatelessWidget {
 
 ### No `@visibleForTesting` fields to shorten waits
 
-Don't add a mutable `@visibleForTesting` field just so a test can shrink a
-timeout, delay, or interval — it bloats production code for the test's sake.
-Keep the value a private `static const`, and have the test hardcode the same
-duration and advance fake time past it (`FakeAsync().run` from
-`package:quiver/testing/async.dart` in unit tests, `tester.pump(duration)` in
-widget tests).
+The rule is in `flutter-conventions` → Constants & helper functions.
 
 ```dart
 // Bad — production field exists only for tests:
@@ -147,12 +142,12 @@ if (isColorReadable(primary, background)) {
   return primary;
 }
 Text("Coach: ")
-const Avatar(initials: "MR")
+const Text("MR")
 
 // Never:
 if (isColorReadable(primary, background)) return primary;
 Text('Coach: ')
-const Avatar(initials: 'MR')
+const Text('MR')
 ```
 
 ### build() structure
@@ -177,8 +172,8 @@ Column(
 )
 ```
 
-The primary `build()` method is always the **first** method in the class body.
-All `_build*` helpers are placed *after* it.
+`build()` comes after the lifecycle methods (`initState`, `dispose`, …) and
+before every other method. All `_build*` helpers are placed *after* it.
 
 ### `BuildContext` in helper functions
 
@@ -266,8 +261,8 @@ Key parameters:
 | `padding` | Padding around children (use `insets*` constants) |
 | `spacing` | Gap between each child (use `padding*` constants) |
 | `onRefresh` | Pull-to-refresh callback |
-| `centerContent` | Center children horizontally |
-| `restrictWidth` | Cap content width for wide screens |
+| `centersContent` | Center children horizontally |
+| `restrictsWidth` | Cap content width for wide screens |
 
 ### AsyncBuilder
 
@@ -278,7 +273,9 @@ AsyncBuilder.future(
   future: DataManager.get.currentUser(),
   errorReason: "Loading current user",   // required — describes the future's purpose
   builder: (context, user) {
-    if (user == null) return const SizedBox();
+    if (user == null) {
+      return const SizedBox();
+    }
     return _ProfileCard(user: user);
   },
   loadingBuilder: (_) => const CircularProgressIndicator(),  // optional
@@ -301,40 +298,25 @@ AsyncBuilder.stream(
 
 ## Existing reusable code
 
-Non-exhaustive — a quick-reference sample of pieces that come up often. Always
+Non-exhaustive: a quick-reference sample of pieces that come up often. Always
 search the codebase (see "Check for reusable code before writing new code" above)
-rather than assuming this list is complete.
+rather than assuming this list is complete. If an entry here has moved or
+been renamed, fix it.
 
-### `Avatar` — `lib/widgets/avatar.dart`
+### `ProfilePicture` — `pro-iq/lib/widgets/profile_picture.dart`
 
-Circular avatar using `CircleAvatar`. Shows a network photo when available;
-falls back to the user's initials if the URL is null, empty, or fails to load.
-Background color is derived deterministically from the initials string.
-
-```dart
-Avatar(
-  initials: "MR",          // required — typically first[0]+last[0] uppercased
-  photoUrl: user.photoUrl.isEmpty ? null : user.photoUrl,  // optional
-  radius: 36,               // optional, default 36
-)
-```
-
-Derive initials from a `User` proto like this:
-```dart
-String get _initials => [
-  if (user.first.isNotEmpty) user.first[0],
-  if (user.last.isNotEmpty) user.last[0],
-].join().toUpperCase();
-```
-
-### `_ProfileCard` — `lib/pages/player_home_page.dart` (private, in-page)
-
-M3 elevated card displaying a `User`'s avatar, name, team, and coach.
-Coach row is omitted when `user.coachName` is empty.
+Circular profile picture for a `User`. Shows the network photo at
+`user.profilePicturePath` when there is one; falls back to the user's
+initials if there isn't, or if loading fails.
 
 ```dart
-_ProfileCard(user: someUser)
+ProfilePicture(user: user)            // default 72pt
+ProfilePicture(user: user, size: 40)  // optional size
 ```
+
+### `_ProfileCard` — `pro-iq/lib/pages/player_home_page.dart` (private, in-page)
+
+Card on the player home page showing a `User`'s picture and details.
 
 ### `formatBytes` — `adair_flutter_lib/utils/string.dart`
 
@@ -349,8 +331,10 @@ formatBytes(fileSizeInBytes)
 
 ## Theming
 
-The app uses `ThemeMode.dark` with a teal seed color. Always use theme-aware
-values — never hardcode light-theme colors like `#1C1B1F` or `#F6F2FA`.
+Always use theme-aware values, never hardcoded colors. Theme mode and seed
+color vary per app (pro-iq: per tenant, via `TenantConfig.get.themeMode`
+and `TenantConfig.get.seedColor`), so code must look right in both light
+and dark.
 
 ```dart
 // Colors
@@ -365,19 +349,5 @@ Theme.of(context).textTheme.labelMedium
 Theme.of(context).textTheme.bodySmall
 ```
 
----
-
-## Protobuf `User` fields
-
-```
-string first       // given name
-string last        // family name
-string email
-repeated string roles
-string team        // e.g. "Chicago Bulls"
-string photo_url   // network image URL, may be empty string
-string coach_name  // e.g. "Coach Derrick Owens", may be empty string
-```
-
-Proto strings default to `""` (not null) when unset — guard with `.isEmpty`
-rather than null checks.
+For proto fields (pro-iq's `User` and others), read the `.proto` source:
+`pro-iq/protobuf/pro_iq.proto`. Don't copy field lists into this skill.

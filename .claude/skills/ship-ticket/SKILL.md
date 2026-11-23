@@ -97,8 +97,8 @@ before implementing.
 ## Step 4 — Implement
 
 - List possible side effects before changing code (root `CLAUDE.md`).
-- Follow `flutter-coding-standards` for widgets and logic, and
-  `flutter-test` for tests.
+- Follow `flutter-conventions` (the rules), plus `flutter-coding-standards`
+  for widgets and logic and `flutter-test` for tests.
 - **Bugs**: add a test that reproduces the bug. Confirm it fails for the
   right reason: temporarily revert the fix with `Edit` (never `git stash`),
   check that the test fails with the same symptom the repro showed, then
