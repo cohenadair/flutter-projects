@@ -224,11 +224,15 @@ comparable — see the multi-platform note in Fix Mode Step 2).
 
 For each `appId`:
 
-1. Call `crashlytics_get_report` twice — once with
-   `filter.issueErrorTypes: ["FATAL"]`, once with `["NON_FATAL"]` — both with
-   `report: "topIssues"`, the SM-1 time window, and a generous `pageSize`
-   (start at 100). Two separate calls, not one combined filter, so each
-   issue can be tagged Fatal/Non-fatal by which call surfaced it.
+1. Call `crashlytics_get_report` once per error type —
+   `filter.issueErrorTypes: ["FATAL"]`, `["NON_FATAL"]`, and, for Android
+   `appId`s only, `["ANR"]` — each with `report: "topIssues"`, the SM-1
+   time window, and a generous `pageSize` (start at 100). Separate calls,
+   not one combined filter, so each issue can be tagged Fatal/Non-fatal/ANR
+   by which call surfaced it. ANRs (app freezes) are Android-only; the iOS
+   apps never report any, so skip that call for them. Tracked since
+   2026-11-19 at the user's request; before that, ANRs were left out of
+   every mode.
 2. **No confirmed pagination.** If a call returns exactly `pageSize` rows,
    the list is likely truncated — say so in the final output rather than
    silently presenting a partial list as complete, and retry once with a
@@ -393,7 +397,7 @@ Structure:
     section-collapse bullet below) so a run with several quiet apps doesn't
     bury the ones that actually need attention, while still being visibly
     present and one click away.
-- Table columns: Reference ID, Type (Fatal/Non-fatal badge), Occurrences,
+- Table columns: Reference ID, Type (Fatal/Non-fatal/ANR badge), Occurrences,
   Last Occurred, Affected Users, App Version Range, Stack Trace
   (App code/Third-party/Unknown-native badge), Cross-Platform (SM-6 — a
   badge naming the matched platform + issue ID as a tooltip, or an em-dash
@@ -497,7 +501,7 @@ Structure:
   untouched, and the OS clipboard visibly updates.
 - Keep the visual style consistent with this codebase's dark-UI conventions
   (see this run's output for a working reference: dark background, colored
-  badges for Fatal/Non-fatal and the three origin buckets, monospace for IDs
+  badges for Fatal/Non-fatal/ANR and the three origin buckets, monospace for IDs
   and stack traces).
 - After writing the file, open it in the browser preview tool and click a
   row to confirm the expand/collapse interaction actually works, and click a
@@ -645,8 +649,8 @@ covered** table. Never switch the active project.
 
 ### UM-4 — Fetch current open issues per app
 
-Same as **SM-3** — `crashlytics_get_report` (`topIssues`, both `FATAL` and
-`NON_FATAL`, SM-1's ~85-day window, `pageSize` starting at 100), filtered to
+Same as **SM-3** — `crashlytics_get_report` (`topIssues`, `FATAL`,
+`NON_FATAL`, and `ANR` for Android apps, SM-1's ~85-day window, `pageSize` starting at 100), filtered to
 `issue.state == OPEN`. The window doesn't need to align with
 `lastCheckTime`; it only needs to cover every currently-open issue so the ID
 diff in UM-5 is against a complete set — an issue first seen 40 days ago
@@ -658,8 +662,8 @@ show as new to *this checkpoint*, even though it's not new to Crashlytics.
 
 Only for appIds whose `ignoredIssues` is non-empty:
 
-1. Call `crashlytics_get_report` (`topIssues`, `FATAL` and `NON_FATAL` as
-   two calls, `pageSize` 100) with `intervalStartTime` = the app's
+1. Call `crashlytics_get_report` (`topIssues`, `FATAL`, `NON_FATAL`, and
+   `ANR` for Android apps, one call each, `pageSize` 100) with `intervalStartTime` = the app's
    `lastCheckTime` and `intervalEndTime` = now. **Don't** filter by
    `issue.state` here — muted and closed issues still appear in the report
    when they have events in the window, and those are exactly the ones this
@@ -720,7 +724,7 @@ UM-7 as closed before its fix shipped.
   guide: ≤10 — a delta since last check should usually be small): reply
   directly in chat. One short section per project/app (even the empty
   ones, per UM-5's rule), a compact markdown table per app with columns
-  Reference ID, Type (Fatal/Non-fatal), Occurrences, Affected Users,
+  Reference ID, Type (Fatal/Non-fatal/ANR), Occurrences, Affected Users,
   Likely Origin, Fix status (UM-6b) — no need for the full SM-7 HTML machinery (sort/expand/
   collapse) for a handful of rows.
 - **If the count is large** (a first-ever run per UM-5.3, or a long gap
