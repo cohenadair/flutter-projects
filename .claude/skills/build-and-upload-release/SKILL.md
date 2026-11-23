@@ -330,9 +330,11 @@ cd /Users/cohen/Documents/flutter-projects && \
 - Any missing/expired credential (`APPLE_APP_SPECIFIC_PASSWORD`,
   `GOOGLE_PLAY_JSON_KEY` invalid or expired) — never regenerate or guess at
   credentials; tell the user which one and point at where it's configured:
-  each project's own `mobile/release_credentials.sh` (pro-iq:
-  `release_credentials.sh` at the pro-iq root) — a local, gitignored file,
-  not the committed `build_and_upload_release.sh` itself.
+  each project's own `mobile/release_credentials.sh` — a local, gitignored
+  file (backed up in iCloud `projects/keys`), not the committed
+  `build_and_upload_release.sh` itself. pro-iq's is `release_credentials.sh`
+  at the pro-iq root, committed to its private repo along with its other
+  keys.
 - A genuine compile error in app code (not a stale-cache symptom) — this is
   a real bug, not a release-pipeline issue. Report it; fixing app code is
   outside this skill's scope unless the user explicitly asks you to.

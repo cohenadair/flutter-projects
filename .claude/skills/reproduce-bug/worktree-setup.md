@@ -7,12 +7,14 @@ config the apps need, so prepare it before building:
 1. **Copy gitignored config** the build needs (Firebase options and plists,
    `firebase.json`, `sensitive.properties`, pro-iq's `dart-defines/`) from
    the main checkout. Without `firebase.json`, iOS builds fail in the
-   FlutterFire Crashlytics upload step:
+   FlutterFire Crashlytics upload step. Public apps' secrets (e.g.
+   `sensitive.properties`) are symlinks into iCloud `projects/keys`; `cp -P`
+   copies the link, not the key, so no copy of a key lands in the worktree:
    ```bash
    cd <repo-dir> && git ls-files --others --ignored --exclude-standard \
      | grep -vE '(^|/)(build|\.dart_tool|Pods|node_modules)/' \
      | grep -E '(firebase_options.*\.dart|GoogleService-Info\.plist|google-services\.json|(^|/)firebase\.json$|sensitive\.properties|^dart-defines/)' \
-     | while read -r f; do mkdir -p "<worktree>/$(dirname "$f")"; cp "$f" "<worktree>/$f"; done
+     | while read -r f; do mkdir -p "<worktree>/$(dirname "$f")"; cp -P "$f" "<worktree>/$f"; done
    ```
 2. **Android signing.** Never copy release keystores or
    `keystore.properties` into a worktree, and don't write one. Every app
