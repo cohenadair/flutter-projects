@@ -32,6 +32,23 @@
 
 ## Crashlytics
 
+### `crashlytics_get_report` 404s for an app that's registered in Firebase
+
+- **Cause:** besides the wrong-platform case below, an app (e.g. a
+  white-label brand's Android/iOS app sharing a project) can be registered
+  in Firebase without the Crashlytics SDK ever being integrated.
+- **Fix:** report "No Crashlytics data for this app; Crashlytics may not be
+  integrated yet". Don't report it as zero issues.
+- **Related:** `crashlytics-triage` → summary.md → SM-7.
+
+### `crashlytics_batch_get_events` output saved to a file instead of inline
+
+- **Symptom:** a batch of ~20+ mobile events exceeds the inline output
+  limit and is saved under `tool-results/mcp-firebase-crashlytics_batch_get_events-*.txt`.
+- **Fix:** parse the file with a Python script rather than reading it in
+  chunks: split records on `\n(?=- name: \|)` and read block scalars.
+  Fields to extract are in `crashlytics-triage` → summary.md → SM-4.
+
 ### `crashlytics_get_issue`: `HTTP Error: 404, Requested entity was not found`
 
 - **Cause:** the issue belongs to the app's other platform; issue IDs are

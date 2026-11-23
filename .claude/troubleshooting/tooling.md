@@ -1,4 +1,4 @@
-# Tooling: git, shell, Next.js
+# Tooling: git, shell, Next.js, HTML
 
 ## git
 
@@ -81,3 +81,13 @@
   use `npx tsc --noEmit` instead; check for a running `next dev`
   (`ps aux | grep "next dev"`) before any `next build`.
 - **Related:** memory `feedback_no_next_build_alongside_dev_server.md`.
+
+## Generated HTML
+
+### Generated HTML shows `â€”` instead of em dashes
+
+- **Cause:** a raw `.html` file (delivered with `SendUserFile`, not
+  published as an artifact) has no `<meta charset="UTF-8">`, so the viewer
+  guesses Windows-1252. The file itself is valid UTF-8.
+- **Fix:** put `<meta charset="UTF-8">` first in `<head>`. Check with
+  `file <path>` ("UTF-8 text") and `grep -c "â€" <path>` (0).
