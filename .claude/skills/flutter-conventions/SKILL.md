@@ -203,8 +203,9 @@ When a wrapper or manager that exists in a downstream project (`pro-iq`,
   `showErrorSnackBar(context, <message>)` with a meaningful message. Check
   `!mounted` before using `context` after an `await`.
 - **Form errors** (thrown while saving a dialog or form): call `_log.e`, then set
-  the inline `_error` string and display it via `EmptyOr`/`styleError` — see
-  `_AddGroupDialogState._save` in `pro-iq/lib/pages/my_players_page.dart`.
+  the inline `_error` string and display it with `ErrorText` (from
+  `adair_flutter_lib/widgets/error_text.dart`) — see
+  `_SaveItemDialogState._save` in `pro-iq/lib/widgets/save_item_dialog.dart`.
 
 ## Spacing & padding
 

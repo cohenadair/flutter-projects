@@ -668,23 +668,18 @@ only the buggy code path).
 
 ## Skill self-update
 
-After completing a run, review whether any finding revealed:
-- A check that Agent 1, 2, 3, or 4 **should have caught but didn't** (gap in
-  the checklist).
-- A **false positive pattern** that recurred (add it to Step 4's
-  false-positive list).
+Follow the `skill-maintenance` Retro at the end of every run. For this
+skill, look especially for:
+- A check that Agent 1, 2, 3, or 4 **should have caught but didn't** (a gap
+  in the checklist; a convention gap goes in `flutter-conventions`).
+- A **false positive pattern** that recurred (add it to Step 4's list).
 - A **fix recipe** for Step 5 that's missing or unclear.
 
-If any of the above apply, update the skill in the same commit, not as a
-separate follow-up:
-- A rule for every sub-project goes in **this file**
-  (`.claude/skills/adair-code-audit/SKILL.md`).
-- A rule for one sub-project goes in that sub-project's project-level file
-  (`<submodule>/.claude/skills/adair-code-audit/SKILL.md`). Create the file
-  if it doesn't exist yet, and add it to the list under **Project-level
-  additions**.
-- Never put sub-project-specific paths, versions, class names or commands in
-  this file.
+Where a rule goes: one for every sub-project in **this file**; one for a
+single sub-project in that sub-project's project-level file
+(`<submodule>/.claude/skills/adair-code-audit/SKILL.md`; create it and list
+it under **Project-level additions** if needed). Never put sub-project
+paths, versions, class names, or commands in this file.
 
 ---
 
