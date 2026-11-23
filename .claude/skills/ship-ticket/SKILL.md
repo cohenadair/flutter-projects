@@ -11,8 +11,8 @@ description: >
   Use when the user says things like "ship issue #42", "implement this
   issue and open a PR", "fix <issue URL>", "work on ticket 42", "take this
   issue to a PR", or invokes /ship-ticket directly. Also use (Step 9 only)
-  when the user says to merge a verified ticket or PR, e.g. "merge it",
-  "merge PR 14", "ship it". For a requirements doc without implementing,
+  when the user says to merge a verified ticket or PR, e.g. "merge it" or
+  "merge PR 14". For a requirements doc without implementing,
   use `github-requirements-generation` instead.
 ---
 
@@ -33,7 +33,7 @@ gh issue view <n> --repo <owner>/<repo> --comments
 ```
 
 If no issue was given, ask for the URL. Map the repo to its sub-project
-using the table in `reproduce-bug` Step 1.
+using the table in `reproduce-bug` → **Read the bug**.
 
 Check that nobody's already on it: `gh pr list --repo <owner>/<repo>
 --state open --search "<n> in:title,body"` and `git -C <repo-dir> ls-remote
@@ -56,9 +56,9 @@ git -C <repo-dir> worktree add ../<repo-name>-issue-<n> -b issue-<n> "origin/$DE
 
 The worktree is a sibling of the submodule inside the monorepo root, so the
 apps' relative `adair-flutter-lib` paths still resolve. Prepare it exactly
-as `reproduce-bug` Step 3 describes (copy gitignored config, never a
-`keystore.properties` or release keystore, `flutter pub get`, generators
-if needed). Do all remaining work, including tests and
+as [worktree-setup.md](../reproduce-bug/worktree-setup.md) describes (copy
+gitignored config, never a `keystore.properties` or release keystore,
+`flutter pub get`, generators if needed). Do all remaining work, including tests and
 `dart format`, in the worktree, never in the main checkout.
 
 **If `adair-flutter-lib` must change too**, create a second worktree for it
@@ -116,9 +116,9 @@ review with the user.
 
 ## Step 6 — Verify on a device
 
-Both skills below use `reproduce-bug`'s device setup (the user's existing
-devices, one simulator or emulator at a time, fresh install, pro-iq on
-local emulators only), run from this worktree.
+Both skills below follow [devices.md](../reproduce-bug/devices.md) (the
+user's existing devices, one simulator or emulator at a time, fresh
+install, pro-iq on local emulators only), run from this worktree.
 
 **Bug:** run `reproduce-bug` again in confirm mode, passing the Step 3
 report. It replays the same seed and steps on the same platform(s). Result:
@@ -138,7 +138,7 @@ Result:
 - **⚠️ Partly verified**: continue, and flag the unverified steps in the PR
   and the final report.
 
-Clean up per `reproduce-bug` Step 7 (stop `flutter run`, the pro-iq
+Clean up per `reproduce-bug` → **Clean up** (stop `flutter run`, the pro-iq
 emulators, and devices this run booted). Don't remove this worktree yet.
 
 ## Step 7 — Commit, push, PR

@@ -126,10 +126,13 @@ Extract just the version string: `Flutter X.Y.Z`.
 
 ### Step 5 — Write release notes to temp files
 
+`<scratchpad>` is this session's scratchpad directory, not `/tmp`: fixed
+`/tmp` names collide when two sessions write release notes at once.
+
 Write each release body to a temp file to avoid shell-escaping issues, then
 pass it via `--notes-file`.
 
-#### adair-flutter-lib notes (`/tmp/lib-release-notes.md`)
+#### adair-flutter-lib notes (`<scratchpad>/lib-release-notes.md`)
 
 ```
 # Flutter Version
@@ -141,7 +144,7 @@ pass it via `--notes-file`.
 ...
 ```
 
-#### sub-project notes (`/tmp/project-release-notes.md`)
+#### sub-project notes (`<scratchpad>/project-release-notes.md`)
 
 ```
 # Flutter Version 
@@ -172,7 +175,7 @@ exists when the sub-project release body references it.
 gh release create {project-slug}-v{version} \
   --repo cohenadair/adair-flutter-lib \
   --title "{Project Display Name} v{version}" \
-  --notes-file /tmp/lib-release-notes.md
+  --notes-file <scratchpad>/lib-release-notes.md
 ```
 
 `gh release create` automatically creates the tag at HEAD if it does not
@@ -186,7 +189,7 @@ already exist.
 gh release create v{version} \
   --repo cohenadair/{project-slug} \
   --title "v{version}" \
-  --notes-file /tmp/project-release-notes.md
+  --notes-file <scratchpad>/project-release-notes.md
 ```
 
 ---
@@ -327,16 +330,16 @@ existing GitHub releases:
 
 ```bash
 # Write updated notes to temp files
-# /tmp/lib-release-notes.md   (same format as Create Step 5)
-# /tmp/project-release-notes.md
+# <scratchpad>/lib-release-notes.md   (same format as Create Step 5)
+# <scratchpad>/project-release-notes.md
 
 gh release edit {project-slug}-v{version} \
   --repo cohenadair/adair-flutter-lib \
-  --notes-file /tmp/lib-release-notes.md
+  --notes-file <scratchpad>/lib-release-notes.md
 
 gh release edit v{version} \
   --repo cohenadair/{project-slug} \
-  --notes-file /tmp/project-release-notes.md
+  --notes-file <scratchpad>/project-release-notes.md
 ```
 
 ---

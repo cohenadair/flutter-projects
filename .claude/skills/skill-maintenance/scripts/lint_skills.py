@@ -71,8 +71,8 @@ def check_paths(path, text, skill_dir):
             report("ERROR", path, f"broken link: {link}")
 
 def check_step_refs(path, text, names):
-    for m in re.finditer(r"`([a-z0-9-]+)` (Step \d+)\b", text):
-        skill, step = m.groups()
+    for m in re.finditer(r"`([a-z0-9-]+)`\s+(Step\s+\d+)\b", text):
+        skill, step = m.group(1), " ".join(m.group(2).split())
         if skill not in names:
             continue
         target = headings(names[skill])

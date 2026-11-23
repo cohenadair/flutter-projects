@@ -160,7 +160,8 @@ a file.** Show the English bullets, plus every translation that will go
 into the other locale ARBs. Then wait for an explicit yes. The change log
 ships inside the app binary, so a wording problem found after a build
 means another build and upload. This holds even when another skill runs
-this one (for example, `build-and-upload-release` Step 6) and the user
+this one (for example, `build-and-upload-release` → **Pre-build check: in-app
+change log**) and the user
 already said "add the entry". Agreeing to *have* an entry is not
 approving its *wording*. Revise until the user approves, then go to
 Step 5. Never start a build that includes entries the user hasn't

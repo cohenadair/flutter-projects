@@ -175,7 +175,8 @@ for its version would need a new build and upload to fix it.
    isn't listed, ask the user rather than guessing.
 2. **Find the page.** Its path is project-specific. For example,
    anglers-log's is `mobile/lib/pages/onboarding/change_log_page.dart`. If
-   it has moved, find it with the grep in `public-release-notes` Step 4.
+   it has moved, find it with the grep in `public-release-notes` → **Find the
+   change log page**.
 3. **Check for an entry for the release version** from Step 2 (the new
    `X.Y.Z`, or the current one if it's being kept). Look at the working
    tree, not `HEAD`, because the build compiles the working tree. In the

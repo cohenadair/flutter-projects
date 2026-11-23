@@ -1,27 +1,17 @@
 ---
 name: store-release
 description: >
-  Creates the store release for a build that's already uploaded and submits
-  it for app review — a new App Store Connect version (iOS) and a Google
-  Play production release (Android) — via the store APIs, replacing
-  the manual steps in both consoles. Can also stop short of submitting
-  (Prepare mode), and upload screenshots, app preview videos, the App Store
-  header/search banners, and the feature graphic exported by the
-  screenshots tool. Use when the user says
-  things like "submit anglers-log for review", "submit the release",
-  "publish the release", "create the store releases", "promote to
-  production", "send 2.8.1 to app review", "create the release but don't
-  submit it", "prepare the release", "set up 2.8.1 in the stores",
-  or asks what state a release is in on the stores ("is tapd in review
-  yet?"). Use Media mode (screenshots/banners only, no build, notes, or
-  review submission) when they say "upload the new screenshots", "update
-  the store screenshots", "attach screenshots to 2.8.2", "update the Play
-  listing images", or otherwise want media uploaded without submitting.
-  Works for anglers-log, activity-log, and tapd only — not pro-iq, whose
-  releases are created manually. This skill never builds or uploads a
-  build — that is `build-and-upload-release`,
-  which is run (and release-tested) beforehand; don't chain into this skill
-  from it unless the user asks.
+  Creates the store release for an already-uploaded build and submits it for
+  app review: a new App Store Connect version (iOS) and a Google Play
+  production release (Android), via the store APIs. Prepare mode stops short
+  of submitting; Media mode only uploads screenshots, app previews, the App
+  Store banners, and the feature graphic. Use for "submit anglers-log for
+  review", "submit the release", "create the store releases", "promote to
+  production", "send 2.8.1 to app review", "prepare the release", "is tapd
+  in review yet?", and (Media mode) "upload the new screenshots", "update
+  the Play listing images". anglers-log, activity-log, and tapd only (not
+  pro-iq). Never builds or uploads a build (that's
+  `build-and-upload-release`), and isn't chained from it unless asked.
 ---
 
 # store-release Skill

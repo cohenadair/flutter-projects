@@ -20,25 +20,16 @@ which was performed on a simulator or emulator, plus a reasoned call on
 which platforms need testing. "Verified" means performed as written. Steps
 that weren't performed are labeled as such.
 
-The device rules are `reproduce-bug`'s, and so is the setup. Read its
-Steps 3–5 before starting. They cover worktree prep (including Android
-signing), using the user's existing devices with only one simulator or
-emulator running at a time (iOS access, emulator memory check), fresh
-installs, pro-iq on local
-emulators only, `scripts/android.sh`, the never-chain-blind rule, the
-screenshot naming, and the per-app notes. Prefer iOS when one platform is
-enough. Running the app is the point of this skill. Never kill the user's
-own `flutter run` sessions, and never change app code here.
-
-Two device rules to keep in mind (details in `reproduce-bug` Step 4):
-
-- **Always close the Android emulator before opening an iOS simulator, and
-  vice versa**, and confirm it's gone (`adb devices` lists nothing; `xcrun
-  simctl list devices booted` is empty) before booting the other.
-- **If the Android emulator is too full to install the build**
-  (`INSTALL_FAILED_INSUFFICIENT_STORAGE`), shut it down and boot it with
-  `-wipe-data` without asking. Don't uninstall the user's other apps to
-  make room.
+Setup is shared with `reproduce-bug`. Before starting, read its
+[worktree-setup.md](../reproduce-bug/worktree-setup.md) (preparing the
+worktree, including Android signing) and
+[devices.md](../reproduce-bug/devices.md) (the user's existing devices, one
+simulator or emulator at a time, iOS access, the emulator memory check,
+fresh installs, pro-iq on local emulators only, `scripts/android.sh`,
+never chaining steps blind, screenshot naming, and the per-app notes).
+Prefer iOS when one platform is enough. Running the app is the point of
+this skill. Never kill the user's own `flutter run` sessions, and never
+change app code here.
 
 ## Inputs
 
@@ -73,7 +64,8 @@ first, and report which held. Then add any that are missing.
 ## Step 2 — Code to run
 
 From `ship-ticket`, use its worktree. For a PR, create one at the PR's
-head, then prepare it as in `reproduce-bug` Step 3:
+head, then prepare it per
+[worktree-setup.md](../reproduce-bug/worktree-setup.md):
 
 ```bash
 git -C <repo-dir> fetch origin "pull/<n>/head"
@@ -105,8 +97,8 @@ change affects them, but only iOS and Android are verified here.
 
 1. **Seed data**: the minimal records and settings that exercise the
    feature, with concrete values. Use the same format as `reproduce-bug`
-   Step 5 (human-readable, plus a machine-loadable form where the project
-   has one). Include edge cases worth seeing (empty state, long text, many
+   → **Seed, then reproduce** (human-readable, plus a machine-loadable form
+   where the project has one). Include edge cases worth seeing (empty state, long text, many
    items, a lapsed Pro user) when the feature changes how they behave.
 2. **Steps**: from a fresh install, each action and what should be seen
    after it. Every behavior from Step 1 gets one or more steps.
@@ -115,8 +107,8 @@ change affects them, but only iOS and Android are verified here.
 
 On each platform from Step 3, from a fresh install: load the seed and
 perform every step, taking a screenshot after each and checking it matches
-what the step says should be seen. Never chain steps blind (`reproduce-bug`
-Step 5). Save evidence screenshots as `<platform>-<n>-<what>.png` and
+what the step says should be seen. Never chain steps blind
+([devices.md](../reproduce-bug/devices.md) → Driving the app). Save evidence screenshots as `<platform>-<n>-<what>.png` and
 working shots in `work/`, and watch the logs for exceptions and `_log.e`.
 
 - **A step doesn't match**: the feature misbehaves, or an instruction is
@@ -124,8 +116,9 @@ working shots in `work/`, and watch the logs for exceptions and `_log.e`.
   wrong, fix it and redo the step. If the feature is wrong, record it as a
   failure with a screenshot and continue with the steps that don't depend
   on it. Don't fix app code.
-- **A step can't be done on a simulator or emulator** (`reproduce-bug` Step
-  2's list): verify everything else, and mark that step **⚠️ Unverified**
+- **A step can't be done on a simulator or emulator** (`reproduce-bug` →
+  **Decide whether it can be verified** list): verify everything else, and
+  mark that step **⚠️ Unverified**
   with the reason.
 
 When everything is done, replay the final instructions once from a fresh
@@ -182,7 +175,7 @@ Also show the report in chat, and send the key image with `SendUserFile`.
 
 ## Step 7 — Clean up
 
-As in `reproduce-bug` Step 7: stop `flutter run` and any pro-iq emulators
+As in `reproduce-bug` → **Clean up**: stop `flutter run` and any pro-iq emulators
 this skill started, shut down devices it booted, delete every local file
 this run wrote (screenshots, report, scripts), and remove the PR worktree it created (`git -C <repo-dir>
 worktree remove ../<repo-name>-pr-<n>`). Leave `ship-ticket`'s worktree

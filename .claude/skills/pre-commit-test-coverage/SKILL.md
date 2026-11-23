@@ -16,7 +16,7 @@ Follow every step below in order.
 
 ## Step 1 — Identify changed files
 
-Use the same Phase A / Phase B detection as `adair-code-audit` Step 1
+Use the same Phase A / Phase B detection as `adair-code-audit` → **Determine scope**
 to determine affected submodules and changed `.dart` files.
 
 ### Phase A — uncommitted changes
