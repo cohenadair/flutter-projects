@@ -56,7 +56,9 @@ The `{project-slug}` is the kebab-case project name (e.g. `anglers-log`,
 `git -C <sub-project dir> remote -v` for the actual owner before running any
 `gh` command against the sub-project repo — e.g. `pro-iq` lives under
 `Pro-IQ-Inc/pro-iq`, not `cohenadair/pro-iq`. `adair-flutter-lib` itself is
-always under `cohenadair`.
+always under `cohenadair`. `{owner}` below is that owner. With the wrong
+owner, `gh release create` fails with a misleading `"workflow" scope may be
+required` error (see `.claude/troubleshooting/tooling.md`).
 
 ---
 
@@ -187,7 +189,7 @@ already exist.
 
 ```bash
 gh release create v{version} \
-  --repo cohenadair/{project-slug} \
+  --repo {owner}/{project-slug} \
   --title "v{version}" \
   --notes-file <scratchpad>/project-release-notes.md
 ```
@@ -201,7 +203,7 @@ create`, or by running:
 
 ```bash
 gh release view {project-slug}-v{version} --repo cohenadair/adair-flutter-lib
-gh release view v{version} --repo cohenadair/{project-slug}
+gh release view v{version} --repo {owner}/{project-slug}
 ```
 
 ---
@@ -338,7 +340,7 @@ gh release edit {project-slug}-v{version} \
   --notes-file <scratchpad>/lib-release-notes.md
 
 gh release edit v{version} \
-  --repo cohenadair/{project-slug} \
+  --repo {owner}/{project-slug} \
   --notes-file <scratchpad>/project-release-notes.md
 ```
 
@@ -351,5 +353,5 @@ updated:
 
 ```bash
 gh release view {project-slug}-v{version} --repo cohenadair/adair-flutter-lib
-gh release view v{version} --repo cohenadair/{project-slug}
+gh release view v{version} --repo {owner}/{project-slug}
 ```

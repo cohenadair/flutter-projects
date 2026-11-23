@@ -125,6 +125,10 @@ expect(Activity.fromMap(map).createdAt, 0);
 
 ## Wrappers vs. managers
 
+- **No global or static mutable state.** State that outlives a widget lives
+  in a manager singleton (internal fields, private `._()` constructor),
+  never in a top-level variable or a resettable `static` field. Tests use
+  the manager's `set()` / `reset()`.
 - **Wrappers** (`adair-flutter-lib/lib/wrappers/`) are thin, 1:1 delegations to a
   Firebase or platform SDK. They contain no business logic — only the minimal surface
   area needed to make the underlying API testable. Example: `FirestoreWrapper.doc()`,
@@ -190,6 +194,9 @@ When a wrapper or manager that exists in a downstream project (`pro-iq`,
 
 ## Error handling
 
+- **Never log personal data.** `_log.e` / `_log.w` reasons, messages, and
+  custom keys go to Crashlytics: no emails, Google or Apple account names,
+  user-entered names, or locations. Log IDs or counts instead.
 - **No empty `catch` blocks.** Every `catch` must at minimum call
   `_log.e(e, reason: "…")` to log the exception to Firebase Crashlytics. Declare
   `_log` at the file level: `final _log = Log("ClassName");`.

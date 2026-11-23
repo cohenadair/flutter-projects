@@ -5,6 +5,20 @@ holds the incidents and quirks behind them.
 
 ## Release builds
 
+### `Error: missing required env vars: APPLE_TEAM_ID APPLE_ID APPLE_APP_SPECIFIC_PASSWORD`
+
+- **Seen:** anglers-log, running `../../build_and_upload_release.sh ios`
+  from inside `anglers-log/mobile`.
+- **Cause:** the root script sources `<project-dir>/release_credentials.sh`
+  (local, gitignored). It wasn't found for the directory the script
+  resolved as the project, or the file doesn't exist there (e.g. a fresh
+  worktree).
+- **Fix:** run from the monorepo root with the project dir as an argument
+  (`./build_and_upload_release.sh anglers-log/mobile …`), from the main
+  checkout. If the file is missing, ask the user; never recreate
+  credentials.
+- **Related:** `build-and-upload-release` → Run the script.
+
 ### Release shipped without merged fixes
 
 - **Seen:** activity-log `2.0.5+2026111701`.

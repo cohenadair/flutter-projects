@@ -123,6 +123,11 @@ more polished. This applies to the copyable text and any in-app changelog
 entries alike; if the user later asks to strip a platform reference,
 apply the edit in both places so they don't drift apart.
 
+**No issue or PR numbers, and keep it condensed.** Customers can't see the
+GitHub tracker, so never write "#1204" or "(issue 42)". Merge related
+fixes into one line ("Fixed several crashes when adding photos") rather
+than one line per commit.
+
 ---
 
 ## Step 4 — Find the change log page, and match its existing voice

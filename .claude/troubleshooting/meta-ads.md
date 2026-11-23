@@ -6,6 +6,14 @@ was resolved. Read this on any Meta error or unexpected result. The
 
 ## Tool & Ads Manager quirks
 
+- **"This tool is new and is being gradually rolled out across ad
+  accounts"** for ad account 14363318: seen for `ads_creative_upload_media`
+  (both `LOCAL_FILE` and `URL`) and `ads_creative_delete` (2026-10). Don't
+  retry. Media: follow the `meta-ads` skill's **Media** section. Deleting a
+  creative: leave it, or the user deletes it in Ads Manager.
+- **`ads_get_ad_preview` returns inconsistent placements:** one request may
+  return every placement, another only the one asked for. Request each
+  placement you need explicitly.
 - **Edits to live objects are staged as drafts** (`is_draft: true`) and need
   publishing with `ads_activate_entity`. A staged draft that fails validation
   **blocks every change underneath it** (e.g. pausing its ads). Fixing it with

@@ -32,7 +32,11 @@ beyond that.
 gh issue view <n> --repo <owner>/<repo> --comments
 ```
 
-If no issue was given, ask for the URL. Map the repo to its sub-project
+If no issue was given, ask for the URL, unless the user says there isn't
+one (e.g. a Crashlytics-only fix). Then work from their description: name
+the branch and worktree `fix-<short-slug>` instead of `issue-<n>`, use a
+plain PR title with no `#<n>:` prefix and no `Closes` line, and skip the
+duplicate-PR check by issue number (check by branch name instead). Map the repo to its sub-project
 using the table in `reproduce-bug` → **Read the bug**.
 
 Check that nobody's already on it: `gh pr list --repo <owner>/<repo>

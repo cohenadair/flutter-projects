@@ -32,6 +32,20 @@
 
 ## Crashlytics
 
+### `crashlytics_get_issue`: `HTTP Error: 404, Requested entity was not found`
+
+- **Cause:** the issue belongs to the app's other platform; issue IDs are
+  per `appId` (e.g. an Android issue looked up with the iOS `appId`).
+- **Fix:** retry with the other platform's `appId` from the
+  `crashlytics-triage` project table.
+
+### `crashlytics_get_report`: `Timeout reached making request`
+
+- **Cause:** a slow Crashlytics API response, usually for a large window.
+- **Fix:** retry that one call once; the other calls in the batch are
+  unaffected. If it times out again, shorten the window or lower
+  `pageSize` and say so in the report.
+
 ### `crashlytics_get_report` interval error: "must be less than 90 days in the past"
 
 - **Fix:** use a start time ~85 days back, not exactly 90.

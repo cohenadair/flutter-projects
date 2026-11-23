@@ -57,6 +57,21 @@ All four apps are on SPM (pro-iq 2026-08-18; activity-log, anglers-log; tapd
 
 ## Xcode & signing
 
+### Simulator tool: `Xcode is installed but not selected`
+
+- **Symptom:** the iOS Simulator tool's `attach` fails with `Run sudo
+  xcode-select -s /Applications/Xcode.app/Contents/Developer`.
+- **Fix:** it needs the user's password, so the user runs that command
+  themselves. Tell them right away and wait; don't switch to driving the
+  Simulator app another way without saying so.
+
+### Simulator tool: `The user has not granted Claude access to "iPhone …"`
+
+- **Fix:** the user attaches the device in the simulator panel and clicks
+  "Let Claude use it" (once per device). Ask right away, since they may be
+  away from the screen; offer Android only if the bug isn't iOS-specific.
+- **Related:** `reproduce-bug` → devices.md.
+
 ### `.ipa` export fails with "No Accounts" / "missing Xcode-Token"
 
 - **Seen:** tapd, 2026-09-19.
