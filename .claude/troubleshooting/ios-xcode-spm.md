@@ -87,3 +87,15 @@ All four apps are on SPM (pro-iq 2026-08-18; activity-log, anglers-log; tapd
   isn't copied into new git worktrees.
 - **Fix:** copy the gitignored config from the main checkout, as
   `reproduce-bug` Step 3 describes.
+- **macOS too (pro-iq, 2026-11-23):** `flutter build macos` in a fresh
+  worktree fails in turn with `Did not find the file passed to
+  "--dart-define-from-file"`, then `Build input file cannot be found:
+  '.../macos/Runner/GoogleService-Info.plist'` (the tenant-copy script phase
+  runs after Xcode's input check), then `PathNotFoundException ...
+  firebase.json` in the FlutterFire symbol-upload phase. Copy all four up
+  front: `dart-defines/`, `firebase.json`,
+  `lib/firebase_options/<tenant>.dart` → `lib/firebase_options.dart`, and
+  `macos/Runner/Firebase/<tenant>/GoogleService-Info.plist` →
+  `macos/Runner/`. The first clean release build compiles every SPM package
+  for arm64 and x86_64. It can take 30+ minutes under memory pressure and
+  look hung (xcodebuild at 0% CPU while `swift-frontend` runs).

@@ -81,6 +81,8 @@ For each selected issue:
    rediscovered from scratch. While you have it open, apply the platform
    label from the **Platform label** section below if it's missing.
 3. `crashlytics_list_events` then `crashlytics_batch_get_events` — pull
+   (set `intervalEndTime` to now or leave it out: an end at midnight today
+   returned `[]` for a fresh issue's same-day events)
    sample events with full stack traces. Grab a few samples if the crash has
    multiple distinct triggering paths, not just one.
 
@@ -116,6 +118,22 @@ For each selected issue:
     it may just reflect an ABI the release build doesn't ship) → there is no
     code fix available. Don't guess at one — go to the **no app-fixable
     resolution** path below.
+  - **Flutter engine** frames only (`FlutterMacOS`, `Flutter`,
+    `libflutter.so`, e.g. on the `io.flutter.raster` thread) → first check
+    whether a Flutter upgrade already on the default branch fixes it.
+    Compare the engine in the shipped build
+    (`FlutterEngine` in the app's `FlutterMacOS.framework/Resources/Info.plist`)
+    with `flutter --version`'s. If they differ, a build from the default
+    branch, or another tenant's newer build, is the test. Ask the user to
+    try their repro on it. A scripted resize or title-bar double-click
+    didn't reproduce a display-dependent macOS crash over Screen Sharing
+    (2026-11-23). If it no longer crashes, close the issue with a note
+    naming the upgrade commit and both engine hashes, without a PR (the
+    user OK'd this on 2026-11-23). Resolution: "Closed — fixed by Flutter
+    upgrade". For macOS crashes on this Mac, `.ips` reports in
+    `~/Library/Logs/DiagnosticReports/Retired/` give exact image offsets
+    and the fault address. Crashlytics names every stripped engine frame
+    after the nearest exported symbol, so those names are wrong.
 - State the root-cause hypothesis and the planned fix to the user before
   writing code if the issue is ambiguous, spans multiple files, or touches
   Firestore/data-model concerns. For a clear, small, local bug, proceed
@@ -241,6 +259,10 @@ guarantees each PR's diff is exactly that issue's fix.
    ```
    `<base>` is `origin/<default-branch>` or the earlier issue's branch name,
    per the exception above.
+   Gitignored config (`firebase.json`, Firebase options, plists,
+   pro-iq's `dart-defines/`) isn't in the new worktree. Copy it from the
+   main checkout before building (list in
+   `.claude/troubleshooting/ios-xcode-spm.md` → Worktrees).
 4. **Do all remaining work for this issue in that worktree directory** — the
    rest of Step 6's fix, Step 7's commit/push/`gh pr create`. Run test
    commands (`flutter test`, `dart format`, `gen_mocks.sh`)

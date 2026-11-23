@@ -53,7 +53,7 @@ for the error text.
 
 | Firebase project ID | Repo dir | GitHub remote | Crashlytics `appId`s |
 |---|---|---|---|
-| `pro-iq` | `/Users/cohen/Documents/flutter-projects/pro-iq` | `Pro-IQ-Inc/pro-iq` (SSH) | Android `1:471654200598:android:d78feedb6a6d675f038c37`, iOS/macOS `1:471654200598:ios:860649be7b6fc80b038c37` |
+| `pro-iq` | `/Users/cohen/Documents/flutter-projects/pro-iq` | `Pro-IQ-Inc/pro-iq` (SSH) | Pro IQ tenant: Android `1:471654200598:android:d78feedb6a6d675f038c37`, iOS/macOS `1:471654200598:ios:860649be7b6fc80b038c37`. Hill Method tenant: Android `1:471654200598:android:3b4e94aa5384f758038c37`, iOS/macOS `1:471654200598:ios:6b2b227bc8198fbc038c37` |
 | `anglers-log` | `/Users/cohen/Documents/flutter-projects/anglers-log` | `cohenadair/anglers-log` | Android `1:1018039459325:android:f4b10d819dbf3934`, iOS `1:1018039459325:ios:b91fa700d0742896244d94` |
 | `activity-log-ed0d0` | `/Users/cohen/Documents/flutter-projects/activity-log/mobile` | `cohenadair/activity-log` | Android `1:369664271784:android:63e4cb098ece2abe`, iOS `1:369664271784:ios:63e4cb098ece2abe` |
 | `tapd-game` | `/Users/cohen/Documents/flutter-projects/tapd/mobile` | `cohenadair/tapd` | Android `1:57081871029:android:6fe4cf3079718070499cfc`, iOS `1:57081871029:ios:33fc9ffc13bd140f499cfc` |
@@ -71,7 +71,9 @@ session and silently outranks each repo's `.firebaserc` — past runs left
 from `pro-iq/` target the wrong project.
 
 **Source of truth for `appId`s:** the table above mirrors the `appId:` lines
-in each app's `lib/firebase_options.dart` (pro-iq: `pro-iq/lib/`;
+in each app's `lib/firebase_options.dart` (pro-iq: one file per tenant in
+`pro-iq/lib/firebase_options/`, since `lib/firebase_options.dart` is a
+gitignored copy of whichever tenant was built last;
 anglers-log: `anglers-log/mobile/lib/`; activity-log:
 `activity-log/mobile/lib/`; tapd: `tapd/mobile/lib/`). If a Crashlytics call 404s for a listed
 `appId`, or an app may have been added since, re-read those files and update
