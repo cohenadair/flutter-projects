@@ -335,9 +335,12 @@ name one.
    countries).
 4. Account-level signals (scope with `entity_ids` where useful):
    `ads_insights_anomaly_signal`, `ads_get_opportunity_score`,
-   `ads_insights_performance_trend` (`hide_ui: true`),
    `ads_insights_industry_benchmark`, and `ads_get_errors` for anything
-   blocking delivery.
+   blocking delivery. For week-over-week changes, use the two `time_range`
+   calls from item 1, not `ads_insights_performance_trend`. That tool gives
+   % changes with a GOOD/BAD label but no window or baseline, and they don't
+   match the two windows (2026-11-24: it said Tapd iOS cost per result was
+   "+8.68%, GOOD" when week over week it was +102%).
 5. Map each campaign to its app via `apps.md`.
 
 Notes on the metrics:
@@ -377,11 +380,17 @@ For each campaign, judge it against the goal (maximize installs):
   and give: what to change (exact entity and setting), why (the data behind
   it), the expected effect, confidence (high / medium / low), and whether it
   restarts learning.
-- Filter Meta's Opportunity Score recommendations through the user's
-  preferences and `apps.md`. Don't suggest anything that conflicts with them
-  (e.g. worldwide targeting for Activity Log, copy with prices, Advantage+
-  placements), or flag the conflict explicitly if
-  the data really argues for it.
+- **Present every Opportunity Score recommendation for the user to review;
+  don't reject one outright** (user, 2026-11-24: Meta sees more of what
+  works). For each one, say what it would change, which ads or ad sets it
+  covers, the points and lift Meta claims, and whether it restarts learning.
+  Then check it against the user's preferences and `apps.md` (e.g.
+  worldwide targeting for Activity Log, copy with prices, Advantage+
+  placements, unconfirmed copy). Name any conflict and give your view, but
+  leave the decision to the user. To see which Advantage+ creative
+  enhancements an ad already has, read its creative with `ads_get_creatives`
+  and `fields: ["advantage_plus_creative_enhancements"]`; the field is
+  omitted when none is on.
 - Typical levers: pause the clearly losing ad in an ad set; refresh fatigued
   creative; move budget between platform campaigns of the same app; scale a
   campaign with a stable, below-benchmark cost per install (budget increases of
