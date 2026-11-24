@@ -322,6 +322,14 @@ cd /Users/cohen/Documents/flutter-projects && \
 
 ### Not auto-fixable — always ask
 
+- `Google Play upload failed` where the log just stops at a step line
+  (e.g. `==> [android] Uploading AAB`) with no error. The root script's
+  Play API calls use `curl -sf`, which throws away Google's response, so
+  the log can't tell a network drop from a rejection. An edit that's never
+  committed leaves nothing on Play. Ask whether to retry once as-is, or to
+  first make the curl calls print the response (`--fail-with-body`), and
+  say which step it stopped at.
+
 - Code-signing / provisioning profile errors ("no signing certificate
   matches", "no profiles for X were found") — these are Apple Developer
   account/keychain state, not something to guess-fix from a script.
