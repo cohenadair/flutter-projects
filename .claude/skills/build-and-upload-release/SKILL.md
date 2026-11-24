@@ -322,13 +322,14 @@ cd /Users/cohen/Documents/flutter-projects && \
 
 ### Not auto-fixable — always ask
 
-- `Google Play upload failed` where the log just stops at a step line
-  (e.g. `==> [android] Uploading AAB`) with no error. The root script's
-  Play API calls use `curl -sf`, which throws away Google's response, so
-  the log can't tell a network drop from a rejection. An edit that's never
-  committed leaves nothing on Play. Ask whether to retry once as-is, or to
-  first make the curl calls print the response (`--fail-with-body`), and
-  say which step it stopped at.
+- `Google Play upload failed` with a Google error the categories above
+  don't cover (e.g. 403 permission denied, an invalid package). The root
+  script's `play_api_curl` logs `Google Play API call failed (curl exit
+  <n>)` under the step line (e.g. `==> [android] Uploading AAB`), followed
+  by Google's JSON response, so quote that response when you ask. curl exit
+  22 is an HTTP error from Google; other codes are network errors (e.g. 28
+  is a timeout), which go under **Transient network failure**. An edit
+  that's never committed leaves nothing on Play.
 
 - Code-signing / provisioning profile errors ("no signing certificate
   matches", "no profiles for X were found") — these are Apple Developer

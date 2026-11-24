@@ -256,6 +256,25 @@ generate_export_options() {
 PLIST
 }
 
+# ── Helper: call the Google Play API, logging Google's error on failure ─────
+#
+# Prints the response body on success. On an HTTP error, prints curl's
+# error and Google's response body to stderr (the platform log), then
+# returns curl's exit code. `curl -sf` used to discard both, leaving a log
+# that stopped at the step line with no reason.
+
+play_api_curl() {
+  local response rc=0
+  response=$(curl -sS --fail-with-body "$@") || rc=$?
+  if [ "$rc" -eq 0 ]; then
+    printf '%s' "$response"
+    return 0
+  fi
+  echo "    Google Play API call failed (curl exit $rc). Response:" >&2
+  printf '%s\n' "${response:-<empty>}" | sed 's/^/    /' >&2
+  return "$rc"
+}
+
 # ── Helper: upload AAB to Google Play via Publishing API ─────────────────────
 #
 # Flow:
@@ -291,7 +310,7 @@ google_play_upload() {
   jwt="${signing_input}.${signature}"
 
   local token
-  token_response=$(curl -sf -X POST "$token_uri" \
+  token_response=$(play_api_curl -X POST "$token_uri" \
     -H "Content-Type: application/x-www-form-urlencoded" \
     --data-urlencode "grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer" \
     --data-urlencode "assertion=$jwt") || return 1
@@ -299,7 +318,7 @@ google_play_upload() {
 
   echo "==> [android] Creating edit"
   local edit_response
-  edit_response=$(curl -sf -X POST \
+  edit_response=$(play_api_curl -X POST \
     -H "Authorization: Bearer $token" \
     -H "Content-Type: application/json" \
     "${base_url}/${pkg}/edits") || return 1
@@ -309,7 +328,7 @@ google_play_upload() {
 
   echo "==> [android] Uploading AAB"
   local upload_url="https://androidpublisher.googleapis.com/upload/androidpublisher/v3/applications/${pkg}/edits/${edit_id}/bundles?uploadType=media"
-  curl -sf -X POST \
+  play_api_curl -X POST \
     -H "Authorization: Bearer $token" \
     -H "Content-Type: application/octet-stream" \
     --data-binary "@${aab_path}" \
@@ -324,14 +343,14 @@ print(json.dumps({
     'releases': [{'status': 'completed', 'versionCodes': [str(version_code)]}]
 }))
 " "$APP_VERSION")
-  curl -sf -X PUT \
+  play_api_curl -X PUT \
     -H "Authorization: Bearer $token" \
     -H "Content-Type: application/json" \
     -d "$track_body" \
     "${base_url}/${pkg}/edits/${edit_id}/tracks/internal" > /dev/null || return 1
 
   echo "==> [android] Committing edit"
-  curl -sf -X POST \
+  play_api_curl -X POST \
     -H "Authorization: Bearer $token" \
     "${base_url}/${pkg}/edits/${edit_id}:commit" > /dev/null || return 1
 }
