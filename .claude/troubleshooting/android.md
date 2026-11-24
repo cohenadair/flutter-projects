@@ -37,6 +37,15 @@
 
 ## Builds
 
+### `(eval):1: no such file or directory: ./gradlew` in a worktree
+
+- **Seen:** pro-iq worktree, 2026-11-24.
+- **Cause:** `android/gradlew` is gitignored, so a fresh git worktree
+  doesn't have it.
+- **Fix:** build with Flutter instead, e.g. `flutter build apk --debug
+  --flavor <flavor> --dart-define-from-file=dart-defines/<tenant>.json`
+  (pro-iq).
+
 ### Release build fails without `keystore.properties`
 
 - **Cause:** anglers-log and activity-log release builds need

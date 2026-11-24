@@ -140,6 +140,14 @@ verify**, with the reason and best-effort steps marked unverified. If only
 part can be done (e.g. the data setup works, but the trigger needs a real
 purchase), verify that part and say exactly where verification ends.
 
+When the bug is about which Android resource or manifest value ships
+(a notification or launcher icon, a per-flavor string or color), verify
+the built APK instead of the screen: `aapt2 dump resources <apk>` shows
+every variant of a resource, `aapt2 dump xmltree <apk> --file <path>`
+reads a packaged XML (manifest, vector), and `unzip` extracts a packaged
+PNG for the before/after image. This proves what the device would load
+even when the trigger (e.g. an FCM push) can't happen on an emulator.
+
 ## Step 3 — Code to run
 
 If a worktree path was passed in, use it. Otherwise create a throwaway one
@@ -266,6 +274,8 @@ PR's manual-test steps would pass with or without the fix>
 Make one side-by-side image of the key before/after (or expected/actual)
 screens, e.g. `magick a.png b.png -resize 35% +append -crop
 <width>x<height>+0+0 +repage before-vs-after.png`.
+This Mac's ImageMagick can't draw text (`-annotate` fails), so put
+the labels in the Markdown caption, not the image.
 
 **Everything goes on GitHub; nothing stays on the computer.** The report
 and its images belong in the PR (or issue), and Step 7 deletes the local

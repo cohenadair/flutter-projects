@@ -70,6 +70,18 @@
 - **Fix:** use an array (`S=(); S+=(...); "${S[@]}"`) or a literal list
   (`for repo in a/b c/d; do`).
 
+## ImageMagick
+
+### `magick: delegate library support not built-in 'none' (Freetype)` / `sh: gs: command not found`
+
+- **Symptom:** `magick ... -annotate` (or `label:`) fails with
+  `FailedToExecuteCommand 'gs' ...` and the Freetype warning.
+- **Seen:** pro-iq (`reproduce-bug` side-by-side image), 2026-11-24.
+- **Cause:** the Homebrew ImageMagick here has no Freetype and Ghostscript
+  isn't installed, so it can't render any text.
+- **Fix:** build the image without text and put the labels in the
+  Markdown caption (e.g. "Left: before. Right: after.").
+
 ## Next.js
 
 ### Dev server 404s on `_next/static/chunks/*` after a build
