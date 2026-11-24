@@ -119,21 +119,32 @@ For each selected issue:
     code fix available. Don't guess at one — go to the **no app-fixable
     resolution** path below.
   - **Flutter engine** frames only (`FlutterMacOS`, `Flutter`,
-    `libflutter.so`, e.g. on the `io.flutter.raster` thread) → first check
-    whether a Flutter upgrade already on the default branch fixes it.
-    Compare the engine in the shipped build
-    (`FlutterEngine` in the app's `FlutterMacOS.framework/Resources/Info.plist`)
-    with `flutter --version`'s. If they differ, a build from the default
-    branch, or another tenant's newer build, is the test. Ask the user to
-    try their repro on it. A scripted resize or title-bar double-click
-    didn't reproduce a display-dependent macOS crash over Screen Sharing
-    (2026-11-23). If it no longer crashes, close the issue with a note
-    naming the upgrade commit and both engine hashes, without a PR (the
-    user OK'd this on 2026-11-23). Resolution: "Closed — fixed by Flutter
-    upgrade". For macOS crashes on this Mac, `.ips` reports in
-    `~/Library/Logs/DiagnosticReports/Retired/` give exact image offsets
-    and the fault address. Crashlytics names every stripped engine frame
-    after the nearest exported symbol, so those names are wrong.
+    `libflutter.so`, e.g. on the `io.flutter.raster` thread) → find the
+    real crash site before deciding anything. Crashlytics names every
+    stripped engine frame after the nearest exported symbol (e.g.
+    `TraceScopeCMa`), so those names are wrong. For macOS crashes on this
+    Mac, the `.ips` report in `~/Library/Logs/DiagnosticReports/` (or
+    `Retired/`) gives the frames, often already symbolicated by macOS.
+    Otherwise disassemble the shipped framework at the frame offset:
+    `lldb --batch -o 'target create --arch arm64 "<FlutterMacOS>"' -o
+    'image lookup -v -a 0x<offset>'`. Then search flutter/flutter for the
+    top symbol (`gh api -X GET search/issues -f q='repo:flutter/flutter
+    <symbol>'`) and check whether the fix PR's merge commit is in
+    `stable` (`gh api repos/flutter/flutter/compare/stable...<sha> -q
+    .status` returns `behind` or `identical` when it's included).
+    - Also check the issue under the same ID in the project's other
+      tenant `appId`s. Issue IDs are shared across apps, and the other
+      app's history (first-seen version, earlier notes) shows whether the
+      crash predates a Flutter upgrade.
+    - Never close an engine crash as fixed by a Flutter upgrade just
+      because one repro attempt didn't crash. On 2026-11-23 this skill
+      closed `2667f4bf` that way, and it recurred on 1.4.0 the next day:
+      the crash was intermittent, and the fix was only on `master`. Close
+      it only when the fix commit is in the Flutter version the build
+      uses.
+    - If the fix isn't released yet, there's no PR. Note the upstream
+      issue and fix PR on the Crashlytics issue, leave it open, and ask
+      the user whether to wait for the release or ship a workaround.
 - State the root-cause hypothesis and the planned fix to the user before
   writing code if the issue is ambiguous, spans multiple files, or touches
   Firestore/data-model concerns. For a clear, small, local bug, proceed
