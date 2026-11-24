@@ -92,3 +92,10 @@ was resolved. Read this on any Meta error or unexpected result. The
   under "spend on excluded placements" in Ads Manager (fixed for Activity Log
   iOS, 2026-10-22; it had taken ~a third of that campaign's spend as
   accidental taps at a ~40% click-through rate).
+- **"Advantage+ creative enhancements can't be changed from Ads MCP on an
+  ad that uses dynamic creative or placement asset customization" (100)**
+  on `ads_update_entity` with `advantage_plus_creative_features`. Ads with
+  `placement_videos` (a 4:5 fallback plus a 9:16 video for Stories/Reels,
+  e.g. the Tapd ads) count as placement asset customization. Nothing is
+  staged. The user turns enhancements on in Ads Manager: open the ad, then
+  Advantage+ creative → Edit (Tapd, 2026-11-24).
